@@ -41,6 +41,7 @@ img {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   padding: 12px 5vw;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
@@ -75,6 +76,7 @@ img {
 .site-nav {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   font-size: 14px;
 }
@@ -190,6 +192,9 @@ img {
 
 .site-main {
   padding: 18px 5vw 36px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .back-row {
@@ -211,7 +216,7 @@ img {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: minmax(240px, 1.3fr) repeat(4, minmax(150px, 1fr));
+  grid-template-columns: minmax(220px, 1.2fr) repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   align-items: start;
 }
@@ -692,7 +697,7 @@ img {
 
 .filter-form {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) repeat(2, minmax(160px, 200px)) auto;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 10px;
   align-items: center;
 }
@@ -778,7 +783,7 @@ textarea:focus {
 
 .content-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
 }
 
@@ -1720,6 +1725,25 @@ textarea:focus {
   }
 }
 
+@media (max-width: 1100px) {
+  .site-nav a,
+  .site-nav button {
+    padding: 6px 10px;
+  }
+
+  .user-chip {
+    padding: 6px 10px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-panel {
+    width: 100%;
+  }
+}
+
 @media (max-width: 900px) {
   .content-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1727,6 +1751,10 @@ textarea:focus {
 
   .filter-form {
     grid-template-columns: 1fr;
+  }
+
+  .recap-video {
+    max-height: 45vh;
   }
 
   .recap-layout {
@@ -1838,6 +1866,14 @@ textarea:focus {
 
   .recap-hero-card {
     grid-template-columns: 1fr;
+  }
+
+  .recap-video {
+    max-height: 40vh;
+  }
+
+  .recap-video[data-provider="TIKTOK"] {
+    max-width: 100%;
   }
 }
 
