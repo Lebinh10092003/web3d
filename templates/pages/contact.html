@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Contact" %} | Vsteam Lab{% endblock %}
+{% block meta_title %}{% trans "Contact Vsteam Lab" %}{% endblock %}
+{% block meta_description %}{% trans "Get in touch with Vsteam Lab for STEAM and robotics resource collaboration." %}{% endblock %}
+{% block og_description %}{% trans "Get in touch with Vsteam Lab for STEAM and robotics resource collaboration." %}{% endblock %}
+{% block twitter_title %}{% trans "Contact Vsteam Lab" %}{% endblock %}
+{% block twitter_description %}{% trans "Get in touch with Vsteam Lab for STEAM and robotics resource collaboration." %}{% endblock %}
+
+{% block content %}
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+<section class="panel">
+  <h1>{% trans "Contact" %}</h1>
+  <p>{% trans "Email" %}: support@web3d.local</p>
+  <p>{% trans "We respond within 2 business days." %}</p>
+</section>
+{% endblock %}

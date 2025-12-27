@@ -1,0 +1,308 @@
+import re
+from urllib.parse import parse_qs, urlparse, urlunparse
+
+from django.conf import settings
+
+from django.db import models
+from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=120)
+    slug = models.SlugField(max_length=140, unique=True)
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        related_name="children",
+        on_delete=models.SET_NULL,
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = "Categories"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class ContentItem(models.Model):
+    class ContentType(models.TextChoices):
+        PDF = "PDF", _("PDF")
+        LEGO_3D = "LEGO_3D", _("LEGO 3D")
+
+    class Status(models.TextChoices):
+        DRAFT = "DRAFT", _("Draft")
+        PENDING = "PENDING", _("Pending")
+        PUBLISHED = "PUBLISHED", _("Published")
+        REJECTED = "REJECTED", _("Rejected")
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name="contents", on_delete=models.CASCADE
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    content_type = models.CharField(max_length=20, choices=ContentType.choices)
+    categories = models.ManyToManyField(Category, blank=True, related_name="items")
+    download_cost_points = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PUBLISHED)
+    is_public = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
+
+
+class ContentFile(models.Model):
+    class FileKind(models.TextChoices):
+        SOURCE = "SOURCE", "Source"
+        PREVIEW = "PREVIEW", "Preview"
+
+    content = models.ForeignKey(ContentItem, related_name="files", on_delete=models.CASCADE)
+    kind = models.CharField(max_length=20, choices=FileKind.choices)
+    storage_path = models.CharField(max_length=500)
+    mime_type = models.CharField(max_length=100)
+    size_bytes = models.BigIntegerField(default=0)
+    checksum = models.CharField(max_length=128, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("content", "kind", "storage_path")
+
+    def __str__(self):
+        return f"{self.content_id}:{self.kind}"
+
+    def get_signed_url(self, expires_in=None, method="GET"):
+        from .storage import build_signed_url
+
+        return build_signed_url(self.storage_path, expires_in=expires_in, method=method)
+
+
+class RecapVideo(models.Model):
+    class VideoProvider(models.TextChoices):
+        YOUTUBE = "YOUTUBE", "YouTube"
+        TIKTOK = "TIKTOK", "TikTok"
+
+    competition = models.CharField(max_length=120, verbose_name=_("Competition"))
+    competition_slug = models.SlugField(max_length=140, blank=True, verbose_name=_("Competition slug"))
+    year = models.PositiveSmallIntegerField(verbose_name=_("Year"))
+    video_provider = models.CharField(
+        max_length=20,
+        choices=VideoProvider.choices,
+        default=VideoProvider.YOUTUBE,
+        verbose_name=_("Video provider"),
+    )
+    video_id = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text=_("Paste a YouTube/TikTok URL, ID, or full iframe embed code."),
+        verbose_name=_("Video ID"),
+    )
+    title = models.CharField(max_length=200, verbose_name=_("Title"))
+    summary = models.TextField(blank=True, verbose_name=_("Summary"))
+    is_published = models.BooleanField(default=True, verbose_name=_("Published"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
+
+    class Meta:
+        ordering = ["competition_slug", "-year", "title"]
+        unique_together = ("competition_slug", "year")
+        verbose_name = _("Recap video")
+        verbose_name_plural = _("Recap videos")
+
+    def __str__(self):
+        return f"{self.competition} {self.year}"
+
+    def save(self, *args, **kwargs):
+        if self.competition:
+            slug = slugify(self.competition)[:140]
+            self.competition_slug = slug or "competition"
+        if self.video_id:
+            provider, video_id = self._normalize_video_reference(self.video_id)
+            if provider:
+                self.video_provider = provider
+            self.video_id = video_id
+        super().save(*args, **kwargs)
+
+    def get_embed_url(self):
+        video_id = (self.video_id or "").strip()
+        if not video_id:
+            return ""
+        if self.video_provider == self.VideoProvider.TIKTOK:
+            if video_id.startswith("http") and "tiktok.com/embed" in video_id:
+                return video_id
+            if not video_id.isdigit():
+                return ""
+            return f"https://www.tiktok.com/embed/v2/{video_id}"
+        if video_id.startswith("http") and "youtu" in video_id and "/embed/" in video_id:
+            return self._normalize_youtube_embed_url(video_id)
+        if not re.match(r"^[A-Za-z0-9_-]{11}$", video_id):
+            return ""
+        return f"https://www.youtube-nocookie.com/embed/{video_id}?rel=0"
+
+    def get_watch_url(self):
+        video_id = (self.video_id or "").strip()
+        if not video_id:
+            return ""
+        if video_id.startswith("http"):
+            if "tiktok" in video_id:
+                tiktok_id = self._extract_tiktok_id(video_id)
+                if tiktok_id:
+                    return f"https://www.tiktok.com/video/{tiktok_id}"
+                return video_id
+            if "youtu" in video_id:
+                youtube_id = self._normalize_youtube_id(video_id)
+                if youtube_id:
+                    return f"https://www.youtube.com/watch?v={youtube_id}"
+            return video_id
+        if self.video_provider == self.VideoProvider.TIKTOK:
+            return f"https://www.tiktok.com/video/{video_id}" if video_id.isdigit() else ""
+        return (
+            f"https://www.youtube.com/watch?v={video_id}"
+            if re.match(r"^[A-Za-z0-9_-]{11}$", video_id)
+            else ""
+        )
+
+    def _normalize_video_reference(self, value):
+        value = (value or "").strip()
+        if not value:
+            return "", ""
+        iframe_src = self._extract_iframe_src(value)
+        if iframe_src:
+            value = iframe_src
+            if self._is_youtube_embed_url(value):
+                return self.VideoProvider.YOUTUBE, self._normalize_youtube_embed_url(value)
+            if "tiktok.com/embed" in value:
+                return self.VideoProvider.TIKTOK, value
+        tiktok_id = self._extract_tiktok_id(value)
+        if tiktok_id:
+            return self.VideoProvider.TIKTOK, tiktok_id
+        if "tiktok" in value:
+            return self.VideoProvider.TIKTOK, value
+        youtube_id = self._normalize_youtube_id(value)
+        if youtube_id:
+            return self.VideoProvider.YOUTUBE, youtube_id
+        if value.isdigit():
+            return self.VideoProvider.TIKTOK, value
+        provider = self.video_provider or self.VideoProvider.YOUTUBE
+        return provider, value
+
+    @staticmethod
+    def _extract_iframe_src(value):
+        if "<iframe" not in value:
+            return ""
+        match = re.search(r'src=["\']([^"\']+)', value)
+        return match.group(1).strip() if match else ""
+
+    @staticmethod
+    def _is_youtube_embed_url(value):
+        return "youtu" in value and "/embed/" in value
+
+    @staticmethod
+    def _normalize_youtube_embed_url(value):
+        if not value:
+            return ""
+        try:
+            parsed = urlparse(value)
+        except Exception:
+            return value
+        host = (parsed.hostname or "").lower()
+        if "youtu" not in host or "/embed/" not in (parsed.path or ""):
+            return value
+        scheme = parsed.scheme or "https"
+        return urlunparse(
+            (
+                scheme,
+                "www.youtube-nocookie.com",
+                parsed.path,
+                "",
+                parsed.query or "",
+                "",
+            )
+        )
+
+    @staticmethod
+    def _extract_tiktok_id(value):
+        value = (value or "").strip()
+        if not value:
+            return ""
+        if value.isdigit() and len(value) >= 15:
+            return value
+        if "tiktok" not in value:
+            return ""
+        try:
+            parsed = urlparse(value)
+        except Exception:
+            return ""
+        path = parsed.path or ""
+        match = re.search(r"/video/(\\d+)", path)
+        if match:
+            return match.group(1)
+        match = re.search(r"/embed(?:/v2)?/(\\d+)", path)
+        if match:
+            return match.group(1)
+        return ""
+
+    @staticmethod
+    def _normalize_youtube_id(value):
+        value = (value or "").strip()
+        if not value:
+            return value
+        if "youtu" not in value:
+            if len(value) == 11 and re.match(r"^[A-Za-z0-9_-]{11}$", value):
+                return value
+            return ""
+        try:
+            parsed = urlparse(value)
+        except Exception:
+            return value
+        host = parsed.hostname or ""
+        if host in ("youtu.be", "www.youtu.be"):
+            path = parsed.path.lstrip("/")
+            return path.split("/")[0] if path else value
+        if host in (
+            "youtube.com",
+            "www.youtube.com",
+            "m.youtube.com",
+            "youtube-nocookie.com",
+            "www.youtube-nocookie.com",
+        ):
+            if parsed.path.startswith("/watch"):
+                query = parse_qs(parsed.query)
+                return query.get("v", [value])[0] or value
+            if parsed.path.startswith("/embed/") or parsed.path.startswith("/shorts/"):
+                parts = parsed.path.split("/")
+                if len(parts) > 2:
+                    return parts[2]
+        return ""
+
+
+class RecapHeroBanner(models.Model):
+    title = models.CharField(max_length=200)
+    body = models.TextField(blank=True)
+    eyebrow = models.CharField(max_length=80, blank=True)
+    background_image = models.FileField(upload_to="banners/recaps/", blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        verbose_name = "Recap hero banner"
+        verbose_name_plural = "Recap hero banners"
+
+    def __str__(self):
+        title = (self.title or "").strip()
+        return title or "Recap hero banner"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.is_active:
+            RecapHeroBanner.objects.exclude(pk=self.pk).update(is_active=False)

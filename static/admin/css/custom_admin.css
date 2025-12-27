@@ -1,0 +1,256 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap");
+
+:root {
+  --admin-bg: #f4efe8;
+  --admin-surface: #ffffff;
+  --admin-ink: #1c1b1a;
+  --admin-muted: #6b6760;
+  --admin-accent: #45e06b;
+  --admin-accent-strong: #25c556;
+  --admin-deep: #123d2a;
+  --admin-shadow: rgba(21, 20, 19, 0.12);
+}
+
+body {
+  font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif;
+  background: radial-gradient(circle at top left, #dff8d7 0%, transparent 40%),
+    radial-gradient(circle at 20% 80%, #d4f2e5 0%, transparent 55%),
+    var(--admin-bg);
+  color: var(--admin-ink);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+#header {
+  background: linear-gradient(135deg, #123d2a, #1e5a39);
+  border-bottom: none;
+  box-shadow: 0 12px 30px var(--admin-shadow);
+}
+
+#header a:link,
+#header a:visited {
+  color: #f8fff7;
+}
+
+.admin-brand {
+  font-size: 20px;
+  letter-spacing: 0.5px;
+}
+
+.admin-brand a {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  text-decoration: none;
+}
+
+.admin-brand__title {
+  font-weight: 700;
+}
+
+.admin-brand__subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+#user-tools {
+  font-size: 13px;
+}
+
+#user-tools a {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+#user-tools a:hover {
+  color: #ffffff;
+}
+
+#content {
+  padding: 24px;
+}
+
+.breadcrumbs {
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 16px;
+}
+
+.module,
+.inline-group {
+  background: var(--admin-surface);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px var(--admin-shadow);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+  background: var(--admin-deep);
+  color: #ffffff;
+  padding: 12px 16px;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+}
+
+.module table,
+.inline-group .tabular {
+  width: 100%;
+}
+
+.module table thead th {
+  background: rgba(18, 61, 42, 0.08);
+}
+
+.dashboard-module {
+  padding: 12px 16px 16px;
+}
+
+#changelist-filter {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 25px var(--admin-shadow);
+}
+
+#changelist-filter h2 {
+  background: var(--admin-deep);
+  color: #fff;
+  padding: 12px 16px;
+}
+
+#changelist-filter h3 {
+  margin-top: 12px;
+  color: var(--admin-deep);
+}
+
+input,
+select,
+textarea {
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.96);
+  line-height: 1.4;
+  min-height: 38px;
+  font: inherit;
+}
+
+textarea {
+  min-height: 120px;
+}
+
+select[multiple] {
+  min-height: 120px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px rgba(69, 224, 107, 0.3);
+}
+
+.button,
+input[type="submit"],
+input[type="button"],
+.submit-row input,
+.object-tools a {
+  background: var(--admin-accent);
+  color: #0f2b1d;
+  border-radius: 999px;
+  border: none;
+  padding: 8px 16px;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.button:hover,
+input[type="submit"]:hover,
+input[type="button"]:hover,
+.submit-row input:hover,
+.object-tools a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 20px rgba(37, 197, 86, 0.25);
+}
+
+.object-tools a {
+  margin-right: 8px;
+}
+
+.submit-row {
+  background: transparent;
+  border: none;
+}
+
+.message,
+ul.messagelist li {
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+table {
+  border-collapse: collapse;
+}
+
+#result_list {
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+#result_list thead th,
+#result_list tbody td {
+  padding: 10px 12px;
+}
+
+#result_list tbody tr {
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.04);
+}
+
+#result_list tbody tr:hover {
+  background: rgba(69, 224, 107, 0.08);
+}
+
+.sweetalerts-enabled ul.messagelist {
+  display: none;
+}
+
+.login #container {
+  background: var(--admin-surface);
+  border-radius: 24px;
+  box-shadow: 0 18px 45px var(--admin-shadow);
+  padding: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.login #header {
+  box-shadow: none;
+}
+
+.login #content-main {
+  width: min(520px, 92vw);
+}
+
+.login #container h1 {
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 700px) {
+  #content {
+    padding: 16px;
+  }
+
+  table {
+    border-spacing: 0 6px;
+  }
+}

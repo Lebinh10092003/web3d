@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Login" %} | Vsteam Lab{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h1>{% trans "Login required" %}</h1>
+  <p>{% trans "Please sign in to continue." %}</p>
+</section>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (typeof openAuthModal === "function") {
+      openAuthModal();
+    }
+  });
+</script>
+{% endblock %}
+
+{% block auth_modal_body %}
+  {% include "accounts/login_modal.html" %}
+{% endblock %}

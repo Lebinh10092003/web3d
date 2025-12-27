@@ -1,0 +1,32 @@
+{% load i18n %}
+<div class="modal-panel">
+  <h2>{% trans "Welcome back" %}</h2>
+  <p>{% trans "Sign in to unlock downloads and leave feedback." %}</p>
+  <form
+    method="post"
+    class="form"
+    hx-post="{% url 'accounts:login' %}?modal=1"
+    hx-target="#auth-modal-body"
+    hx-swap="innerHTML"
+  >
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% if next %}
+      <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
+    <label>{% trans "Username" %}</label>
+    {{ form.username }}
+    <label>{% trans "Password" %}</label>
+    {{ form.password }}
+    <button class="button" type="submit">{% trans "Login" %}</button>
+  </form>
+  <div class="modal-switch">
+    <span>{% trans "New here?" %}</span>
+    <a
+      href="{% url 'accounts:register' %}?modal=1"
+      hx-get="{% url 'accounts:register' %}?modal=1"
+      hx-target="#auth-modal-body"
+      hx-swap="innerHTML"
+    >{% trans "Create account" %}</a>
+  </div>
+</div>

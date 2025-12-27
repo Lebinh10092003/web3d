@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Privacy Policy" %} | Vsteam Lab{% endblock %}
+{% block meta_title %}{% trans "Privacy Policy | Vsteam Lab" %}{% endblock %}
+{% block meta_description %}{% trans "Review how Vsteam Lab collects and uses data for accounts, points, and content access." %}{% endblock %}
+{% block og_description %}{% trans "Review how Vsteam Lab collects and uses data for accounts, points, and content access." %}{% endblock %}
+{% block twitter_title %}{% trans "Privacy Policy | Vsteam Lab" %}{% endblock %}
+{% block twitter_description %}{% trans "Review how Vsteam Lab collects and uses data for accounts, points, and content access." %}{% endblock %}
+
+{% block content %}
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+<section class="panel">
+  <h1>{% trans "Privacy Policy" %}</h1>
+  <p>{% trans "We collect basic account information to provide access to content and track points." %}</p>
+  <p>{% trans "Uploaded files are stored on our servers. We do not sell personal data." %}</p>
+  <p>{% trans "Contact us if you want your account removed." %}</p>
+</section>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% load static i18n %}
+<div class="content-grid">
+  {% for item in page_obj %}
+    <article class="content-card" data-stagger="{{ forloop.counter0 }}">
+      <a href="{% url 'library:content-detail' item.id %}" class="card-media">
+        {% if item.preview_url %}
+          <img src="{{ item.preview_url }}" alt="{% trans 'Preview' %}" loading="lazy"{% if item.file_type == "pdf" %} class="card-preview--pdf"{% endif %}>
+        {% else %}
+          <img src="{% static 'img/test.jpg' %}" alt="{% trans 'Preview' %}" loading="lazy">
+        {% endif %}
+      </a>
+      <div class="card-body">
+        <div class="card-tags">
+          <span class="tag">{{ item.file_type_label }}</span>
+          <span class="tag tag-muted">{{ item.get_status_display }}</span>
+        </div>
+        <h3><a href="{% url 'library:content-detail' item.id %}">{{ item.title }}</a></h3>
+        <p>{{ item.description|default:""|truncatechars:140 }}</p>
+        <div class="card-meta">
+          <span>{% trans "Rating" %}: {{ item.rating_avg|default_if_none:"-" }}</span>
+          <span>{% blocktrans with count=item.favorites_count %}{{ count }} saves{% endblocktrans %}</span>
+          {% if item.download_cost_points == 0 %}
+            <span class="points-badge points-free">{% trans "Free" %}</span>
+          {% else %}
+            <span class="points-badge points-paid">
+              {% blocktrans with points=item.download_cost_points %}{{ points }} pts{% endblocktrans %}
+            </span>
+          {% endif %}
+        </div>
+      </div>
+    </article>
+  {% empty %}
+    <div class="empty-state">{% trans "No content found yet. Try a different filter." %}</div>
+  {% endfor %}
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a
+        class="button button-ghost"
+        href="?{% if filter_query %}{{ filter_query }}&{% endif %}page={{ page_obj.previous_page_number }}"
+        hx-get="?{% if filter_query %}{{ filter_query }}&{% endif %}page={{ page_obj.previous_page_number }}"
+        hx-target="#content-grid"
+        hx-push-url="true"
+      >{% trans "Previous" %}</a>
+    {% endif %}
+    <div class="pagination-pages">
+      {% for page_num in page_range %}
+        {% if page_num == page_obj.paginator.ELLIPSIS %}
+          <span class="pagination-ellipsis">{{ page_num }}</span>
+        {% elif page_num == page_obj.number %}
+          <span class="pagination-current">{{ page_num }}</span>
+        {% else %}
+          <a
+            class="pagination-link"
+            href="?{% if filter_query %}{{ filter_query }}&{% endif %}page={{ page_num }}"
+            hx-get="?{% if filter_query %}{{ filter_query }}&{% endif %}page={{ page_num }}"
+            hx-target="#content-grid"
+            hx-push-url="true"
+          >{{ page_num }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% if page_obj.has_next %}
+      <a
+        class="button button-ghost"
+        href="?{% if filter_query %}{{ filter_query }}&{% endif %}page={{ page_obj.next_page_number }}"
+        hx-get="?{% if filter_query %}{{ filter_query }}&{% endif %}page={{ page_obj.next_page_number }}"
+        hx-target="#content-grid"
+        hx-push-url="true"
+      >{% trans "Next" %}</a>
+    {% endif %}
+  </div>
+{% endif %}

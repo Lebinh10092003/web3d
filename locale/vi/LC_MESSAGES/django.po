@@ -1,0 +1,732 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: web3d\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-23 00:00+0000\n"
+"PO-Revision-Date: 2025-12-23 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: vi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "PDF + 3D learning vault"
+msgstr "Kho tài nguyên PDF + 3D"
+
+msgid "English"
+msgstr "Tiếng Anh"
+
+msgid "Vietnamese"
+msgstr "Tiếng Việt"
+
+msgid "Library"
+msgstr "Thư viện"
+
+msgid "Submit"
+msgstr "Đóng góp"
+
+msgid "%(points)s pts"
+msgstr "%(points)s điểm"
+
+msgid "Logout"
+msgstr "Đăng xuất"
+
+msgid "Login"
+msgstr "Đăng nhập"
+
+msgid "Create account"
+msgstr "Tạo tài khoản"
+
+msgid "Language"
+msgstr "Ngôn ngữ"
+
+msgid "Go"
+msgstr "Đổi"
+
+msgid "Back"
+msgstr "Quay lại"
+
+msgid "PDF + 3D learning vault for robotics classrooms."
+msgstr "Kho tài nguyên PDF + 3D cho lớp học robotics."
+
+msgid "Explore"
+msgstr "Khám phá"
+
+msgid "Profile"
+msgstr "Hồ sơ"
+
+msgid "Legal"
+msgstr "Pháp lý"
+
+msgid "About"
+msgstr "Giới thiệu"
+
+msgid "Contact"
+msgstr "Liên hệ"
+
+msgid "Privacy"
+msgstr "Quyền riêng tư"
+
+msgid "Social"
+msgstr "Mạng xã hội"
+
+msgid "Facebook"
+msgstr "Facebook"
+
+msgid "TikTok"
+msgstr "TikTok"
+
+msgid "Created by: Le Binh"
+msgstr "Tạo bởi: Lê Bình"
+
+msgid "Preview ready. Download gated by points."
+msgstr "Xem trước có sẵn. Tải xuống được mở bằng điểm."
+
+msgid "I am from Vietnam"
+msgstr "Tôi đến từ Việt Nam"
+
+msgid "and this website is a place to connect, share, and exchange ideas about STEAM, robotics, and learning resources."
+msgstr "và website này là nơi kết nối, chia sẻ và trao đổi ý tưởng về STEAM, robotics và tài nguyên học tập."
+
+msgid "Zalo chat"
+msgstr "Chat Zalo"
+
+msgid "Phone"
+msgstr "Điện thoại"
+
+msgid "Loading..."
+msgstr "Đang tải..."
+
+msgid "Vsteam Lab | Robotics competition resources"
+msgstr "Vsteam Lab | Tài nguyên cuộc thi robotics"
+
+msgid "Share and discover lessons, PDFs, and 3D LEGO builds for WRO, FLL, Enjoy AI, VEX, and more."
+msgstr "Chia sẻ và khám phá bài học, PDF và mô hình LEGO 3D cho WRO, FLL, Enjoy AI, VEX và nhiều cuộc thi khác."
+
+msgid "STEAM + Robotics Vault"
+msgstr "Kho STEAM + Robotics"
+
+msgid "Share resources for WRO, FLL, Enjoy AI, VEX, and more."
+msgstr "Chia sẻ tài nguyên cho WRO, FLL, Enjoy AI, VEX và nhiều cuộc thi khác."
+
+msgid "Find lessons, PDFs, and 3D LEGO builds from the competition community. Preview first, unlock downloads with points."
+msgstr "Tìm bài học, PDF và mô hình LEGO 3D từ cộng đồng các cuộc thi. Xem trước, mở khóa tải xuống bằng điểm."
+
+msgid "Weekly Focus"
+msgstr "Chủ đề tuần"
+
+msgid "Micro:bit robotics lesson pack"
+msgstr "Bộ bài học robotics Micro:bit"
+
+msgid "PDF + LDraw set"
+msgstr "Bộ PDF + LDraw"
+
+msgid "Explore now"
+msgstr "Khám phá ngay"
+
+msgid "Search PDFs, 3D builds"
+msgstr "Tìm PDF, mô hình 3D"
+
+msgid "All types"
+msgstr "Tất cả loại"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "LEGO 3D"
+msgstr "LEGO 3D"
+
+msgid "All categories"
+msgstr "Tất cả danh mục"
+
+msgid "Apply"
+msgstr "Áp dụng"
+
+msgid "Preview"
+msgstr "Xem trước"
+
+msgid "Rating"
+msgstr "Đánh giá"
+
+msgid "%(count)s saves"
+msgstr "%(count)s lượt lưu"
+
+msgid "Free"
+msgstr "Miễn phí"
+
+msgid "No content found yet. Try a different filter."
+msgstr "Chưa có nội dung. Hãy thử bộ lọc khác."
+
+msgid "Previous"
+msgstr "Trước"
+
+msgid "Next"
+msgstr "Sau"
+
+msgid "%(count)s ratings"
+msgstr "%(count)s lượt đánh giá"
+
+msgid "Free download"
+msgstr "Tải miễn phí"
+
+msgid "%(points)s points to unlock"
+msgstr "%(points)s điểm để mở khóa"
+
+msgid "Unlock & download"
+msgstr "Mở khóa & tải xuống"
+
+msgid "Download requires points. Earn points by contributing or community engagement."
+msgstr "Tải xuống cần điểm. Kiếm điểm bằng cách đóng góp hoặc tương tác cộng đồng."
+
+msgid "Download now"
+msgstr "Tải ngay"
+
+msgid "Unlock with points"
+msgstr "Mở khóa bằng điểm"
+
+msgid "Community notes"
+msgstr "Ghi chú cộng đồng"
+
+msgid "Share tips, feedback, or build notes"
+msgstr "Chia sẻ mẹo, phản hồi hoặc ghi chú lắp ráp"
+
+msgid "Post comment"
+msgstr "Gửi bình luận"
+
+msgid "to join the discussion."
+msgstr "để tham gia thảo luận."
+
+msgid "Favorited"
+msgstr "Đã yêu thích"
+
+msgid "Favorite"
+msgstr "Yêu thích"
+
+msgid "%(count)s votes"
+msgstr "%(count)s lượt bình chọn"
+
+msgid "Submit rating"
+msgstr "Gửi đánh giá"
+
+msgid "to rate this content."
+msgstr "để đánh giá nội dung này."
+
+msgid "Avatar"
+msgstr "Ảnh đại diện"
+
+msgid "Edited"
+msgstr "Đã sửa"
+
+msgid "Edit"
+msgstr "Sửa"
+
+msgid "Delete"
+msgstr "Xóa"
+
+msgid "Save"
+msgstr "Lưu"
+
+msgid "Cancel"
+msgstr "Hủy"
+
+msgid "Comment deleted."
+msgstr "Bình luận đã bị xóa."
+
+msgid "Reply"
+msgstr "Trả lời"
+
+msgid "Write a reply"
+msgstr "Viết trả lời"
+
+msgid "No comments yet. Be the first to share tips."
+msgstr "Chưa có bình luận. Hãy là người đầu tiên chia sẻ."
+
+msgid "Submit content"
+msgstr "Gửi nội dung"
+
+msgid "Contribute new content"
+msgstr "Đóng góp nội dung mới"
+
+msgid "Upload a PDF or LEGO 3D file for review. File type is detected automatically."
+msgstr "Tải lên file PDF hoặc LEGO 3D để xét duyệt. Loại file được nhận diện tự động."
+
+msgid "Title"
+msgstr "Tiêu đề"
+
+msgid "Description"
+msgstr "Mô tả"
+
+msgid "Upload file (PDF, .io, .lxf)"
+msgstr "Tải file (PDF, .io, .lxf)"
+
+msgid "Submit for review"
+msgstr "Gửi để xét duyệt"
+
+msgid "Login required"
+msgstr "Cần đăng nhập"
+
+msgid "Please sign in to continue."
+msgstr "Vui lòng đăng nhập để tiếp tục."
+
+msgid "Welcome back"
+msgstr "Chào mừng trở lại"
+
+msgid "Sign in to unlock downloads and leave feedback."
+msgstr "Đăng nhập để mở khóa tải xuống và để lại phản hồi."
+
+msgid "Username"
+msgstr "Tên đăng nhập"
+
+msgid "Password"
+msgstr "Mật khẩu"
+
+msgid "New here?"
+msgstr "Mới tham gia?"
+
+msgid "Create your account"
+msgstr "Tạo tài khoản"
+
+msgid "Earn points, unlock downloads, and contribute resources."
+msgstr "Nhận điểm, mở khóa tải xuống và đóng góp tài nguyên."
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Display name"
+msgstr "Tên hiển thị"
+
+msgid "Role"
+msgstr "Vai trò"
+
+msgid "Confirm password"
+msgstr "Xác nhận mật khẩu"
+
+msgid "Register"
+msgstr "Đăng ký"
+
+msgid "Teacher"
+msgstr "Giáo viên"
+
+msgid "Student"
+msgstr "Học sinh"
+
+msgid "Community"
+msgstr "Cộng đồng"
+
+msgid "Already have an account?"
+msgstr "Đã có tài khoản?"
+
+msgid "Your profile"
+msgstr "Hồ sơ của bạn"
+
+msgid "Bio"
+msgstr "Giới thiệu"
+
+msgid "Avatar image"
+msgstr "Ảnh đại diện"
+
+msgid "Save profile"
+msgstr "Lưu hồ sơ"
+
+msgid "Points"
+msgstr "Điểm"
+
+msgid "%(points)s points"
+msgstr "%(points)s điểm"
+
+msgid "Unlocked content"
+msgstr "Nội dung đã mở khóa"
+
+msgid "No unlocks yet."
+msgstr "Chưa mở khóa nội dung nào."
+
+msgid "Your submissions"
+msgstr "Các đóng góp của bạn"
+
+msgid "No submissions yet."
+msgstr "Chưa có đóng góp."
+
+msgid "Your published items"
+msgstr "Nội dung đã xuất bản"
+
+msgid "No items yet."
+msgstr "Chưa có nội dung."
+
+msgid "Draft"
+msgstr "Nháp"
+
+msgid "Pending"
+msgstr "Đang chờ"
+
+msgid "Published"
+msgstr "Đã xuất bản"
+
+msgid "Rejected"
+msgstr "Bị từ chối"
+
+msgid "About Vsteam Lab"
+msgstr "Giới thiệu Vsteam Lab"
+
+msgid "Vsteam Lab is a STEAM education center in Vietnam with strong achievements in robotics competitions."
+msgstr "Vsteam Lab là trung tâm giáo dục STEAM tại Việt Nam với nhiều thành tích trong các cuộc thi robotics."
+
+msgid "We provide learning resources, 3D models, and practical guides that help teachers and students build creative and technical skills."
+msgstr "Chúng tôi cung cấp tài nguyên học tập, mô hình 3D và hướng dẫn thực hành giúp giáo viên và học sinh phát triển kỹ năng sáng tạo và kỹ thuật."
+
+msgid "Contact Vsteam Lab"
+msgstr "Liên hệ Vsteam Lab"
+
+msgid "Get in touch with Vsteam Lab for STEAM and robotics resource collaboration."
+msgstr "Liên hệ Vsteam Lab để hợp tác tài nguyên STEAM và robotics."
+
+msgid "We respond within 2 business days."
+msgstr "Chúng tôi phản hồi trong vòng 2 ngày làm việc."
+
+msgid "Privacy Policy"
+msgstr "Chính sách quyền riêng tư"
+
+msgid "Privacy Policy | Vsteam Lab"
+msgstr "Chính sách quyền riêng tư | Vsteam Lab"
+
+msgid "Review how Vsteam Lab collects and uses data for accounts, points, and content access."
+msgstr "Tìm hiểu cách Vsteam Lab thu thập và sử dụng dữ liệu cho tài khoản, điểm và truy cập nội dung."
+
+msgid "We collect basic account information to provide access to content and track points."
+msgstr "Chúng tôi thu thập thông tin cơ bản để cung cấp quyền truy cập nội dung và theo dõi điểm."
+
+msgid "Uploaded files are stored on our servers. We do not sell personal data."
+msgstr "Các file tải lên được lưu trữ trên máy chủ của chúng tôi. Chúng tôi không bán dữ liệu cá nhân."
+
+msgid "Contact us if you want your account removed."
+msgstr "Liên hệ nếu bạn muốn xóa tài khoản."
+
+msgid "%(site)s | STEAM + Robotics resources"
+msgstr "%(site)s | Tài nguyên STEAM + Robotics"
+
+msgid "Share and discover lessons, PDFs, and 3D LEGO builds for robotics competitions."
+msgstr "Chia sẻ và khám phá bài học, PDF và mô hình LEGO 3D cho các cuộc thi robotics."
+
+msgid "%(title)s - %(type)s resource from Vsteam Lab."
+msgstr "%(title)s - tài nguyên %(type)s từ Vsteam Lab."
+
+msgid "No files available for this content yet."
+msgstr "Chưa có file cho nội dung này."
+
+msgid "Not enough points to unlock this download."
+msgstr "Không đủ điểm để mở khóa tải xuống."
+
+msgid "Source file not available yet."
+msgstr "File nguồn chưa có sẵn."
+
+msgid "Download service is not configured yet."
+msgstr "Dịch vụ tải xuống chưa được cấu hình."
+
+msgid "Comment could not be saved."
+msgstr "Không thể lưu bình luận."
+
+msgid "Comment could not be updated."
+msgstr "Không thể cập nhật bình luận."
+
+msgid "Rating could not be saved."
+msgstr "Không thể lưu đánh giá."
+
+msgid "Could not determine file type."
+msgstr "Không thể xác định loại file."
+
+msgid "Upload failed: %(error)s"
+msgstr "Tải lên thất bại: %(error)s"
+
+msgid "Submission received for review."
+msgstr "Đã nhận bài gửi để xét duyệt."
+
+msgid "Welcome to Vsteam Lab."
+msgstr "Chào mừng đến với Vsteam Lab."
+
+msgid "Avatar upload failed: %(error)s"
+msgstr "Tải ảnh đại diện thất bại: %(error)s"
+
+msgid "Profile updated."
+msgstr "Đã cập nhật hồ sơ."
+
+msgid "Web3D Admin"
+msgstr "Quản trị Web3D"
+
+msgid "Management"
+msgstr "Quản trị"
+
+msgid "Admin Console"
+msgstr "Bảng quản trị"
+
+msgid "Accounts"
+msgstr "Tài khoản"
+
+msgid "Analytics"
+msgstr "Phân tích"
+
+msgid "Contributions"
+msgstr "Đóng góp"
+
+msgid "Gating"
+msgstr "Điểm & mở khóa"
+
+msgid "Interactions"
+msgstr "Tương tác"
+
+msgid "Competition slug"
+msgstr "Slug cuộc thi"
+
+msgid "Video provider"
+msgstr "Nền tảng video"
+
+msgid "Video ID"
+msgstr "Mã video"
+
+msgid "Summary"
+msgstr "Tóm tắt"
+
+msgid "Created at"
+msgstr "Tạo lúc"
+
+msgid "Updated at"
+msgstr "Cập nhật lúc"
+
+msgid "Recap video"
+msgstr "Video tổng kết"
+
+msgid "Recap videos"
+msgstr "Video tổng kết"
+
+msgid "Paste a YouTube/TikTok URL or ID."
+msgstr "Dán URL, ID hoặc mã iframe nhúng YouTube/TikTok."
+
+msgid "Watch on YouTube"
+msgstr "Xem trên YouTube"
+
+msgid "Watch on TikTok"
+msgstr "Xem trên TikTok"
+msgid "%(label)s must be smaller than %(size)s MB."
+msgstr "%(label)s phải nhỏ hơn %(size)s MB."
+
+msgid "Accepted"
+msgstr "Được chấp nhận"
+
+msgid "Add a short summary and relevant category."
+msgstr "Thêm tóm tắt ngắn và danh mục liên quan."
+
+msgid "Add details"
+msgstr "Thêm thông tin"
+
+msgid "Allowed formats: jpg, jpeg, png, webp, gif."
+msgstr "Định dạng cho phép: jpg, jpeg, png, webp, gif."
+
+msgid "Approved content appears in the library with tags."
+msgstr "Nội dung được duyệt sẽ xuất hiện trong thư viện kèm thẻ."
+
+msgid "Archive"
+msgstr "Lưu trữ"
+
+msgid "Browse competition recap videos by year and revisit past seasons."
+msgstr "Duyệt video tổng kết theo năm và xem lại các mùa trước."
+
+msgid "Category"
+msgstr "Danh mục"
+
+msgid "Choose a competition and year to watch the recap and revisit past seasons."
+msgstr "Chọn cuộc thi và năm để xem tổng kết và xem lại các mùa trước."
+
+msgid "Choose category"
+msgstr "Chọn danh mục"
+
+msgid "Clear titles help learners find your content faster."
+msgstr "Tiêu đề rõ ràng giúp người học tìm nội dung nhanh hơn."
+
+msgid "Competition"
+msgstr "Cuộc thi"
+
+msgid "Competition (optional)"
+msgstr "Cuộc thi (tùy chọn)"
+
+msgid "Competition + year"
+msgstr "Cuộc thi + năm"
+
+msgid "Content"
+msgstr "Nội dung"
+
+msgid "Continue download"
+msgstr "Tiếp tục tải xuống"
+
+msgid "Could not read PDF content. Please upload a text-based PDF."
+msgstr "Không thể đọc nội dung PDF. Vui lòng tải lên PDF dạng văn bản."
+
+msgid "Download available in"
+msgstr "Tải xuống sau"
+
+msgid "Download to view more."
+msgstr "Tải xuống để xem thêm."
+
+msgid "Drag and drop your file"
+msgstr "Kéo và thả file của bạn"
+
+msgid "File"
+msgstr "File"
+
+msgid "File extension is required."
+msgstr "Cần có phần mở rộng của file."
+
+msgid "Filter"
+msgstr "Bộ lọc"
+
+msgid "How review works"
+msgstr "Cách xét duyệt"
+
+msgid "Human + rules"
+msgstr "Người + quy tắc"
+
+msgid "If empty, we rely on PDF keywords."
+msgstr "Nếu để trống, chúng tôi dựa vào từ khóa trong PDF."
+
+msgid "Include a cover image for higher downloads."
+msgstr "Thêm ảnh bìa để tăng lượt tải."
+
+msgid "Learn about Vsteam Lab, a STEAM education center in Vietnam with strong achievements in robotics competitions."
+msgstr "Tìm hiểu về Vsteam Lab, trung tâm giáo dục STEAM tại Việt Nam với nhiều thành tích trong các cuộc thi robotics."
+
+msgid "Learn more"
+msgstr "Tìm hiểu thêm"
+
+msgid "Login to download"
+msgstr "Đăng nhập để tải"
+
+msgid "New category"
+msgstr "Danh mục mới"
+
+msgid "No recap video yet for this selection."
+msgstr "Chưa có video tổng kết cho lựa chọn này."
+
+msgid "No recap videos yet."
+msgstr "Chưa có video tổng kết."
+
+msgid "Or add a new category"
+msgstr "Hoặc thêm danh mục mới"
+
+msgid "Other competition"
+msgstr "Cuộc thi khác"
+
+msgid "PDF content is empty. Please upload a text-based PDF."
+msgstr "Nội dung PDF trống. Vui lòng tải lên PDF dạng văn bản."
+
+msgid "PDF keyword validation requires the pypdf package."
+msgstr "Kiểm tra từ khóa PDF cần gói pypdf."
+
+msgid "PDF must mention competitions like WRO, FLL, Enjoy AI, or VEX."
+msgstr "PDF phải nhắc đến các cuộc thi như WRO, FLL, Enjoy AI hoặc VEX."
+
+msgid "PDFs must mention competition keywords (WRO, FLL, VEX, Enjoy AI)."
+msgstr "PDF phải có từ khóa cuộc thi (WRO, FLL, VEX, Enjoy AI)."
+
+msgid "Past seasons"
+msgstr "Các mùa trước"
+
+msgid "Pick an existing category or create a new one."
+msgstr "Chọn danh mục có sẵn hoặc tạo danh mục mới."
+
+msgid "Please sign in to unlock downloads."
+msgstr "Vui lòng đăng nhập để mở khóa tải xuống."
+
+msgid "Please upload an image file."
+msgstr "Vui lòng tải lên file ảnh."
+
+msgid "Points on approval"
+msgstr "Điểm khi được duyệt"
+
+msgid "Preview image"
+msgstr "Ảnh xem trước"
+
+msgid "Preview shows every 10th page."
+msgstr "Xem trước chỉ hiển thị mỗi 10 trang."
+
+msgid "Recap Library"
+msgstr "Thư viện tổng kết"
+
+msgid "Recap library"
+msgstr "Thư viện tổng kết"
+
+msgid "Recap library | Vsteam Lab"
+msgstr "Thư viện tổng kết | Vsteam Lab"
+
+msgid "Recaps"
+msgstr "Tổng kết"
+
+msgid "Review"
+msgstr "Xét duyệt"
+
+msgid "Review usually takes 24-48 hours. Approved submissions earn points."
+msgstr "Xét duyệt thường mất 24-48 giờ. Bài được duyệt sẽ nhận điểm."
+
+msgid "Rewards"
+msgstr "Phần thưởng"
+
+msgid "Select a category"
+msgstr "Chọn một danh mục"
+
+msgid "Select a category or add a new one."
+msgstr "Chọn một danh mục hoặc thêm danh mục mới."
+
+msgid "Select a competition"
+msgstr "Chọn cuộc thi"
+
+msgid "Share your learning materials"
+msgstr "Chia sẻ tài liệu học tập của bạn"
+
+msgid "Shown as the thumbnail in the library. If empty and the file is PDF, we auto-generate page 1."
+msgstr "Hiển thị làm ảnh thu nhỏ trong thư viện. Nếu trống và file là PDF, chúng tôi tự tạo trang 1."
+
+msgid "Submission"
+msgstr "Bài gửi"
+
+msgid "Thanks for downloading! Explore lessons, PDFs, and 3D builds created by teachers and students."
+msgstr "Cảm ơn bạn đã tải xuống! Khám phá bài học, PDF và mô hình 3D do giáo viên và học sinh tạo."
+
+msgid "Tips for a fast approval"
+msgstr "Mẹo để được duyệt nhanh"
+
+msgid "Upload a PDF or 3D file. We review every submission before it appears in the library."
+msgstr "Tải lên file PDF hoặc 3D. Chúng tôi xét duyệt mọi bài gửi trước khi hiển thị trong thư viện."
+
+msgid "Upload file"
+msgstr "Tải file lên"
+
+msgid "Upload preview image (optional)"
+msgstr "Tải ảnh xem trước (tùy chọn)"
+
+msgid "Uploaded file does not look like a PDF."
+msgstr "File tải lên không giống PDF."
+
+msgid "Use a clear title (team, season, challenge)."
+msgstr "Dùng tiêu đề rõ ràng (đội, mùa, thử thách)."
+
+msgid "Video recaps"
+msgstr "Video tổng kết"
+
+msgid "Vsteam Lab"
+msgstr "Vsteam Lab"
+
+msgid "Vsteam Lab - STEAM + Robotics community"
+msgstr "Vsteam Lab - cộng đồng STEAM + Robotics"
+
+msgid "Vsteam Lab banner"
+msgstr "Banner Vsteam Lab"
+
+msgid "We auto-detect file type. For PDFs, include competition keywords."
+msgstr "Chúng tôi tự nhận diện loại file. Với PDF, hãy thêm từ khóa cuộc thi."
+
+msgid "We verify file format and readability."
+msgstr "Chúng tôi kiểm tra định dạng và khả năng đọc."
+
+msgid "Year"
+msgstr "Năm"
+
+msgid "or click to browse from your device"
+msgstr "hoặc nhấn để chọn từ thiết bị"

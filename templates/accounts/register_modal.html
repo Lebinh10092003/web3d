@@ -1,0 +1,38 @@
+{% load i18n %}
+<div class="modal-panel">
+  <h2>{% trans "Create your account" %}</h2>
+  <p>{% trans "Earn points, unlock downloads, and contribute resources." %}</p>
+  <form
+    method="post"
+    class="form"
+    hx-post="{% url 'accounts:register' %}?modal=1"
+    hx-target="#auth-modal-body"
+    hx-swap="innerHTML"
+  >
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ form.errors }}
+    <label>{% trans "Username" %}</label>
+    {{ form.username }}
+    <label>{% trans "Email" %}</label>
+    {{ form.email }}
+    <label>{% trans "Display name" %}</label>
+    {{ form.display_name }}
+    <label>{% trans "Role" %}</label>
+    {{ form.role }}
+    <label>{% trans "Password" %}</label>
+    {{ form.password1 }}
+    <label>{% trans "Confirm password" %}</label>
+    {{ form.password2 }}
+    <button class="button" type="submit">{% trans "Register" %}</button>
+  </form>
+  <div class="modal-switch">
+    <span>{% trans "Already have an account?" %}</span>
+    <a
+      href="{% url 'accounts:login' %}?modal=1"
+      hx-get="{% url 'accounts:login' %}?modal=1"
+      hx-target="#auth-modal-body"
+      hx-swap="innerHTML"
+    >{% trans "Login" %}</a>
+  </div>
+</div>

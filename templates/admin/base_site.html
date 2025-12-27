@@ -1,0 +1,31 @@
+{% extends "admin/base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Web3D Admin" %}{% if subtitle %} | {{ subtitle }}{% endif %}{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'admin/css/custom_admin.css' %}">
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    window.__djangoMessages = [
+      {% for message in messages %}
+        { level: "{{ message.tags|escapejs }}", text: "{{ message|escapejs }}" }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+  </script>
+  <script src="{% static 'admin/js/custom_admin.js' %}"></script>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name" class="admin-brand">
+  <a href="{% url 'admin:index' %}">
+    <span class="admin-brand__title">Vsteam Lab</span>
+    <span class="admin-brand__subtitle">{% trans "Admin Console" %}</span>
+  </a>
+</h1>
+{% endblock %}

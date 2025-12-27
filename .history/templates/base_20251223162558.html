@@ -1,0 +1,95 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Web3D Library{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  {% if ADSENSE_CLIENT %}
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ ADSENSE_CLIENT }}" crossorigin="anonymous"></script>
+  {% endif %}
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="{% url 'library:home' %}">
+      <img src="{% static 'img/logo.svg' %}" alt="Web3D" class="brand-logo">
+      <div>
+        <div class="brand-title">Web3D</div>
+        <div class="brand-subtitle">PDF + 3D learning vault</div>
+      </div>
+    </a>
+    <nav class="site-nav">
+      <a href="{% url 'library:home' %}">Library</a>
+      <a href="{% url 'contributions:submit' %}">Submit</a>
+      {% if request.user.is_authenticated %}
+        <a class="user-chip" href="{% url 'accounts:profile' %}">
+          <span class="user-avatar">
+            {% if request.user.avatar_path %}
+              <img src="{{ request.user.avatar_path }}" alt="Avatar">
+            {% else %}
+              <img src="{% static 'img/test.jpg' %}" alt="Avatar">
+            {% endif %}
+          </span>
+          <span class="user-info">
+            <span class="user-name">{{ request.user.display_name|default:request.user.username }}</span>
+            <span class="user-points">{{ request.user.points_balance }} pts</span>
+          </span>
+        </a>
+        <a href="{% url 'accounts:logout' %}">Logout</a>
+      {% else %}
+        <a
+          href="{% url 'accounts:login' %}"
+          hx-get="{% url 'accounts:login' %}?modal=1"
+          hx-target="#auth-modal-body"
+          hx-swap="innerHTML"
+        >Login</a>
+        <a
+          class="button button-ghost"
+          href="{% url 'accounts:register' %}"
+          hx-get="{% url 'accounts:register' %}?modal=1"
+          hx-target="#auth-modal-body"
+          hx-swap="innerHTML"
+        >Create account</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="site-main">
+    <div class="back-row">
+      <button class="button button-ghost back-button" type="button" data-back-button>
+        &larr; Back
+      </button>
+    </div>
+    {% if messages %}
+
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div>Web3D Platform for educators and robotics builders.</div>
+    <div class="footer-links">
+      <span>Preview ready. Download gated by points.</span>
+    </div>
+  </footer>
+
+  <dialog id="auth-modal" class="auth-modal">
+    <div class="auth-modal-content">
+      <button class="modal-close" type="button" data-modal-close>&times;</button>
+      <div id="auth-modal-body">
+        {% block auth_modal_body %}
+          <div class="modal-placeholder">
+            Loading...
+          </div>
+        {% endblock %}
+      </div>
+    </div>
+  </dialog>
+
+  <script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

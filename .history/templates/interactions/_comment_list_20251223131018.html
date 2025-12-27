@@ -1,0 +1,176 @@
+{% load static %}
+<div id="comment-list" class="comment-list">
+  {% for comment in comments %}
+    <div class="comment">
+      <div class="comment-header">
+        <div class="comment-avatar">
+          {% if comment.user.avatar_path %}
+            <img src="{{ comment.user.avatar_path }}" alt="Avatar" loading="lazy">
+          {% else %}
+            <img src="{% static 'img/test.jpg' %}" alt="Avatar" loading="lazy">
+          {% endif %}
+        </div>
+        <div class="comment-info">
+          <div class="comment-author">{{ comment.user.display_name|default:comment.user.username }}</div>
+          <div class="comment-meta-line">
+            <span class="comment-date">{{ comment.created_at|date:"M d, Y" }}</span>
+            {% if comment.updated_at and comment.updated_at != comment.created_at %}
+              <span class="comment-edited">Edited {{ comment.updated_at|date:"M d, Y" }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if request.user.is_authenticated %}
+          {% if request.user.is_staff or request.user.id == comment.user_id %}
+            <div class="comment-actions comment-actions-header">
+              <button
+                class="button button-ghost"
+                type="button"
+                hx-get="{% url 'interactions:comment-edit' content.id comment.id %}"
+                hx-target="#comment-list"
+                hx-swap="outerHTML"
+              >Edit</button>
+              <form
+                method="post"
+                hx-post="{% url 'interactions:comment-delete' content.id comment.id %}"
+                hx-target="#comment-list"
+                hx-swap="outerHTML"
+              >
+                {% csrf_token %}
+                <button class="button button-ghost" type="submit">Delete</button>
+              </form>
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <div class="comment-body">
+        {% if editing_comment_id == comment.id %}
+          <form
+            method="post"
+            class="form comment-edit-form"
+            hx-post="{% url 'interactions:comment-edit' content.id comment.id %}"
+            hx-target="#comment-list"
+            hx-swap="outerHTML"
+          >
+            {% csrf_token %}
+            {{ edit_form.body.errors }}
+            {{ edit_form.body }}
+            <div class="comment-actions comment-actions-inline">
+              <button class="button button-ghost" type="submit">Save</button>
+              <button
+                class="button button-ghost"
+                type="button"
+                hx-get="{% url 'interactions:comment-edit' content.id comment.id %}?cancel=1"
+                hx-target="#comment-list"
+                hx-swap="outerHTML"
+              >Cancel</button>
+            </div>
+          </form>
+        {% elif comment.is_deleted %}
+          <p class="comment-deleted">Comment deleted.</p>
+        {% else %}
+          <p>{{ comment.body }}</p>
+        {% endif %}
+      </div>
+
+      {% if comment.replies.all %}
+        <div class="comment-replies">
+          {% for reply in comment.replies.all %}
+            <div class="comment comment-reply">
+              <div class="comment-header">
+                <div class="comment-avatar">
+                  {% if reply.user.avatar_path %}
+                    <img src="{{ reply.user.avatar_path }}" alt="Avatar" loading="lazy">
+                  {% else %}
+                    <img src="{% static 'img/avatar' %}" alt="Avatar" loading="lazy">
+                  {% endif %}
+                </div>
+                <div class="comment-info">
+                  <div class="comment-author">{{ reply.user.display_name|default:reply.user.username }}</div>
+                  <div class="comment-meta-line">
+                    <span class="comment-date">{{ reply.created_at|date:"M d, Y" }}</span>
+                    {% if reply.updated_at and reply.updated_at != reply.created_at %}
+                      <span class="comment-edited">Edited {{ reply.updated_at|date:"M d, Y" }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+                {% if request.user.is_authenticated %}
+                  {% if request.user.is_staff or request.user.id == reply.user_id %}
+                    <div class="comment-actions comment-actions-header">
+                      <button
+                        class="button button-ghost"
+                        type="button"
+                        hx-get="{% url 'interactions:comment-edit' content.id reply.id %}"
+                        hx-target="#comment-list"
+                        hx-swap="outerHTML"
+                      >Edit</button>
+                      <form
+                        method="post"
+                        hx-post="{% url 'interactions:comment-delete' content.id reply.id %}"
+                        hx-target="#comment-list"
+                        hx-swap="outerHTML"
+                      >
+                        {% csrf_token %}
+                        <button class="button button-ghost" type="submit">Delete</button>
+                      </form>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+
+              <div class="comment-body">
+                {% if editing_comment_id == reply.id %}
+                  <form
+                    method="post"
+                    class="form comment-edit-form"
+                    hx-post="{% url 'interactions:comment-edit' content.id reply.id %}"
+                    hx-target="#comment-list"
+                    hx-swap="outerHTML"
+                  >
+                    {% csrf_token %}
+                    {{ edit_form.body.errors }}
+                    {{ edit_form.body }}
+                    <div class="comment-actions comment-actions-inline">
+                      <button class="button button-ghost" type="submit">Save</button>
+                      <button
+                        class="button button-ghost"
+                        type="button"
+                        hx-get="{% url 'interactions:comment-edit' content.id reply.id %}?cancel=1"
+                        hx-target="#comment-list"
+                        hx-swap="outerHTML"
+                      >Cancel</button>
+                    </div>
+                  </form>
+                {% elif reply.is_deleted %}
+                  <p class="comment-deleted">Comment deleted.</p>
+                {% else %}
+                  <p>{{ reply.body }}</p>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if request.user.is_authenticated %}
+        <details class="comment-reply-toggle">
+          <summary>Reply</summary>
+          <form
+            method="post"
+            class="form comment-reply-form"
+            hx-post="{% url 'interactions:comment' content.id %}"
+            hx-target="#comment-list"
+            hx-swap="outerHTML"
+          >
+            {% csrf_token %}
+            <input type="hidden" name="parent_id" value="{{ comment.id }}">
+            <textarea name="body" rows="3" placeholder="Write a reply" required></textarea>
+            <button class="button button-ghost" type="submit">Reply</button>
+          </form>
+        </details>
+      {% endif %}
+    </div>
+  {% empty %}
+    <div class="empty-state">No comments yet. Be the first to share tips.</div>
+  {% endfor %}
+</div>

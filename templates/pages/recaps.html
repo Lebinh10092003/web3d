@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Recaps" %} | Vsteam Lab{% endblock %}
+{% block meta_title %}{% trans "Recap library | Vsteam Lab" %}{% endblock %}
+{% block meta_description %}{% trans "Browse competition recap videos by year and revisit past seasons." %}{% endblock %}
+{% block og_description %}{% trans "Browse competition recap videos by year and revisit past seasons." %}{% endblock %}
+{% block twitter_title %}{% trans "Recap library | Vsteam Lab" %}{% endblock %}
+{% block twitter_description %}{% trans "Browse competition recap videos by year and revisit past seasons." %}{% endblock %}
+
+{% block content %}
+<section class="recap-hero{% if recap_banner and recap_banner.background_image %} recap-hero--with-banner{% endif %}"{% if recap_banner and recap_banner.background_image %} style="--recap-hero-image: url('{{ recap_banner.background_image.url }}');"{% endif %}>
+  <div class="recap-hero-text">
+    <p class="recap-eyebrow">{{ recap_intro_eyebrow }}</p>
+    <h1>{{ recap_intro_title }}</h1>
+    <p>{{ recap_intro_body }}</p>
+  </div>
+</section>
+
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+
+{% if recaps %}
+<section
+  class="recap-layout"
+  data-recap-library
+  data-watch-youtube="{% trans 'Watch on YouTube' %}"
+  data-watch-tiktok="{% trans 'Watch on TikTok' %}"
+>
+  <div class="recap-player">
+    <div class="recap-video" data-recap-video>
+      {% if initial_recap and initial_recap.video_embed_url %}
+        <iframe
+          data-recap-frame
+          src="{{ initial_recap.video_embed_url }}"
+          title="{{ initial_recap.title }}"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          loading="lazy"
+        ></iframe>
+        <div class="preview-placeholder large" data-recap-placeholder hidden>
+          {% trans "No recap video yet for this selection." %}
+        </div>
+      {% else %}
+        <iframe data-recap-frame hidden></iframe>
+        <div class="preview-placeholder large" data-recap-placeholder>
+          {% trans "No recap video yet for this selection." %}
+        </div>
+      {% endif %}
+    </div>
+    <div class="recap-meta">
+      <p class="recap-meta-line" data-recap-meta>
+        {% if initial_recap %}{{ initial_recap.competition_label }} - {{ initial_recap.year }}{% endif %}
+      </p>
+      <h2 data-recap-title>{% if initial_recap %}{{ initial_recap.title }}{% endif %}</h2>
+      <p data-recap-summary>{% if initial_recap %}{{ initial_recap.summary }}{% endif %}</p>
+      <p class="recap-watch" data-recap-watch-wrapper {% if not initial_recap or not initial_recap.video_watch_url %}hidden{% endif %}>
+        <a
+          class="recap-watch-link"
+          data-recap-watch
+          href="{% if initial_recap %}{{ initial_recap.video_watch_url }}{% endif %}"
+          target="_blank"
+          rel="noopener"
+        >
+          {% if initial_recap and initial_recap.video_provider == "TIKTOK" %}
+            {% trans "Watch on TikTok" %}
+          {% else %}
+            {% trans "Watch on YouTube" %}
+          {% endif %}
+        </a>
+      </p>
+    </div>
+  </div>
+  <aside class="recap-panel">
+    <div class="recap-controls">
+      <div class="recap-control">
+        <label for="recap-competition">{% trans "Competition" %}</label>
+        <select id="recap-competition" data-recap-competition>
+          {% for comp in competitions %}
+            <option value="{{ comp.slug }}" {% if forloop.first %}selected{% endif %}>{{ comp.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="recap-control">
+        <label for="recap-year">{% trans "Year" %}</label>
+        <select id="recap-year" data-recap-year>
+          {% for year in initial_years %}
+            <option value="{{ year }}">{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="recap-list" data-recap-list>
+      {% for recap in recaps %}
+        <button
+          class="recap-card"
+          type="button"
+          data-recap-card
+          data-competition="{{ recap.competition }}"
+          data-year="{{ recap.year }}"
+          data-video-embed-url="{{ recap.video_embed_url }}"
+          data-video-watch-url="{{ recap.video_watch_url }}"
+          data-video-provider="{{ recap.video_provider }}"
+          data-title="{{ recap.title }}"
+          data-summary="{{ recap.summary }}"
+          data-label="{{ recap.competition_label }}"
+        >
+          <div class="recap-card-eyebrow">{{ recap.competition_label }} - {{ recap.year }}</div>
+          <div class="recap-card-title">{{ recap.title }}</div>
+          {% if recap.summary %}
+            <p>{{ recap.summary }}</p>
+          {% endif %}
+        </button>
+      {% endfor %}
+    </div>
+  </aside>
+</section>
+
+{{ recaps|json_script:"recap-data" }}
+{{ years_by_competition|json_script:"recap-years" }}
+{% else %}
+  <div class="empty-state">{% trans "No recap videos yet." %}</div>
+{% endif %}
+{% endblock %}

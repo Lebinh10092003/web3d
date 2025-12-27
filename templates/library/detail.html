@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ content.title }} | Vsteam Lab{% endblock %}
+{% block meta_title %}{{ content.title }} | Vsteam Lab{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+{% block og_description %}{{ meta_description }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block twitter_title %}{{ content.title }} | Vsteam Lab{% endblock %}
+{% block twitter_description %}{{ meta_description }}{% endblock %}
+
+{% block content %}
+<section class="detail-hero">
+  <div class="detail-header">
+    <div class="card-tags">
+      <span class="tag">{{ file_type_label }}</span>
+      <span class="tag tag-muted">{{ content.get_status_display }}</span>
+    </div>
+    <h1>{{ content.title }}</h1>
+    <p>{{ content.description }}</p>
+    <div class="detail-meta">
+      <span>{% blocktrans with count=rating_count %}{{ count }} ratings{% endblocktrans %}</span>
+      <span>{% blocktrans with count=favorites_count %}{{ count }} saves{% endblocktrans %}</span>
+      {% if content.download_cost_points == 0 %}
+        <span class="points-badge points-free">{% trans "Free download" %}</span>
+      {% else %}
+        <span class="points-badge points-paid">
+          {% blocktrans with points=content.download_cost_points %}{{ points }} points to unlock{% endblocktrans %}
+        </span>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="detail-grid">
+  <div class="detail-preview">
+    {% if preview_pages %}
+      <div class="preview-stack">
+        {% for page_url in preview_pages %}
+          <img src="{{ page_url }}" alt="{% trans 'Preview' %}" class="preview-image">
+        {% endfor %}
+      </div>
+    {% elif preview_url %}
+      <img src="{{ preview_url }}" alt="{% trans 'Preview' %}" class="preview-image">
+    {% else %}
+      <img src="{% static 'img/test.jpg' %}" alt="{% trans 'Preview' %}" class="preview-image">
+    {% endif %}
+    {% if is_pdf %}
+      <p class="preview-note">
+        {% trans "Preview shows every 10th page." %}
+        <a href="#download-actions">{% trans "Download to view more." %}</a>
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="detail-actions" id="download-actions">
+    <div class="panel panel-stack">
+      <div class="panel-section">
+        <h2>{% trans "Unlock & download" %}</h2>
+        <p>{% trans "Download requires points. Earn points by contributing or community engagement." %}</p>
+        {% if request.user.is_authenticated %}
+          <form method="post" action="{% url 'library:content-download' content.id %}" data-download-form>
+            {% csrf_token %}
+            {% if is_unlocked %}
+              <button class="button" type="submit">{% trans "Download now" %}</button>
+            {% else %}
+              <button class="button" type="submit">{% trans "Unlock with points" %}</button>
+            {% endif %}
+          </form>
+        {% else %}
+          <a
+            class="button"
+            href="{% url 'accounts:login' %}"
+            hx-get="{% url 'accounts:login' %}?modal=1"
+            hx-target="#auth-modal-body"
+            hx-swap="innerHTML"
+          >{% trans "Login to download" %}</a>
+          <p class="field-hint">{% trans "Please sign in to unlock downloads." %}</p>
+        {% endif %}
+      </div>
+
+      <div class="panel-section" id="favorite-button">
+        {% include "interactions/_favorite_button.html" %}
+      </div>
+
+      <div class="panel-section" id="rating-widget">
+        {% include "interactions/_rating_widget.html" %}
+      </div>
+
+      {% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_DETAIL class_name="ad-slot-card" %}
+    </div>
+  </div>
+</section>
+
+<div class="download-banner" id="download-banner" aria-hidden="true">
+  <div class="download-banner-card" role="dialog" aria-modal="true" aria-labelledby="download-banner-title">
+    <button class="download-banner-close" type="button" data-download-banner-close>&times;</button>
+    <div class="download-banner-media">
+      <img src="{% static 'img/test.jpg' %}" alt="{% trans 'Vsteam Lab banner' %}">
+    </div>
+    <div class="download-banner-body">
+      <span class="download-banner-eyebrow">{% trans "Vsteam Lab" %}</span>
+      <h3 id="download-banner-title">{% trans "Vsteam Lab - STEAM + Robotics community" %}</h3>
+      <p>{% trans "Thanks for downloading! Explore lessons, PDFs, and 3D builds created by teachers and students." %}</p>
+      <p class="download-banner-timer">
+        {% trans "Download available in" %} <span data-download-banner-countdown>5</span>s
+      </p>
+      <div class="download-banner-actions">
+        <button class="button" type="button" data-download-banner-continue disabled>{% trans "Continue download" %}</button>
+        <a class="button button-ghost" href="{% url 'about' %}">{% trans "Learn more" %}</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="detail-comments">
+  <div class="panel">
+    <h2>{% trans "Community notes" %}</h2>
+    {% if request.user.is_authenticated %}
+      <form
+        class="form"
+        method="post"
+        hx-post="{% url 'interactions:comment' content.id %}"
+        hx-target="#comment-list"
+        hx-swap="outerHTML"
+      >
+        {% csrf_token %}
+        <textarea name="body" rows="4" placeholder="{% trans 'Share tips, feedback, or build notes' %}" required></textarea>
+        <button class="button" type="submit">{% trans "Post comment" %}</button>
+      </form>
+    {% else %}
+      <p>
+        <a
+          class="button button-ghost"
+          href="{% url 'accounts:login' %}"
+          hx-get="{% url 'accounts:login' %}?modal=1"
+          hx-target="#auth-modal-body"
+          hx-swap="innerHTML"
+        >{% trans "Login" %}</a> {% trans "to join the discussion." %}
+      </p>
+    {% endif %}
+  </div>
+
+{% include "interactions/_comment_list.html" %}
+</section>
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    "name": "{{ content.title|escapejs }}",
+    "description": "{{ meta_description|escapejs }}",
+    "url": "{{ canonical_url|default:request.build_absolute_uri }}",
+    "creator": {
+      "@type": "Person",
+      "name": "{{ content.owner|escapejs }}"
+    }
+  }
+</script>
+{% endblock %}

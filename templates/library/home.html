@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Library" %} | Vsteam Lab{% endblock %}
+{% block meta_title %}{% trans "Vsteam Lab | Robotics competition resources" %}{% endblock %}
+{% block meta_description %}{% trans "Share and discover lessons, PDFs, and 3D LEGO builds for WRO, FLL, Enjoy AI, VEX, and more." %}{% endblock %}
+{% block og_description %}{% trans "Share and discover lessons, PDFs, and 3D LEGO builds for WRO, FLL, Enjoy AI, VEX, and more." %}{% endblock %}
+{% block twitter_title %}{% trans "Vsteam Lab | Robotics competition resources" %}{% endblock %}
+{% block twitter_description %}{% trans "Share and discover lessons, PDFs, and 3D LEGO builds for WRO, FLL, Enjoy AI, VEX, and more." %}{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">{% trans "STEAM + Robotics Vault" %}</div>
+    <h1>{% trans "Share resources for WRO, FLL, Enjoy AI, VEX, and more." %}</h1>
+    <p>{% trans "Find lessons, PDFs, and 3D LEGO builds from the competition community. Preview first, unlock downloads with points." %}</p>
+  </div>
+</section>
+
+<section class="filters">
+  <form method="get" class="filter-form" hx-get="." hx-target="#content-grid" hx-push-url="true">
+    <input type="search" name="q" placeholder="{% trans 'Search PDFs, 3D builds' %}" value="{{ query }}">
+    <select name="content_type">
+      <option value="">{% trans "All types" %}</option>
+      {% for file_type in file_types %}
+        <option value="{{ file_type.value }}" {% if file_type.value == content_type %}selected{% endif %}>
+          {{ file_type.label }}
+        </option>
+      {% endfor %}
+    </select>
+    <select name="category">
+      <option value="">{% trans "All categories" %}</option>
+      {% for category in categories %}
+        <option value="{{ category.slug }}" {% if category.slug == category_slug %}selected{% endif %}>{{ category.name }}</option>
+      {% endfor %}
+    </select>
+    <button class="button" type="submit">{% trans "Apply" %}</button>
+  </form>
+</section>
+
+<section id="content-grid">
+  {% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_HOME class_name="ad-slot-wide" %}
+  {% include "library/_content_grid.html" %}
+</section>
+{% endblock %}

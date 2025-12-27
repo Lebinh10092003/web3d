@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "About" %} | Vsteam Lab{% endblock %}
+{% block meta_title %}{% trans "About Vsteam Lab" %}{% endblock %}
+{% block meta_description %}{% trans "Learn about Vsteam Lab, a STEAM education center in Vietnam with strong achievements in robotics competitions." %}{% endblock %}
+{% block og_description %}{% trans "Learn about Vsteam Lab, a STEAM education center in Vietnam with strong achievements in robotics competitions." %}{% endblock %}
+{% block twitter_title %}{% trans "About Vsteam Lab" %}{% endblock %}
+{% block twitter_description %}{% trans "Learn about Vsteam Lab, a STEAM education center in Vietnam with strong achievements in robotics competitions." %}{% endblock %}
+
+{% block content %}
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+<section class="panel">
+  <h1>{% trans "About Vsteam Lab" %}</h1>
+  <p>{% trans "Vsteam Lab is a STEAM education center in Vietnam with strong achievements in robotics competitions." %}</p>
+  <p>{% trans "We provide learning resources, 3D models, and practical guides that help teachers and students build creative and technical skills." %}</p>
+</section>
+{% endblock %}

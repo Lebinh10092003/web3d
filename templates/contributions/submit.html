@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Submit content" %} | Vsteam Lab{% endblock %}
+
+{% block content %}
+<section class="submit-shell">
+  <div class="submit-hero">
+    <div>
+      <p class="submit-eyebrow">{% trans "Submission" %}</p>
+      <h1>{% trans "Share your learning materials" %}</h1>
+      <p class="submit-subtitle">
+        {% trans "Upload a PDF or 3D file. We review every submission before it appears in the library." %}
+      </p>
+    </div>
+  </div>
+
+  <div class="submit-layout">
+    <div class="submit-card">
+      <form method="post" class="form submit-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="submit-section">
+          <div class="submit-section-title">
+            <span class="submit-step">1</span>
+            <div>
+              <h2>{% trans "Upload file" %}</h2>
+              <p>{% trans "We auto-detect file type. For PDFs, include competition keywords." %}</p>
+            </div>
+          </div>
+          <div class="submit-dropzone">
+            <div class="submit-dropzone-text">
+              <strong>{% trans "Drag and drop your file" %}</strong>
+              <span>{% trans "or click to browse from your device" %}</span>
+            </div>
+            {{ form.file_upload }}
+          </div>
+          <div class="submit-field">
+            <label>{% trans "Upload preview image (optional)" %}</label>
+            {{ form.preview_upload }}
+            <p class="field-hint">
+              {% trans "Shown as the thumbnail in the library. If empty and the file is PDF, we auto-generate page 1." %}
+            </p>
+          </div>
+        </div>
+
+        <div class="submit-section">
+          <div class="submit-section-title">
+            <span class="submit-step">2</span>
+            <div>
+              <h2>{% trans "Add details" %}</h2>
+              <p>{% trans "Clear titles help learners find your content faster." %}</p>
+            </div>
+          </div>
+          <div class="submit-grid">
+            <div class="submit-field">
+              <label>{% trans "Title" %}</label>
+              {{ form.title }}
+            </div>
+            <div class="submit-field">
+              <label>{% trans "Competition (optional)" %}</label>
+              {{ form.competition }}
+              <p class="field-hint">{% trans "If empty, we rely on PDF keywords." %}</p>
+            </div>
+            <div class="submit-field submit-span">
+              <label>{% trans "Description" %}</label>
+              {{ form.description }}
+            </div>
+          </div>
+        </div>
+
+        <div class="submit-section">
+          <div class="submit-section-title">
+            <span class="submit-step">3</span>
+            <div>
+              <h2>{% trans "Choose category" %}</h2>
+              <p>{% trans "Pick an existing category or create a new one." %}</p>
+            </div>
+          </div>
+          <div class="submit-grid">
+            <div class="submit-field">
+              <label>{% trans "Category" %}</label>
+              {{ form.category }}
+            </div>
+            <div class="submit-field">
+              <label>{% trans "Or add a new category" %}</label>
+              {{ form.new_category }}
+            </div>
+          </div>
+        </div>
+
+        <div class="submit-actions">
+          <button class="button" type="submit">{% trans "Submit for review" %}</button>
+          <p class="submit-note">
+            {% trans "Review usually takes 24-48 hours. Approved submissions earn points." %}
+          </p>
+        </div>
+      </form>
+    </div>
+
+    <aside class="submit-sidebar">
+      <div class="submit-sidebar-card">
+        <h2>{% trans "How review works" %}</h2>
+        <ul class="submit-steps">
+          <li>{% trans "We verify file format and readability." %}</li>
+          <li>{% trans "PDFs must mention competition keywords (WRO, FLL, VEX, Enjoy AI)." %}</li>
+          <li>{% trans "Approved content appears in the library with tags." %}</li>
+        </ul>
+      </div>
+      <div class="submit-sidebar-card submit-sidebar-card--soft">
+        <h3>{% trans "Tips for a fast approval" %}</h3>
+        <ul class="submit-tips">
+          <li>{% trans "Use a clear title (team, season, challenge)." %}</li>
+          <li>{% trans "Add a short summary and relevant category." %}</li>
+          <li>{% trans "Include a cover image for higher downloads." %}</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% load i18n %}
+<div class="rating-box">
+  <div class="rating-summary">
+    <strong>{{ rating_avg|default_if_none:"-" }}</strong>
+    <span>{% blocktrans with count=rating_count %}{{ count }} votes{% endblocktrans %}</span>
+  </div>
+  {% if request.user.is_authenticated %}
+    <form
+      method="post"
+      class="rating-form"
+      hx-post="{% url 'interactions:rate' content.id %}"
+      hx-target="#rating-widget"
+      hx-swap="innerHTML"
+    >
+      {% csrf_token %}
+      <div class="rating-stars">
+        {% for score in stars %}
+          <input
+            type="radio"
+            id="star-{{ score }}"
+            name="score"
+            value="{{ score }}"
+            {% if user_rating and user_rating.score == score %}checked{% endif %}
+          >
+          <label for="star-{{ score }}">&#9733;</label>
+        {% endfor %}
+      </div>
+      <button class="button button-ghost" type="submit">{% trans "Submit rating" %}</button>
+    </form>
+  {% else %}
+    <div class="hint">
+      <a
+        href="{% url 'accounts:login' %}"
+        hx-get="{% url 'accounts:login' %}?modal=1"
+        hx-target="#auth-modal-body"
+        hx-swap="innerHTML"
+      >{% trans "Login" %}</a> {% trans "to rate this content." %}
+    </div>
+  {% endif %}
+</div>

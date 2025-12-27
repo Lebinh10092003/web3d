@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Profile" %} | Vsteam Lab{% endblock %}
+
+{% block content %}
+<section class="profile-grid">
+  <div class="panel">
+    <h1>{% trans "Your profile" %}</h1>
+    <div class="profile-avatar">
+      <img
+        src="{% if request.user.avatar_path %}{{ request.user.avatar_path }}{% else %}{% static 'img/test.jpg' %}{% endif %}"
+        alt="{% trans 'Avatar' %}"
+      >
+    </div>
+    <form method="post" class="form" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <label>{% trans "Display name" %}</label>
+      {{ form.display_name }}
+      <label>{% trans "Role" %}</label>
+      {{ form.role }}
+      <label>{% trans "Bio" %}</label>
+      {{ form.bio }}
+      <label>{% trans "Avatar image" %}</label>
+      {{ form.file_upload }}
+      <button class="button" type="submit">{% trans "Save profile" %}</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2>{% trans "Points" %}</h2>
+    <div class="metric">{% blocktrans with points=request.user.points_balance %}{{ points }} points{% endblocktrans %}</div>
+    <h3>{% trans "Unlocked content" %}</h3>
+    <ul class="simple-list">
+      {% for unlock in unlocks %}
+        <li><a href="{% url 'library:content-detail' unlock.content.id %}">{{ unlock.content.title }}</a></li>
+      {% empty %}
+        <li>{% trans "No unlocks yet." %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>{% trans "Your submissions" %}</h2>
+    <ul class="simple-list">
+      {% for submission in submissions %}
+        <li>{{ submission.title }} ({{ submission.status }})</li>
+      {% empty %}
+        <li>{% trans "No submissions yet." %}</li>
+      {% endfor %}
+    </ul>
+    <h3>{% trans "Your published items" %}</h3>
+    <ul class="simple-list">
+      {% for item in own_content %}
+        <li><a href="{% url 'library:content-detail' item.id %}">{{ item.title }}</a></li>
+      {% empty %}
+        <li>{% trans "No items yet." %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

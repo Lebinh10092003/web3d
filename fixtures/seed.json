@@ -1,0 +1,853 @@
+[
+  {
+    "model": "accounts.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$260000$seed_salt_123$zW8pD3zBSjTS/tdMQxYFuaEGIPHlwjWUUA2R/6DNbsA=",
+      "last_login": "2025-01-10T10:00:00Z",
+      "is_superuser": true,
+      "username": "admin",
+      "first_name": "Admin",
+      "last_name": "User",
+      "email": "admin@example.com",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2025-01-01T08:00:00Z",
+      "role": "TEACHER",
+      "display_name": "Admin",
+      "bio": "System administrator.",
+      "avatar_path": "avatars/admin.jpg",
+      "points_balance": 200,
+      "created_at": "2025-01-01T08:00:00Z",
+      "updated_at": "2025-01-10T10:00:00Z"
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$260000$seed_salt_123$zW8pD3zBSjTS/tdMQxYFuaEGIPHlwjWUUA2R/6DNbsA=",
+      "last_login": "2025-01-09T12:00:00Z",
+      "is_superuser": false,
+      "username": "teacher_anna",
+      "first_name": "Anna",
+      "last_name": "Tran",
+      "email": "anna@example.com",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2025-01-02T09:00:00Z",
+      "role": "TEACHER",
+      "display_name": "Anna Tran",
+      "bio": "STEM teacher focused on robotics.",
+      "avatar_path": "avatars/anna.jpg",
+      "points_balance": 120,
+      "created_at": "2025-01-02T09:00:00Z",
+      "updated_at": "2025-01-10T09:00:00Z"
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 3,
+    "fields": {
+      "password": "pbkdf2_sha256$260000$seed_salt_123$zW8pD3zBSjTS/tdMQxYFuaEGIPHlwjWUUA2R/6DNbsA=",
+      "last_login": "2025-01-09T09:15:00Z",
+      "is_superuser": false,
+      "username": "student_lee",
+      "first_name": "Lee",
+      "last_name": "Nguyen",
+      "email": "lee@example.com",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2025-01-03T10:00:00Z",
+      "role": "STUDENT",
+      "display_name": "Lee Nguyen",
+      "bio": "High school robotics student.",
+      "avatar_path": "avatars/lee.jpg",
+      "points_balance": 40,
+      "created_at": "2025-01-03T10:00:00Z",
+      "updated_at": "2025-01-10T08:30:00Z"
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 4,
+    "fields": {
+      "password": "pbkdf2_sha256$260000$seed_salt_123$zW8pD3zBSjTS/tdMQxYFuaEGIPHlwjWUUA2R/6DNbsA=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "community_minh",
+      "first_name": "Minh",
+      "last_name": "Do",
+      "email": "minh@example.com",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2025-01-04T11:00:00Z",
+      "role": "COMMUNITY",
+      "display_name": "Minh Do",
+      "bio": "Makerspace mentor.",
+      "avatar_path": "avatars/minh.jpg",
+      "points_balance": 80,
+      "created_at": "2025-01-04T11:00:00Z",
+      "updated_at": "2025-01-10T08:00:00Z"
+    }
+  },
+  {
+    "model": "library.category",
+    "pk": 1,
+    "fields": {
+      "name": "Robotics",
+      "slug": "robotics",
+      "parent": null,
+      "is_active": true,
+      "created_at": "2025-01-05T08:00:00Z"
+    }
+  },
+  {
+    "model": "library.category",
+    "pk": 2,
+    "fields": {
+      "name": "STEM",
+      "slug": "stem",
+      "parent": null,
+      "is_active": true,
+      "created_at": "2025-01-05T08:05:00Z"
+    }
+  },
+  {
+    "model": "library.category",
+    "pk": 3,
+    "fields": {
+      "name": "Lesson Plans",
+      "slug": "lesson-plans",
+      "parent": null,
+      "is_active": true,
+      "created_at": "2025-01-05T08:10:00Z"
+    }
+  },
+  {
+    "model": "library.category",
+    "pk": 4,
+    "fields": {
+      "name": "LEGO Builds",
+      "slug": "lego-builds",
+      "parent": null,
+      "is_active": true,
+      "created_at": "2025-01-05T08:15:00Z"
+    }
+  },
+  {
+    "model": "library.contentitem",
+    "pk": 1,
+    "fields": {
+      "owner": 2,
+      "title": "Robot Arm Basics",
+      "description": "Step-by-step 3D assembly for a 3-axis arm.",
+      "content_type": "LEGO_3D",
+      "categories": [1, 4],
+      "download_cost_points": 0,
+      "status": "PUBLISHED",
+      "is_public": true,
+      "created_at": "2025-01-06T08:00:00Z",
+      "updated_at": "2025-01-06T09:00:00Z"
+    }
+  },
+  {
+    "model": "library.contentitem",
+    "pk": 2,
+    "fields": {
+      "owner": 2,
+      "title": "Sensor Lab Worksheet",
+      "description": "Worksheet covering ultrasonic and IR sensors.",
+      "content_type": "PDF",
+      "categories": [2, 3],
+      "download_cost_points": 10,
+      "status": "PUBLISHED",
+      "is_public": true,
+      "created_at": "2025-01-06T08:10:00Z",
+      "updated_at": "2025-01-06T09:10:00Z"
+    }
+  },
+  {
+    "model": "library.contentitem",
+    "pk": 3,
+    "fields": {
+      "owner": 4,
+      "title": "Gearbox Assembly",
+      "description": "3D model showcasing simple gear ratios.",
+      "content_type": "LEGO_3D",
+      "categories": [1, 4],
+      "download_cost_points": 15,
+      "status": "PUBLISHED",
+      "is_public": true,
+      "created_at": "2025-01-06T08:20:00Z",
+      "updated_at": "2025-01-06T09:20:00Z"
+    }
+  },
+  {
+    "model": "library.contentitem",
+    "pk": 4,
+    "fields": {
+      "owner": 2,
+      "title": "Programming Loops Guide",
+      "description": "Intro to loops and sequencing for robotics.",
+      "content_type": "PDF",
+      "categories": [2, 3],
+      "download_cost_points": 5,
+      "status": "PUBLISHED",
+      "is_public": true,
+      "created_at": "2025-01-06T08:30:00Z",
+      "updated_at": "2025-01-06T09:30:00Z"
+    }
+  },
+  {
+    "model": "library.contentitem",
+    "pk": 5,
+    "fields": {
+      "owner": 4,
+      "title": "Line Follower Build",
+      "description": "3D chassis and wiring overview.",
+      "content_type": "LEGO_3D",
+      "categories": [1, 4],
+      "download_cost_points": 20,
+      "status": "PUBLISHED",
+      "is_public": true,
+      "created_at": "2025-01-06T08:40:00Z",
+      "updated_at": "2025-01-06T09:40:00Z"
+    }
+  },
+  {
+    "model": "library.contentitem",
+    "pk": 6,
+    "fields": {
+      "owner": 2,
+      "title": "Robotics Safety Checklist",
+      "description": "Printable checklist for classroom safety.",
+      "content_type": "PDF",
+      "categories": [2, 3],
+      "download_cost_points": 0,
+      "status": "PUBLISHED",
+      "is_public": true,
+      "created_at": "2025-01-06T08:50:00Z",
+      "updated_at": "2025-01-06T09:50:00Z"
+    }
+  },
+  {
+    "model": "library.contentitem",
+    "pk": 7,
+    "fields": {
+      "owner": 4,
+      "title": "Servo Motion Demo",
+      "description": "Preview model for servo calibration.",
+      "content_type": "LEGO_3D",
+      "categories": [1, 4],
+      "download_cost_points": 8,
+      "status": "PUBLISHED",
+      "is_public": true,
+      "created_at": "2025-01-06T09:00:00Z",
+      "updated_at": "2025-01-06T10:00:00Z"
+    }
+  },
+  {
+    "model": "library.contentitem",
+    "pk": 8,
+    "fields": {
+      "owner": 2,
+      "title": "Classroom Intro Slides",
+      "description": "Slide deck covering robotics basics.",
+      "content_type": "PDF",
+      "categories": [2, 3],
+      "download_cost_points": 12,
+      "status": "PUBLISHED",
+      "is_public": true,
+      "created_at": "2025-01-06T09:10:00Z",
+      "updated_at": "2025-01-06T10:10:00Z"
+    }
+  },
+  {
+    "model": "library.contentitem",
+    "pk": 9,
+    "fields": {
+      "owner": 4,
+      "title": "Wheeled Rover Pack",
+      "description": "3D rover with modular wheel kits.",
+      "content_type": "LEGO_3D",
+      "categories": [1, 4],
+      "download_cost_points": 18,
+      "status": "PUBLISHED",
+      "is_public": true,
+      "created_at": "2025-01-06T09:20:00Z",
+      "updated_at": "2025-01-06T10:20:00Z"
+    }
+  },
+  {
+    "model": "library.contentitem",
+    "pk": 10,
+    "fields": {
+      "owner": 2,
+      "title": "Assessment Rubric",
+      "description": "Rubric for evaluating robotics projects.",
+      "content_type": "PDF",
+      "categories": [2, 3],
+      "download_cost_points": 0,
+      "status": "PUBLISHED",
+      "is_public": true,
+      "created_at": "2025-01-06T09:30:00Z",
+      "updated_at": "2025-01-06T10:30:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 1,
+    "fields": {
+      "content": 1,
+      "kind": "PREVIEW",
+      "storage_path": "previews/robot-arm-basics.jpg",
+      "mime_type": "image/jpeg",
+      "size_bytes": 145000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:05:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 2,
+    "fields": {
+      "content": 1,
+      "kind": "SOURCE",
+      "storage_path": "sources/robot-arm-basics.zip",
+      "mime_type": "application/zip",
+      "size_bytes": 1240000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:06:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 3,
+    "fields": {
+      "content": 2,
+      "kind": "PREVIEW",
+      "storage_path": "previews/sensor-lab-worksheet.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 98000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:15:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 4,
+    "fields": {
+      "content": 2,
+      "kind": "SOURCE",
+      "storage_path": "sources/sensor-lab-worksheet.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 210000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:16:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 5,
+    "fields": {
+      "content": 3,
+      "kind": "PREVIEW",
+      "storage_path": "previews/gearbox-assembly.jpg",
+      "mime_type": "image/jpeg",
+      "size_bytes": 152000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:25:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 6,
+    "fields": {
+      "content": 3,
+      "kind": "SOURCE",
+      "storage_path": "sources/gearbox-assembly.zip",
+      "mime_type": "application/zip",
+      "size_bytes": 1320000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:26:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 7,
+    "fields": {
+      "content": 4,
+      "kind": "PREVIEW",
+      "storage_path": "previews/programming-loops-guide.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 87000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:35:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 8,
+    "fields": {
+      "content": 4,
+      "kind": "SOURCE",
+      "storage_path": "sources/programming-loops-guide.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 190000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:36:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 9,
+    "fields": {
+      "content": 5,
+      "kind": "PREVIEW",
+      "storage_path": "previews/line-follower-build.jpg",
+      "mime_type": "image/jpeg",
+      "size_bytes": 160000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:45:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 10,
+    "fields": {
+      "content": 5,
+      "kind": "SOURCE",
+      "storage_path": "sources/line-follower-build.zip",
+      "mime_type": "application/zip",
+      "size_bytes": 1420000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:46:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 11,
+    "fields": {
+      "content": 6,
+      "kind": "PREVIEW",
+      "storage_path": "previews/robotics-safety-checklist.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 76000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:55:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 12,
+    "fields": {
+      "content": 6,
+      "kind": "SOURCE",
+      "storage_path": "sources/robotics-safety-checklist.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 180000,
+      "checksum": "",
+      "created_at": "2025-01-06T09:56:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 13,
+    "fields": {
+      "content": 7,
+      "kind": "PREVIEW",
+      "storage_path": "previews/servo-motion-demo.jpg",
+      "mime_type": "image/jpeg",
+      "size_bytes": 140000,
+      "checksum": "",
+      "created_at": "2025-01-06T10:05:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 14,
+    "fields": {
+      "content": 7,
+      "kind": "SOURCE",
+      "storage_path": "sources/servo-motion-demo.zip",
+      "mime_type": "application/zip",
+      "size_bytes": 1180000,
+      "checksum": "",
+      "created_at": "2025-01-06T10:06:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 15,
+    "fields": {
+      "content": 8,
+      "kind": "PREVIEW",
+      "storage_path": "previews/classroom-intro-slides.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 110000,
+      "checksum": "",
+      "created_at": "2025-01-06T10:15:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 16,
+    "fields": {
+      "content": 8,
+      "kind": "SOURCE",
+      "storage_path": "sources/classroom-intro-slides.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 320000,
+      "checksum": "",
+      "created_at": "2025-01-06T10:16:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 17,
+    "fields": {
+      "content": 9,
+      "kind": "PREVIEW",
+      "storage_path": "previews/wheeled-rover-pack.jpg",
+      "mime_type": "image/jpeg",
+      "size_bytes": 170000,
+      "checksum": "",
+      "created_at": "2025-01-06T10:25:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 18,
+    "fields": {
+      "content": 9,
+      "kind": "SOURCE",
+      "storage_path": "sources/wheeled-rover-pack.zip",
+      "mime_type": "application/zip",
+      "size_bytes": 1520000,
+      "checksum": "",
+      "created_at": "2025-01-06T10:26:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 19,
+    "fields": {
+      "content": 10,
+      "kind": "PREVIEW",
+      "storage_path": "previews/assessment-rubric.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 68000,
+      "checksum": "",
+      "created_at": "2025-01-06T10:35:00Z"
+    }
+  },
+  {
+    "model": "library.contentfile",
+    "pk": 20,
+    "fields": {
+      "content": 10,
+      "kind": "SOURCE",
+      "storage_path": "sources/assessment-rubric.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 140000,
+      "checksum": "",
+      "created_at": "2025-01-06T10:36:00Z"
+    }
+  },
+  {
+    "model": "contributions.contributionsubmission",
+    "pk": 1,
+    "fields": {
+      "user": 3,
+      "title": "Bridge Challenge PDF",
+      "description": "Lesson plan for bridge building.",
+      "content_type": "PDF",
+      "file_path": "uploads/bridge-challenge.pdf",
+      "status": "PENDING",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_notes": "",
+      "created_at": "2025-01-07T09:00:00Z",
+      "updated_at": "2025-01-07T09:00:00Z"
+    }
+  },
+  {
+    "model": "contributions.contributionsubmission",
+    "pk": 2,
+    "fields": {
+      "user": 4,
+      "title": "Mars Rover 3D",
+      "description": "Rover model for exploration challenge.",
+      "content_type": "LEGO_3D",
+      "file_path": "uploads/mars-rover.zip",
+      "status": "PENDING",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_notes": "",
+      "created_at": "2025-01-07T09:10:00Z",
+      "updated_at": "2025-01-07T09:10:00Z"
+    }
+  },
+  {
+    "model": "contributions.contributionsubmission",
+    "pk": 3,
+    "fields": {
+      "user": 3,
+      "title": "Sensor Data Sheet",
+      "description": "Reference sheet for common sensors.",
+      "content_type": "PDF",
+      "file_path": "uploads/sensor-data-sheet.pdf",
+      "status": "APPROVED",
+      "reviewed_by": 1,
+      "reviewed_at": "2025-01-07T12:00:00Z",
+      "review_notes": "Looks great, approved for publishing.",
+      "created_at": "2025-01-07T09:20:00Z",
+      "updated_at": "2025-01-07T12:00:00Z"
+    }
+  },
+  {
+    "model": "interactions.comment",
+    "pk": 1,
+    "fields": {
+      "content": 1,
+      "user": 3,
+      "parent": null,
+      "body": "Great model, used it in class.",
+      "is_deleted": false,
+      "created_at": "2025-01-08T08:00:00Z",
+      "updated_at": "2025-01-08T08:00:00Z"
+    }
+  },
+  {
+    "model": "interactions.comment",
+    "pk": 2,
+    "fields": {
+      "content": 1,
+      "user": 2,
+      "parent": 1,
+      "body": "Glad it helped. Let me know if you need updates.",
+      "is_deleted": false,
+      "created_at": "2025-01-08T08:10:00Z",
+      "updated_at": "2025-01-08T08:10:00Z"
+    }
+  },
+  {
+    "model": "interactions.comment",
+    "pk": 3,
+    "fields": {
+      "content": 2,
+      "user": 4,
+      "parent": null,
+      "body": "PDF is clear and concise.",
+      "is_deleted": false,
+      "created_at": "2025-01-08T08:20:00Z",
+      "updated_at": "2025-01-08T08:20:00Z"
+    }
+  },
+  {
+    "model": "interactions.rating",
+    "pk": 1,
+    "fields": {
+      "content": 1,
+      "user": 3,
+      "score": 5,
+      "created_at": "2025-01-08T09:00:00Z"
+    }
+  },
+  {
+    "model": "interactions.rating",
+    "pk": 2,
+    "fields": {
+      "content": 1,
+      "user": 4,
+      "score": 4,
+      "created_at": "2025-01-08T09:05:00Z"
+    }
+  },
+  {
+    "model": "interactions.rating",
+    "pk": 3,
+    "fields": {
+      "content": 2,
+      "user": 3,
+      "score": 4,
+      "created_at": "2025-01-08T09:10:00Z"
+    }
+  },
+  {
+    "model": "interactions.rating",
+    "pk": 4,
+    "fields": {
+      "content": 3,
+      "user": 2,
+      "score": 5,
+      "created_at": "2025-01-08T09:15:00Z"
+    }
+  },
+  {
+    "model": "interactions.rating",
+    "pk": 5,
+    "fields": {
+      "content": 4,
+      "user": 4,
+      "score": 3,
+      "created_at": "2025-01-08T09:20:00Z"
+    }
+  },
+  {
+    "model": "interactions.favorite",
+    "pk": 1,
+    "fields": {
+      "content": 1,
+      "user": 3,
+      "created_at": "2025-01-08T09:30:00Z"
+    }
+  },
+  {
+    "model": "interactions.favorite",
+    "pk": 2,
+    "fields": {
+      "content": 2,
+      "user": 3,
+      "created_at": "2025-01-08T09:35:00Z"
+    }
+  },
+  {
+    "model": "interactions.favorite",
+    "pk": 3,
+    "fields": {
+      "content": 3,
+      "user": 2,
+      "created_at": "2025-01-08T09:40:00Z"
+    }
+  },
+  {
+    "model": "analytics.contentview",
+    "pk": 1,
+    "fields": {
+      "content": 1,
+      "user": 3,
+      "ip_address": "10.0.0.12",
+      "user_agent": "SeedBrowser/1.0",
+      "created_at": "2025-01-09T10:00:00Z"
+    }
+  },
+  {
+    "model": "analytics.contentview",
+    "pk": 2,
+    "fields": {
+      "content": 2,
+      "user": 4,
+      "ip_address": "10.0.0.21",
+      "user_agent": "SeedBrowser/1.0",
+      "created_at": "2025-01-09T10:05:00Z"
+    }
+  },
+  {
+    "model": "analytics.contentview",
+    "pk": 3,
+    "fields": {
+      "content": 3,
+      "user": 2,
+      "ip_address": "10.0.0.22",
+      "user_agent": "SeedBrowser/1.0",
+      "created_at": "2025-01-09T10:10:00Z"
+    }
+  },
+  {
+    "model": "analytics.contentview",
+    "pk": 4,
+    "fields": {
+      "content": 1,
+      "user": null,
+      "ip_address": "10.0.0.30",
+      "user_agent": "AnonBrowser/1.0",
+      "created_at": "2025-01-09T10:15:00Z"
+    }
+  },
+  {
+    "model": "analytics.contentdownload",
+    "pk": 1,
+    "fields": {
+      "content": 2,
+      "user": 3,
+      "ip_address": "10.0.0.12",
+      "user_agent": "SeedBrowser/1.0",
+      "created_at": "2025-01-09T11:00:00Z"
+    }
+  },
+  {
+    "model": "analytics.contentdownload",
+    "pk": 2,
+    "fields": {
+      "content": 3,
+      "user": 4,
+      "ip_address": "10.0.0.21",
+      "user_agent": "SeedBrowser/1.0",
+      "created_at": "2025-01-09T11:05:00Z"
+    }
+  },
+  {
+    "model": "gating.pointledger",
+    "pk": 1,
+    "fields": {
+      "user": 2,
+      "delta": 100,
+      "reason": "Initial seed points",
+      "created_at": "2025-01-05T10:00:00Z"
+    }
+  },
+  {
+    "model": "gating.pointledger",
+    "pk": 2,
+    "fields": {
+      "user": 3,
+      "delta": 50,
+      "reason": "Initial seed points",
+      "created_at": "2025-01-05T10:05:00Z"
+    }
+  },
+  {
+    "model": "gating.pointledger",
+    "pk": 3,
+    "fields": {
+      "user": 4,
+      "delta": 75,
+      "reason": "Initial seed points",
+      "created_at": "2025-01-05T10:10:00Z"
+    }
+  },
+  {
+    "model": "gating.pointledger",
+    "pk": 4,
+    "fields": {
+      "user": 3,
+      "delta": -10,
+      "reason": "Unlock Sensor Lab Worksheet",
+      "created_at": "2025-01-09T11:30:00Z"
+    }
+  },
+  {
+    "model": "gating.unlock",
+    "pk": 1,
+    "fields": {
+      "user": 3,
+      "content": 2,
+      "method": "POINTS",
+      "cost_points": 10,
+      "created_at": "2025-01-09T11:30:00Z"
+    }
+  },
+  {
+    "model": "gating.unlock",
+    "pk": 2,
+    "fields": {
+      "user": 4,
+      "content": 3,
+      "method": "POINTS",
+      "cost_points": 15,
+      "created_at": "2025-01-09T11:35:00Z"
+    }
+  }
+]
