@@ -1,4 +1,0 @@
-.env
-.env.*
-!.env.example
-web3d-*-firebase-adminsdk-*.json
