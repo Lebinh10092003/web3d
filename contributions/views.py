@@ -1,4 +1,5 @@
 import os
+import zipfile
 
 from django.conf import settings
 from django.contrib import messages
@@ -78,6 +79,47 @@ def _maybe_generate_pdf_preview(source_path, preview_path):
     return default_storage.save(preview_path, ContentFile(preview_bytes))
 
 
+def _maybe_generate_archive_preview(source_path, preview_path):
+    if not source_path or not preview_path:
+        return ""
+
+    try:
+        with default_storage.open(source_path, "rb") as handle:
+            archive = zipfile.ZipFile(handle)
+            with archive:
+                candidates = [
+                    info
+                    for info in archive.infolist()
+                    if not info.is_dir()
+                    and info.file_size > 0
+                    and info.filename.lower().endswith((".png", ".jpg", ".jpeg"))
+                ]
+                if not candidates:
+                    return ""
+
+                def score(info):
+                    name = info.filename.replace("\\", "/")
+                    base = os.path.basename(name).lower()
+                    is_image100 = 0 if base == "image100.png" else 1
+                    is_preview = 0 if any(token in base for token in ("preview", "thumb", "thumbnail", "render")) else 1
+                    depth = len(name.split("/"))
+                    return (is_image100, is_preview, depth, -info.file_size)
+
+                best = min(candidates, key=score)
+                preview_bytes = archive.read(best)
+    except zipfile.BadZipFile:
+        return ""
+    except Exception:
+        return ""
+
+    if not preview_bytes:
+        return ""
+    try:
+        return default_storage.save(preview_path, ContentFile(preview_bytes))
+    except Exception:
+        return ""
+
+
 @login_required
 def submit(request):
     if request.method == "POST":
@@ -104,6 +146,12 @@ def submit(request):
                     auto_preview_name = _build_preview_filename(upload.name)
                     auto_preview_path = _build_preview_path(request.user.id, auto_preview_name)
                     saved_preview_path = _maybe_generate_pdf_preview(
+                        saved_path, auto_preview_path
+                    )
+                elif content_type in {"lxf", "io"}:
+                    auto_preview_name = _build_preview_filename(upload.name)
+                    auto_preview_path = _build_preview_path(request.user.id, auto_preview_name)
+                    saved_preview_path = _maybe_generate_archive_preview(
                         saved_path, auto_preview_path
                     )
             except Exception as exc:

@@ -43,6 +43,10 @@ class ContributionSubmission(models.Model):
     )
     file_path = models.CharField(max_length=500)
     preview_path = models.CharField(max_length=500, blank=True)
+    download_cost_points = models.PositiveIntegerField(
+        default=10,
+        help_text=_("Points required to unlock and download this content."),
+    )
     points_awarded = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     reviewed_by = models.ForeignKey(
@@ -126,6 +130,9 @@ class ContributionSubmission(models.Model):
         )
         if existing_source:
             content = existing_source.content
+            if content.download_cost_points != self.download_cost_points:
+                content.download_cost_points = self.download_cost_points
+                content.save(update_fields=["download_cost_points"])
             if self.category:
                 content.categories.add(self.category)
             competition_category = self._get_or_create_competition_category()
@@ -141,6 +148,7 @@ class ContributionSubmission(models.Model):
             title=self.title,
             description=self.description,
             content_type=self._resolve_content_type(),
+            download_cost_points=self.download_cost_points,
             status=ContentItem.Status.PUBLISHED,
             is_public=True,
         )

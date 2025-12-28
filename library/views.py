@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.staticfiles import finders
 from django.core.paginator import Paginator
@@ -409,6 +410,9 @@ def _ldraw_candidates(clean_path):
         remainder = PurePosixPath(*parts[1:]).as_posix()
         push(remainder)
         push(collapse_known_prefixes(remainder))
+        # Some loaders request primitives under "parts/" even though they live in "p/".
+        push(f"p/{remainder}")
+        push(collapse_known_prefixes(f"p/{remainder}"))
         if parts[1:]:
             first_segment = parts[1]
             if first_segment.isdigit():
@@ -454,6 +458,42 @@ def _rewrite_bricklink_part_id(candidate):
     return path.with_name(rewritten).as_posix()
 
 
+def _is_numeric_part_dat(clean_path):
+    name = PurePosixPath(clean_path).name
+    return bool(re.fullmatch(r"\d+\.dat", name, flags=re.IGNORECASE))
+
+
+def _build_placeholder_part_dat(clean_path):
+    name = PurePosixPath(clean_path).name
+    safe_name = re.sub(r"[^A-Za-z0-9_.-]", "_", name)
+    lines = [
+        f"0 Placeholder part for missing file: {safe_name}",
+        f"0 Name: {safe_name}",
+        "0 Author: web3d",
+        "0 !LDRAW_ORG Unofficial_Part",
+        "0 BFC NOCLIP",
+        "4 16 -10 0 -10 10 0 -10 10 0 10 -10 0 10",
+        "4 16 -10 20 -10 -10 20 10 10 20 10 10 20 -10",
+        "4 16 -10 0 -10 -10 20 -10 10 20 -10 10 0 -10",
+        "4 16 10 0 -10 10 20 -10 10 20 10 10 0 10",
+        "4 16 10 0 10 10 20 10 -10 20 10 -10 0 10",
+        "4 16 -10 0 10 -10 20 10 -10 20 -10 -10 0 -10",
+        "2 24 -10 0 -10 10 0 -10",
+        "2 24 10 0 -10 10 0 10",
+        "2 24 10 0 10 -10 0 10",
+        "2 24 -10 0 10 -10 0 -10",
+        "2 24 -10 20 -10 10 20 -10",
+        "2 24 10 20 -10 10 20 10",
+        "2 24 10 20 10 -10 20 10",
+        "2 24 -10 20 10 -10 20 -10",
+        "2 24 -10 0 -10 -10 20 -10",
+        "2 24 10 0 -10 10 20 -10",
+        "2 24 10 0 10 10 20 10",
+        "2 24 -10 0 10 -10 20 10",
+        "0",
+    ]
+    return ("\n".join(lines) + "\n").encode("utf-8")
+
 @require_GET
 def ldraw_asset(request, relative_path):
     clean_path = _clean_ldraw_path(relative_path)
@@ -473,6 +513,14 @@ def ldraw_asset(request, relative_path):
             break
 
     if not resolved:
+        if _is_numeric_part_dat(clean_path):
+            response = HttpResponse(
+                _build_placeholder_part_dat(clean_path),
+                content_type="text/plain; charset=utf-8",
+            )
+            response["Cache-Control"] = "public, max-age=300"
+            response["X-LDraw-Placeholder"] = "1"
+            return response
         raise Http404
 
     ext = resolved.suffix.lower()
@@ -517,6 +565,14 @@ def content_lego_model(request, pk):
 
     response = FileResponse(file_handle, content_type="text/plain; charset=utf-8")
     response["Cache-Control"] = "public, max-age=3600"
+    filename = PurePosixPath(cache_path).name
+    if filename.startswith("model-") and filename.lower().endswith(".ldr"):
+        variant = filename[len("model-") : -len(".ldr")]
+        response["X-LDraw-Variant"] = variant
+        if variant.startswith("lxf-cli"):
+            response["X-LXF-Converter"] = "cli"
+        elif variant.startswith("lxf-py"):
+            response["X-LXF-Converter"] = "python"
     return response
 
 
@@ -530,8 +586,11 @@ def content_download(request, pk):
         messages.error(request, _("No files available for this content yet."))
         return redirect("library:content-detail", pk=pk)
 
+    did_unlock = False
+    user = None
     with transaction.atomic():
-        user = type(request.user).objects.select_for_update().get(pk=request.user.pk)
+        user_model = get_user_model()
+        user = user_model.objects.select_for_update().get(pk=request.user.pk)
         unlock = Unlock.objects.filter(content=content, user=user).first()
         if not unlock:
             cost = content.download_cost_points
@@ -539,21 +598,30 @@ def content_download(request, pk):
                 messages.error(request, _("Not enough points to unlock this download."))
                 return redirect("library:content-detail", pk=pk)
 
-            try:
-                unlock, created = Unlock.objects.get_or_create(
-                    content=content,
-                    user=user,
-                    defaults={
-                        "method": Unlock.Method.POINTS,
-                        "cost_points": cost,
-                    },
-                )
-            except IntegrityError:
-                unlock = Unlock.objects.filter(content=content, user=user).first()
-                created = False
+            if cost > 0:
+                try:
+                    unlock, created = Unlock.objects.get_or_create(
+                        content=content,
+                        user=user,
+                        defaults={
+                            "method": Unlock.Method.POINTS,
+                            "cost_points": cost,
+                        },
+                    )
+                except IntegrityError:
+                    unlock = Unlock.objects.filter(content=content, user=user).first()
+                    created = False
 
-            if created and cost > 0:
-                PointLedger.record(user, -cost, f"Unlock {content.title}")
+                if created:
+                    PointLedger.record(user, -cost, f"Unlock {content.title}")
+                did_unlock = True
+
+    if did_unlock:
+        messages.success(
+            request,
+            _('Unlocked successfully. Click "Download now" to start downloading.'),
+        )
+        return redirect("library:content-detail", pk=pk)
 
     source_file = content.files.filter(kind=ContentFile.FileKind.SOURCE).first()
     if not source_file:
@@ -573,7 +641,7 @@ def content_download(request, pk):
 
     ContentDownload.objects.create(
         content=content,
-        user=request.user,
+        user=user or request.user,
         ip_address=_get_client_ip(request),
         user_agent=request.META.get("HTTP_USER_AGENT", "")[:255],
     )

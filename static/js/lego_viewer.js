@@ -302,7 +302,7 @@ async function initViewer(root) {
       () => {
         setStatus(
           status,
-          "Could not load 3D model. Check the uploaded file format.",
+          "Không tải được 3D model. Nếu file là .lxf (LEGO Digital Designer), cần chuyển đổi sang LDraw (.ldr/.mpd) bằng lxf2ldr/ldd2ldraw hoặc upload .io/.ldr/.mpd.",
           "error"
         );
       }
