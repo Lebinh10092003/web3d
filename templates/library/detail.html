@@ -34,22 +34,26 @@
 
 <section class="detail-grid">
   <div class="detail-preview">
-    {% if preview_pages %}
-      <div class="preview-stack">
-        {% for page_url in preview_pages %}
-          <img src="{{ page_url }}" alt="{% trans 'Preview' %}" class="preview-image">
-        {% endfor %}
-      </div>
-    {% elif preview_url %}
-      <img src="{{ preview_url }}" alt="{% trans 'Preview' %}" class="preview-image">
+    {% if lego_model_url %}
+      {% include "library/_lego_viewer.html" with model_url=lego_model_url %}
     {% else %}
-      <img src="{% static 'img/test.jpg' %}" alt="{% trans 'Preview' %}" class="preview-image">
-    {% endif %}
-    {% if is_pdf %}
-      <p class="preview-note">
-        {% trans "Preview shows every 10th page." %}
-        <a href="#download-actions">{% trans "Download to view more." %}</a>
-      </p>
+      {% if preview_pages %}
+        <div class="preview-stack">
+          {% for page_url in preview_pages %}
+            <img src="{{ page_url }}" alt="{% trans 'Preview' %}" class="preview-image">
+          {% endfor %}
+        </div>
+      {% elif preview_url %}
+        <img src="{{ preview_url }}" alt="{% trans 'Preview' %}" class="preview-image">
+      {% else %}
+        <img src="{% static 'img/test.jpg' %}" alt="{% trans 'Preview' %}" class="preview-image">
+      {% endif %}
+      {% if is_pdf %}
+        <p class="preview-note">
+          {% trans "Preview shows every 10th page." %}
+          <a href="#download-actions">{% trans "Download to view more." %}</a>
+        </p>
+      {% endif %}
     {% endif %}
   </div>
 

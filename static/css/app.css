@@ -971,6 +971,36 @@ textarea:focus {
     object-fit: contain;
   }
 
+  .lego-viewer {
+    display: grid;
+    gap: 10px;
+  }
+
+  .lego-viewer-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .lego-viewer-canvas {
+    width: 100%;
+    height: 420px;
+    border-radius: 12px;
+    background: radial-gradient(circle at 20% 15%, rgba(69, 224, 107, 0.16), transparent 55%),
+      rgba(18, 61, 42, 0.06);
+  }
+
+  .lego-viewer-status {
+    min-height: 20px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .lego-viewer-status[data-level="error"] {
+    color: #b40000;
+  }
+
 .detail-actions {
   display: flex;
   flex-direction: column;

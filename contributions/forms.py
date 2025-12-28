@@ -27,7 +27,9 @@ class ContributionSubmissionForm(forms.ModelForm):
     )
     file_upload = forms.FileField(
         required=True,
-        widget=forms.ClearableFileInput(attrs={"class": "file-input"}),
+        widget=forms.ClearableFileInput(
+            attrs={"accept": ".pdf,.io,.lxf,.ldr,.mpd", "class": "file-input"}
+        ),
     )
     preview_upload = forms.FileField(
         required=False,
@@ -80,10 +82,20 @@ class ContributionSubmissionForm(forms.ModelForm):
         ext = os.path.splitext(upload.name)[1].lower().lstrip(".")
         if not ext:
             raise forms.ValidationError(_("File extension is required."))
+        allowed_ext = {"pdf", "io", "lxf", "ldr", "mpd"}
+        if ext not in allowed_ext:
+            raise forms.ValidationError(
+                _("Allowed formats: pdf, io, lxf, ldr, mpd.")
+            )
         if ext == "pdf":
             if not self._looks_like_pdf(upload):
                 raise forms.ValidationError(_("Uploaded file does not look like a PDF."))
             self._validate_pdf_keywords(upload)
+        if ext in {"io", "lxf"} and not self._looks_like_zip(upload):
+            raise forms.ValidationError(
+                _("Uploaded file does not look like a valid %(ext)s archive.")
+                % {"ext": ext}
+            )
         self._inferred_content_type = ext[:20]
         return upload
 
@@ -123,6 +135,18 @@ class ContributionSubmissionForm(forms.ModelForm):
             except Exception:
                 pass
         return header == b"%PDF"
+
+    def _looks_like_zip(self, upload):
+        try:
+            header = upload.read(2)
+        except Exception:
+            return False
+        finally:
+            try:
+                upload.seek(0)
+            except Exception:
+                pass
+        return header == b"PK"
 
     def _validate_pdf_keywords(self, upload):
         try:

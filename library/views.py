@@ -1,10 +1,13 @@
 import mimetypes
 import os
+import re
+from pathlib import Path, PurePosixPath
 from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.staticfiles import finders
 from django.core.paginator import Paginator
 from django.core.files.storage import default_storage
 from django.db import transaction
@@ -19,6 +22,7 @@ from analytics.models import ContentDownload, ContentView
 from gating.models import PointLedger, Unlock
 from interactions.models import Comment, Favorite, Rating
 
+from .lego_ldraw import UnsupportedLegoModel, get_cached_ldraw_model_path
 from .models import Category, ContentFile, ContentItem
 
 try:
@@ -236,6 +240,9 @@ def content_detail(request, pk):
         preview_ext.upper() if preview_ext else content.get_content_type_display()
     )
     is_pdf = (preview_ext or source_ext) == "pdf"
+    lego_model_url = ""
+    if source_ext in {"io", "lxf", "ldr", "mpd"}:
+        lego_model_url = reverse("library:content-lego-model", args=[content.id])
     preview_pages = []
     if is_pdf and fitz:
         pdf_file = _pick_pdf_file(preview_file, source_file)
@@ -281,6 +288,7 @@ def content_detail(request, pk):
         "preview_pages": preview_pages,
         "file_type_label": file_type_label,
         "is_pdf": is_pdf,
+        "lego_model_url": lego_model_url,
         "source_file": source_file,
         "meta_description": _build_meta_description(content),
         "rating_avg": rating_stats["avg"],
@@ -340,6 +348,174 @@ def content_preview_image(request, pk):
         raise Http404
 
     response = HttpResponse(preview_bytes, content_type="image/png")
+    response["Cache-Control"] = "public, max-age=3600"
+    return response
+
+
+@require_GET
+def ldraw_index(request):
+    return HttpResponse("LDraw assets", content_type="text/plain; charset=utf-8")
+
+
+def _get_ldraw_root():
+    ldconfig_path = finders.find("ldraw/LDConfig.ldr")
+    if not ldconfig_path:
+        raise Http404
+    return Path(ldconfig_path).resolve().parent
+
+
+def _clean_ldraw_path(relative_path):
+    cleaned = (relative_path or "").replace("\\", "/").lstrip("/")
+    if not cleaned:
+        return ""
+    path = PurePosixPath(cleaned)
+    if path.is_absolute() or ".." in path.parts:
+        return ""
+    return path.as_posix()
+
+
+def _ldraw_candidates(clean_path):
+    candidates = []
+
+    def push(value):
+        if not value:
+            return
+        if value not in candidates:
+            candidates.append(value)
+
+    def collapse_known_prefixes(value):
+        collapsed = value
+        for prefix in ("p", "parts", "models"):
+            token = f"{prefix}/{prefix}/"
+            while token in collapsed:
+                collapsed = collapsed.replace(token, f"{prefix}/")
+        return collapsed
+
+    push(clean_path)
+    push(collapse_known_prefixes(clean_path))
+
+    if not clean_path:
+        return candidates
+
+    path = PurePosixPath(clean_path)
+    parts = list(path.parts)
+
+    if parts and parts[0] == "models":
+        remainder = PurePosixPath(*parts[1:]).as_posix()
+        push(remainder)
+        push(collapse_known_prefixes(remainder))
+
+    if parts and parts[0] == "parts":
+        remainder = PurePosixPath(*parts[1:]).as_posix()
+        push(remainder)
+        push(collapse_known_prefixes(remainder))
+        if parts[1:]:
+            first_segment = parts[1]
+            if first_segment.isdigit():
+                push(f"p/{remainder}")
+            if first_segment == "p":
+                push(PurePosixPath("p", *parts[2:]).as_posix())
+            if first_segment == "models":
+                push(PurePosixPath(*parts[2:]).as_posix())
+
+    if len(parts) == 1:
+        push(f"parts/{clean_path}")
+        push(f"p/{clean_path}")
+        push(f"models/{clean_path}")
+
+    if parts and parts[0] not in {"parts", "p", "models"} and parts[0].isdigit():
+        push(f"p/{clean_path}")
+
+    expanded = []
+    for candidate in candidates:
+        expanded.append(candidate)
+        if candidate.lower().endswith("-bl.dat"):
+            expanded.append(candidate[:-7] + ".dat")
+        rewritten = _rewrite_bricklink_part_id(candidate)
+        if rewritten and rewritten != candidate:
+            expanded.append(rewritten)
+        if candidate.lower().endswith(".dat") and "/parts/" not in f"/{candidate}":
+            expanded.append(f"parts/{candidate}")
+    out = []
+    for candidate in expanded:
+        if candidate and candidate not in out:
+            out.append(candidate)
+    return out
+
+
+def _rewrite_bricklink_part_id(candidate):
+    if not candidate or not candidate.lower().endswith(".dat"):
+        return ""
+    path = PurePosixPath(candidate)
+    name = path.name
+    rewritten = re.sub(r"^(\d+)pb", r"\1p", name, flags=re.IGNORECASE)
+    if rewritten == name:
+        return ""
+    return path.with_name(rewritten).as_posix()
+
+
+@require_GET
+def ldraw_asset(request, relative_path):
+    clean_path = _clean_ldraw_path(relative_path)
+    if not clean_path:
+        raise Http404
+
+    root = _get_ldraw_root()
+    resolved = None
+    for candidate in _ldraw_candidates(clean_path):
+        candidate_path = (root / candidate).resolve()
+        try:
+            candidate_path.relative_to(root)
+        except ValueError:
+            continue
+        if candidate_path.is_file():
+            resolved = candidate_path
+            break
+
+    if not resolved:
+        raise Http404
+
+    ext = resolved.suffix.lower()
+    if ext in {".dat", ".ldr", ".mpd", ".txt", ".ldr"}:
+        content_type = "text/plain; charset=utf-8"
+    else:
+        guessed, _ = mimetypes.guess_type(str(resolved))
+        content_type = guessed or "application/octet-stream"
+
+    try:
+        file_handle = resolved.open("rb")
+    except OSError:
+        raise Http404
+
+    response = FileResponse(file_handle, content_type=content_type)
+    response["Cache-Control"] = "public, max-age=3600"
+    return response
+
+
+@require_GET
+def content_lego_model(request, pk):
+    content = get_object_or_404(
+        ContentItem, pk=pk, is_public=True, status=ContentItem.Status.PUBLISHED
+    )
+    source_file = content.files.filter(kind=ContentFile.FileKind.SOURCE).first()
+    if not source_file:
+        raise Http404
+
+    source_path = source_file.storage_path
+    if not source_path:
+        raise Http404
+
+    try:
+        cache_path = get_cached_ldraw_model_path(content_id=content.id, source_path=source_path)
+    except UnsupportedLegoModel:
+        raise Http404
+
+    try:
+        file_handle = default_storage.open(cache_path, "rb")
+    except Exception:
+        raise Http404
+
+    response = FileResponse(file_handle, content_type="text/plain; charset=utf-8")
     response["Cache-Control"] = "public, max-age=3600"
     return response
 

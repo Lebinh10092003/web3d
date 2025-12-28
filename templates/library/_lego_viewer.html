@@ -1,0 +1,43 @@
+{% load static i18n %}
+
+<div
+  class="lego-viewer"
+  data-lego-viewer
+  data-model-url="{{ model_url }}"
+  data-parts-path="{% url 'library:ldraw-index' %}"
+>
+  <div class="lego-viewer-toolbar">
+    <button class="button button-ghost" type="button" data-lego-fit>{% trans "Fit" %}</button>
+    <button class="button button-ghost" type="button" data-lego-reset>{% trans "Reset" %}</button>
+  </div>
+  <canvas class="lego-viewer-canvas" data-lego-canvas></canvas>
+  <div class="lego-viewer-status" data-lego-status>{% trans "Loading 3D model…" %}</div>
+  <noscript>
+    <p class="field-hint">{% trans "Enable JavaScript to view this 3D model." %}</p>
+  </noscript>
+</div>
+
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    }
+  }
+</script>
+<script type="module" src="{% static 'js/lego_viewer.js' %}"></script>
+<script>
+  window.setTimeout(function () {
+    document.querySelectorAll("[data-lego-viewer]").forEach(function (root) {
+      if (root.dataset.legoBound === "true") {
+        return;
+      }
+      var status = root.querySelector("[data-lego-status]");
+      if (!status) {
+        return;
+      }
+      status.textContent =
+        "3D viewer chưa chạy. Kiểm tra tải static (/static/js/lego_viewer.js) và Console lỗi module.";
+      status.dataset.level = "error";
+    });
+  }, 2500);
+</script>
