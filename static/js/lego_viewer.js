@@ -187,6 +187,7 @@ async function initViewer(root) {
 
   const modelUrl = root.dataset.modelUrl;
   const partsPath = ensureTrailingSlash(root.dataset.partsPath);
+  const zoomEnabled = root.dataset.zoomEnabled !== "false";
 
   if (!canvas || !modelUrl) {
     setStatus(status, "Missing 3D model source.", "error");
@@ -215,6 +216,7 @@ async function initViewer(root) {
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.rotateSpeed = 0.7;
+    controls.enableZoom = zoomEnabled;
 
     setRendererSize(renderer, canvas, camera);
 

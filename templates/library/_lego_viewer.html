@@ -5,6 +5,7 @@
   data-lego-viewer
   data-model-url="{{ model_url }}"
   data-parts-path="{% url 'library:ldraw-index' %}"
+  data-zoom-enabled="{{ zoom_enabled|yesno:'true,false' }}"
 >
   <div class="lego-viewer-toolbar">
     <button class="button button-ghost" type="button" data-lego-flip>{% trans "Flip" %}</button>

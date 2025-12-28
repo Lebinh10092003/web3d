@@ -310,6 +310,7 @@ function bindDownloadBanner() {
   if (!form || !banner) {
     return;
   }
+
   if (form.dataset.bannerBound === "true") {
     return;
   }
@@ -375,19 +376,50 @@ function bindDownloadBanner() {
     }
     isSubmitting = true;
     closeBanner();
-    window.setTimeout(() => {
-      form.submit();
-    }, 150);
+    form.submit();
     window.setTimeout(() => {
       isSubmitting = false;
     }, 1000);
   };
 
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    if (isSubmitting) {
+  const parseNumber = (value) => {
+    const parsed = Number.parseInt(String(value || ""), 10);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const showToast = (level, text) => {
+    if (!text) {
       return;
     }
+    try {
+      showSweetAlerts([{ level, text }]);
+    } catch {
+      // ignore
+    }
+  };
+
+  form.addEventListener("submit", (event) => {
+    if (isSubmitting) {
+      event.preventDefault();
+      return;
+    }
+
+    const unlocked = form.dataset.downloadUnlocked === "true";
+    const cost = parseNumber(form.dataset.downloadCost);
+    const points = parseNumber(form.dataset.userPoints);
+
+    if (!unlocked && cost > 0 && points < cost) {
+      event.preventDefault();
+      showToast("error", form.dataset.downloadInsufficientMessage);
+      return;
+    }
+
+    if (!unlocked) {
+      isSubmitting = true;
+      return;
+    }
+
+    event.preventDefault();
     openBanner();
   });
 

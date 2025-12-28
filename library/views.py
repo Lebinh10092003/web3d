@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.staticfiles import finders
 from django.core.paginator import Paginator
 from django.core.files.storage import default_storage
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count, Q
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -539,15 +539,21 @@ def content_download(request, pk):
                 messages.error(request, _("Not enough points to unlock this download."))
                 return redirect("library:content-detail", pk=pk)
 
-            if cost > 0:
-                PointLedger.record(user, -cost, f"Unlock {content.title}")
+            try:
+                unlock, created = Unlock.objects.get_or_create(
+                    content=content,
+                    user=user,
+                    defaults={
+                        "method": Unlock.Method.POINTS,
+                        "cost_points": cost,
+                    },
+                )
+            except IntegrityError:
+                unlock = Unlock.objects.filter(content=content, user=user).first()
+                created = False
 
-            unlock = Unlock.objects.create(
-                content=content,
-                user=user,
-                method=Unlock.Method.POINTS,
-                cost_points=cost,
-            )
+            if created and cost > 0:
+                PointLedger.record(user, -cost, f"Unlock {content.title}")
 
     source_file = content.files.filter(kind=ContentFile.FileKind.SOURCE).first()
     if not source_file:
