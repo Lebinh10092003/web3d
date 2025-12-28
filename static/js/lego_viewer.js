@@ -43,6 +43,82 @@ function setStatus(node, message, level = "") {
   node.dataset.level = level;
 }
 
+async function preloadLDrawMaterials(loader, partsPath) {
+  if (!loader || typeof loader.preloadMaterials !== "function") {
+    return;
+  }
+
+  const configUrl = `${ensureTrailingSlash(partsPath)}LDConfig.ldr`;
+
+  async function attempt(preloadFn, timeoutMs = 4000) {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const timeoutId = window.setTimeout(() => {
+        finish(false, new Error("Timed out while loading LDraw colors."));
+      }, timeoutMs);
+      const finish = (result, error) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        window.clearTimeout(timeoutId);
+        if (result) {
+          resolve();
+        } else {
+          reject(error || new Error("Failed to preload LDraw materials."));
+        }
+      };
+
+      try {
+        const ret = preloadFn(
+          () => finish(true),
+          (error) => finish(false, error)
+        );
+        if (ret && typeof ret.then === "function") {
+          ret.then(() => finish(true)).catch((error) => finish(false, error));
+        }
+      } catch (error) {
+        finish(false, error);
+      }
+    });
+  }
+
+  const arity = Number(loader.preloadMaterials.length || 0);
+
+  try {
+    if (arity >= 4) {
+      await attempt((onLoad, onError) =>
+        loader.preloadMaterials(configUrl, onLoad, undefined, onError)
+      );
+    } else {
+      await attempt((onLoad, onError) =>
+        loader.preloadMaterials(onLoad, undefined, onError)
+      );
+    }
+    return;
+  } catch {}
+
+  try {
+    if (arity >= 4) {
+      await attempt((onLoad, onError) =>
+        loader.preloadMaterials(onLoad, undefined, onError)
+      );
+    } else {
+      await attempt((onLoad, onError) =>
+        loader.preloadMaterials(configUrl, onLoad, undefined, onError)
+      );
+    }
+    return;
+  } catch {}
+
+  try {
+    const ret = loader.preloadMaterials();
+    if (ret && typeof ret.then === "function") {
+      await ret;
+    }
+  } catch {}
+}
+
 function fitCamera(THREE, camera, controls, object, offset = 1.25) {
   const box = new THREE.Box3().setFromObject(object);
   if (box.isEmpty()) {
@@ -105,6 +181,7 @@ async function initViewer(root) {
 
   const canvas = root.querySelector("[data-lego-canvas]");
   const status = root.querySelector("[data-lego-status]");
+  const flipButton = root.querySelector("[data-lego-flip]");
   const fitButton = root.querySelector("[data-lego-fit]");
   const resetButton = root.querySelector("[data-lego-reset]");
 
@@ -120,7 +197,7 @@ async function initViewer(root) {
     root.dataset.legoBound = "true";
     setStatus(status, "Loading 3D viewer…", "loading");
 
-  const { THREE, OrbitControls, LDrawLoader } = await loadThreeDeps();
+    const { THREE, OrbitControls, LDrawLoader } = await loadThreeDeps();
 
     if (!canvas.style.height) {
       canvas.style.height = `${CANVAS_DEFAULT_HEIGHT}px`;
@@ -156,20 +233,60 @@ async function initViewer(root) {
     const loader = new LDrawLoader();
     loader.setPartsLibraryPath(partsPath);
 
+    setStatus(status, "Loading LEGO colors…", "loading");
+    await preloadLDrawMaterials(loader, partsPath);
+
     setStatus(status, "Loading 3D model…", "loading");
 
     loader.load(
       modelUrl,
-    (group) => {
-      modelGroup = group;
-      scene.add(group);
-      fitCamera(THREE, camera, controls, group);
-      initialCamera = {
-        position: camera.position.clone(),
-        target: controls.target.clone(),
-      };
-      setStatus(status, "", "");
-    },
+      (group) => {
+        modelGroup = group;
+
+        const baseTransform = {
+          position: group.position.clone(),
+          rotation: group.rotation.clone(),
+        };
+        let flipped = true;
+
+        const applyTransform = () => {
+          group.position.copy(baseTransform.position);
+          group.rotation.copy(baseTransform.rotation);
+          if (flipped) {
+            group.rotation.x += Math.PI;
+          }
+          group.updateMatrixWorld(true);
+          const box = new THREE.Box3().setFromObject(group);
+          if (!box.isEmpty()) {
+            group.position.y -= box.min.y;
+            group.updateMatrixWorld(true);
+          }
+        };
+
+        applyTransform();
+        scene.add(group);
+        fitCamera(THREE, camera, controls, group);
+        initialCamera = {
+          position: camera.position.clone(),
+          target: controls.target.clone(),
+        };
+        setStatus(status, "", "");
+
+        if (flipButton) {
+          flipButton.addEventListener("click", () => {
+            if (!modelGroup) {
+              return;
+            }
+            flipped = !flipped;
+            applyTransform();
+            fitCamera(THREE, camera, controls, modelGroup);
+            initialCamera = {
+              position: camera.position.clone(),
+              target: controls.target.clone(),
+            };
+          });
+        }
+      },
       (event) => {
         if (!event || !event.total) {
           return;
