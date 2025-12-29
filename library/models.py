@@ -44,6 +44,7 @@ class ContentItem(models.Model):
         settings.AUTH_USER_MODEL, related_name="contents", on_delete=models.CASCADE
     )
     title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=220, unique=True, blank=True)
     description = models.TextField(blank=True)
     content_type = models.CharField(max_length=20, choices=ContentType.choices)
     categories = models.ManyToManyField(Category, blank=True, related_name="items")
@@ -66,6 +67,23 @@ class ContentItem(models.Model):
 
     def __str__(self):
         return self.title
+
+    def _build_unique_slug(self):
+        base = slugify(self.title)[:200] or "content"
+        slug = base
+        counter = 2
+        qs = type(self).objects.exclude(pk=self.pk)
+        while qs.filter(slug=slug).exists():
+            suffix = f"-{counter}"
+            trimmed = base[: max(1, 200 - len(suffix))]
+            slug = f"{trimmed}{suffix}"
+            counter += 1
+        return slug
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self._build_unique_slug()
+        super().save(*args, **kwargs)
 
 
 class ContentFile(models.Model):

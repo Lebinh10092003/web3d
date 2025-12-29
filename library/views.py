@@ -293,10 +293,20 @@ def home(request):
     return render(request, "library/home.html", context)
 
 
-def content_detail(request, pk):
-    content = get_object_or_404(
-        ContentItem, pk=pk, is_public=True, status=ContentItem.Status.PUBLISHED
-    )
+def content_detail(request, slug):
+    content = ContentItem.objects.filter(
+        slug=slug, is_public=True, status=ContentItem.Status.PUBLISHED
+    ).first()
+    if not content and str(slug).isdigit():
+        content = get_object_or_404(
+            ContentItem, pk=int(slug), is_public=True, status=ContentItem.Status.PUBLISHED
+        )
+        if not content.slug:
+            content.save(update_fields=["slug"])
+        if content.slug and content.slug != slug:
+            return redirect("library:content-detail", slug=content.slug, permanent=True)
+    if not content:
+        raise Http404
     preview_file = content.files.filter(kind=ContentFile.FileKind.PREVIEW).first()
     source_file = content.files.filter(kind=ContentFile.FileKind.SOURCE).first()
     preview_url = _safe_signed_url(preview_file)
@@ -814,7 +824,7 @@ def content_download(request, pk):
                 },
             )
         messages.error(request, message_text)
-        return redirect("library:content-detail", pk=pk)
+        return redirect("library:content-detail", slug=content.slug)
 
     base_context = {
         "content": content,
@@ -863,7 +873,7 @@ def content_download(request, pk):
                             },
                         )
                     messages.error(request, message_text)
-                    return redirect("library:content-detail", pk=pk)
+                    return redirect("library:content-detail", slug=content.slug)
 
                 if cost > 0:
                     try:
@@ -903,7 +913,7 @@ def content_download(request, pk):
                 },
             )
         messages.success(request, action_message)
-        return redirect("library:content-detail", pk=pk)
+        return redirect("library:content-detail", slug=content.slug)
 
     if is_htmx:
         if content.download_cost_points == 0 or unlock:
@@ -941,12 +951,12 @@ def content_download(request, pk):
     source_file = content.files.filter(kind=ContentFile.FileKind.SOURCE).first()
     if not source_file:
         messages.error(request, _("Source file not available yet."))
-        return redirect("library:content-detail", pk=pk)
+        return redirect("library:content-detail", slug=content.slug)
 
     file_path = source_file.storage_path
     if not file_path:
         messages.error(request, _("Download service is not configured yet."))
-        return redirect("library:content-detail", pk=pk)
+        return redirect("library:content-detail", slug=content.slug)
 
     if getattr(settings, "USE_SIGNED_DOWNLOADS", True):
         signed_url = source_file.get_signed_url(
@@ -960,7 +970,7 @@ def content_download(request, pk):
         file_handle = default_storage.open(file_path, "rb")
     except Exception:
         messages.error(request, _("Download service is not configured yet."))
-        return redirect("library:content-detail", pk=pk)
+        return redirect("library:content-detail", slug=content.slug)
 
     ContentDownload.objects.create(
         content=content,

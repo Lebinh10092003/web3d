@@ -76,7 +76,7 @@
           <li class="profile-submission-item">
             <div class="profile-submission-main">
               {% if submission.published_content %}
-                <a href="{% url 'library:content-detail' submission.published_content.id %}">{{ submission.title }}</a>
+                <a href="{% url 'library:content-detail' submission.published_content.slug %}">{{ submission.title }}</a>
                 <span class="tag tag-muted">{{ submission.get_status_display }}</span>
                 <span class="points-badge points-free">{% trans "Unlocked" %}</span>
               {% else %}
@@ -85,7 +85,7 @@
               {% endif %}
             </div>
             {% if submission.published_content %}
-              <a class="button button-ghost button-xs" href="{% url 'library:content-detail' submission.published_content.id %}">
+              <a class="button button-ghost button-xs" href="{% url 'library:content-detail' submission.published_content.slug %}">
                 {% trans "View details" %}
               </a>
             {% endif %}

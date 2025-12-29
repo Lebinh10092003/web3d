@@ -2,7 +2,7 @@
 <div class="content-grid">
   {% for item in page_obj %}
     <article class="content-card" data-stagger="{{ forloop.counter0 }}">
-      <a href="{% url 'library:content-detail' item.id %}" class="card-media">
+      <a href="{% url 'library:content-detail' item.slug %}" class="card-media">
         {% if item.preview_url %}
           <img src="{{ item.preview_url }}" alt="{% trans 'Preview' %}" loading="lazy"{% if item.file_type == "pdf" %} class="card-preview--pdf"{% endif %}>
         {% else %}
@@ -14,7 +14,7 @@
           <span class="tag">{{ item.file_type_label }}</span>
           <span class="tag tag-muted">{{ item.get_status_display }}</span>
         </div>
-        <h3><a href="{% url 'library:content-detail' item.id %}">{{ item.title }}</a></h3>
+        <h3><a href="{% url 'library:content-detail' item.slug %}">{{ item.title }}</a></h3>
         <p>{{ item.description|default:""|truncatechars:140 }}</p>
         <div class="card-meta">
           <span>{% trans "Rating" %}: {{ item.rating_avg|default_if_none:"-" }}</span>

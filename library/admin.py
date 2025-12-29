@@ -14,6 +14,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class ContentItemAdmin(admin.ModelAdmin):
     list_display = (
         "title",
+        "slug",
         "content_type",
         "owner",
         "download_cost_points",
@@ -22,8 +23,9 @@ class ContentItemAdmin(admin.ModelAdmin):
         "created_at",
     )
     list_filter = ("content_type", "status", "is_public")
-    search_fields = ("title", "description")
+    search_fields = ("title", "slug", "description")
     filter_horizontal = ("categories",)
+    prepopulated_fields = {"slug": ("title",)}
     exclude = ("price_vnd",)
 
 

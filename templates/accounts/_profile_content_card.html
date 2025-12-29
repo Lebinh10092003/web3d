@@ -1,6 +1,6 @@
 {% load static i18n %}
 <article class="content-card profile-content-card" data-stagger="{{ stagger|default:0 }}">
-  <a href="{% url 'library:content-detail' item.id %}" class="card-media">
+  <a href="{% url 'library:content-detail' item.slug %}" class="card-media">
     {% if item.preview_url %}
       <img src="{{ item.preview_url }}" alt="{{ item.title }}" loading="lazy">
     {% else %}
@@ -18,9 +18,9 @@
         </span>
       {% endif %}
     </div>
-    <h3><a href="{% url 'library:content-detail' item.id %}">{{ item.title }}</a></h3>
+    <h3><a href="{% url 'library:content-detail' item.slug %}">{{ item.title }}</a></h3>
     <p>{{ item.description|default:""|truncatechars:80 }}</p>
-    <a class="button button-ghost button-xs" href="{% url 'library:content-detail' item.id %}">
+    <a class="button button-ghost button-xs" href="{% url 'library:content-detail' item.slug %}">
       {% trans "View details" %}
     </a>
   </div>
