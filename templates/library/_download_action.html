@@ -28,6 +28,9 @@
       {% if content.download_cost_points > 0 and request.user.points_balance < content.download_cost_points %}
         <button class="button" type="submit">{% trans "Unlock with points" %}</button>
         <p class="field-hint">{% trans "Not enough points to unlock this download." %}</p>
+        <button class="button button-ghost" type="button" data-points-modal-open>
+          {% trans "Get more points" %}
+        </button>
       {% else %}
         <button class="button" type="submit">{% trans "Unlock with points" %}</button>
       {% endif %}

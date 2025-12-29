@@ -27,8 +27,13 @@ from analytics.models import ContentDownload, ContentView
 from gating.models import PointLedger, Unlock
 from interactions.models import Comment, Favorite, Rating
 
-from .lego_ldraw import UnsupportedLegoModel, get_cached_ldraw_model_path
+from .lego_ldraw import (
+    UnsupportedLegoModel,
+    find_cached_ldraw_model_path,
+    get_cached_ldraw_model_path,
+)
 from .models import Category, ContentFile, ContentItem
+from .tasks import enqueue_ldraw_prebuild
 
 try:
     import fitz
@@ -61,13 +66,14 @@ def _get_client_ip(request):
     return ip if ip else None
 
 
-def _safe_signed_url(content_file):
+def _safe_signed_url(content_file, expires_in=None):
     if not content_file:
         return ""
     try:
-        return content_file.get_signed_url()
+        return content_file.get_signed_url(expires_in=expires_in)
     except Exception:
         return ""
+
 
 
 def _rate_limit(request, key, limit, window):
@@ -291,10 +297,8 @@ def content_detail(request, pk):
     content = get_object_or_404(
         ContentItem, pk=pk, is_public=True, status=ContentItem.Status.PUBLISHED
     )
-
     preview_file = content.files.filter(kind=ContentFile.FileKind.PREVIEW).first()
     source_file = content.files.filter(kind=ContentFile.FileKind.SOURCE).first()
-
     preview_url = _safe_signed_url(preview_file)
     source_ext = _extract_extension(getattr(source_file, "storage_path", ""))
     preview_ext = _extract_extension(getattr(preview_file, "storage_path", ""))
@@ -317,6 +321,15 @@ def content_detail(request, pk):
             ]
             preview_url = preview_pages[0] if preview_pages else ""
 
+    og_ttl = int(getattr(settings, "MEDIA_SIGNED_URL_OG_TTL", 86400))
+    og_image_url = ""
+    if preview_file:
+        og_image_url = _safe_signed_url(preview_file, expires_in=og_ttl)
+    if not og_image_url and preview_pages:
+        og_image_url = preview_pages[0]
+    if not og_image_url:
+        og_image_url = preview_url
+
     if request.method == "GET":
         ContentView.objects.create(
             content=content,
@@ -337,6 +350,12 @@ def content_detail(request, pk):
         is_unlocked = is_unlocked or Unlock.objects.filter(
             content=content, user=request.user
         ).exists()
+        if content.owner_id == request.user.id:
+            is_unlocked = True
+        if request.user.is_staff or request.user.is_superuser:
+            is_unlocked = True
+
+    can_view_lego_model = bool(lego_model_url) and is_unlocked
 
     comments = list(
         Comment.objects.filter(content=content, parent__isnull=True)
@@ -353,12 +372,19 @@ def content_detail(request, pk):
         "lego_model_url": lego_model_url,
         "source_file": source_file,
         "meta_description": _build_meta_description(content),
+        "og_image_url": og_image_url,
         "rating_avg": rating_stats["avg"],
         "rating_count": rating_stats["count"],
         "favorites_count": favorites_count,
         "user_rating": user_rating,
         "is_favorited": is_favorited,
         "is_unlocked": is_unlocked,
+        "lock_preview": (
+            content.content_type == ContentItem.ContentType.LEGO_3D
+            and content.download_cost_points > 100
+            and not is_unlocked
+        ),
+        "can_view_lego_model": can_view_lego_model,
         "is_htmx": False,
         "action_message": None,
         "action_level": "",
@@ -428,7 +454,7 @@ def ldraw_index(request):
 
 
 @require_GET
-def protected_media(request, blob_path):
+def protected_media(request, blob_path=None):
     token = request.GET.get("token", "")
     if not token:
         return HttpResponse("Missing token.", status=403, content_type="text/plain")
@@ -437,7 +463,9 @@ def protected_media(request, blob_path):
     except signing.BadSignature:
         return HttpResponse("Invalid token.", status=403, content_type="text/plain")
     path = payload.get("path")
-    if path != blob_path:
+    if not path:
+        return HttpResponse("Invalid token.", status=403, content_type="text/plain")
+    if blob_path and path != blob_path:
         return HttpResponse("Invalid token.", status=403, content_type="text/plain")
     exp = payload.get("exp")
     if exp and int(exp) < int(time.time()):
@@ -447,12 +475,13 @@ def protected_media(request, blob_path):
         if not request.user.is_authenticated or request.user.id != uid:
             return HttpResponse("Invalid user.", status=403, content_type="text/plain")
 
+    resolved_path = blob_path or path
     try:
-        file_handle = default_storage.open(blob_path, "rb")
+        file_handle = default_storage.open(resolved_path, "rb")
     except Exception:
         raise Http404
 
-    filename = os.path.basename(blob_path)
+    filename = os.path.basename(resolved_path)
     guessed, _ = mimetypes.guess_type(filename)
     content_type = guessed or "application/octet-stream"
     response = FileResponse(file_handle, content_type=content_type)
@@ -462,7 +491,9 @@ def protected_media(request, blob_path):
     accel_prefix = getattr(settings, "MEDIA_ACCEL_REDIRECT_PREFIX", "")
     if accel_prefix:
         response = HttpResponse(content_type=content_type)
-        response["X-Accel-Redirect"] = f"{accel_prefix.rstrip('/')}/{blob_path.lstrip('/')}"
+        response["X-Accel-Redirect"] = (
+            f"{accel_prefix.rstrip('/')}/{resolved_path.lstrip('/')}"
+        )
         if request.GET.get("download") == "1":
             response["Content-Disposition"] = f'attachment; filename="{filename}"'
     response["Cache-Control"] = "private, max-age=60"
@@ -690,29 +721,45 @@ def content_lego_model(request, pk):
         ).exists()
         if content.owner_id == request.user.id:
             is_unlocked = True
+        if request.user.is_staff or request.user.is_superuser:
+            is_unlocked = True
     if not is_unlocked:
         return HttpResponse("Unlock required.", status=403, content_type="text/plain")
 
-    try:
-        cache_path = get_cached_ldraw_model_path(content_id=content.id, source_path=source_path)
-    except UnsupportedLegoModel as exc:
-        if settings.DEBUG:
-            return HttpResponse(
-                f"LDraw conversion failed: {exc}",
-                status=400,
-                content_type="text/plain; charset=utf-8",
+    cache_path = find_cached_ldraw_model_path(
+        content_id=content.id, source_path=source_path
+    )
+    if not cache_path and getattr(settings, "USE_BACKGROUND_JOBS", True):
+        enqueue_ldraw_prebuild(content.id, source_path)
+        return HttpResponse(
+            "LDraw model is being prepared. Please retry shortly.",
+            status=202,
+            content_type="text/plain; charset=utf-8",
+        )
+
+    if not cache_path:
+        try:
+            cache_path = get_cached_ldraw_model_path(
+                content_id=content.id, source_path=source_path
             )
-        logger.warning("LDraw conversion failed for content %s: %s", content.id, exc)
-        raise Http404
-    except Exception:
-        logger.exception("Unexpected LDraw conversion error for content %s", content.id)
-        if settings.DEBUG:
-            return HttpResponse(
-                "Unexpected LDraw conversion error. Check server logs.",
-                status=500,
-                content_type="text/plain; charset=utf-8",
-            )
-        raise Http404
+        except UnsupportedLegoModel as exc:
+            if settings.DEBUG:
+                return HttpResponse(
+                    f"LDraw conversion failed: {exc}",
+                    status=400,
+                    content_type="text/plain; charset=utf-8",
+                )
+            logger.warning("LDraw conversion failed for content %s: %s", content.id, exc)
+            raise Http404
+        except Exception:
+            logger.exception("Unexpected LDraw conversion error for content %s", content.id)
+            if settings.DEBUG:
+                return HttpResponse(
+                    "Unexpected LDraw conversion error. Check server logs.",
+                    status=500,
+                    content_type="text/plain; charset=utf-8",
+                )
+            raise Http404
 
     try:
         file_handle = default_storage.open(cache_path, "rb")
@@ -751,6 +798,8 @@ def content_download(request, pk):
         ContentItem, pk=pk, is_public=True, status=ContentItem.Status.PUBLISHED
     )
     is_htmx = request.headers.get("HX-Request") == "true"
+    is_owner = content.owner_id == request.user.id
+    is_privileged = request.user.is_staff or request.user.is_superuser
     if not content.files.exists():
         message_text = _("No files available for this content yet.")
         if is_htmx:
@@ -767,48 +816,73 @@ def content_download(request, pk):
         messages.error(request, message_text)
         return redirect("library:content-detail", pk=pk)
 
+    base_context = {
+        "content": content,
+    }
+
     did_unlock = False
-    user = None
+    user = request.user
     unlock = None
-    with transaction.atomic():
-        user_model = get_user_model()
-        user = user_model.objects.select_for_update().get(pk=request.user.pk)
-        unlock = Unlock.objects.filter(content=content, user=user).first()
-        if not unlock:
-            cost = content.download_cost_points
-            if cost > 0 and user.points_balance < cost:
-                message_text = _("Not enough points to unlock this download.")
-                if is_htmx:
-                    return render(
-                        request,
-                        "library/_download_action.html",
-                        {
-                            "content": content,
-                            "is_unlocked": False,
-                            "action_message": message_text,
-                            "action_level": "error",
-                        },
-                    )
-                messages.error(request, message_text)
-                return redirect("library:content-detail", pk=pk)
+    is_unlocked = False
 
-            if cost > 0:
-                try:
-                    unlock, created = Unlock.objects.get_or_create(
-                        content=content,
-                        user=user,
-                        defaults={
-                            "method": Unlock.Method.POINTS,
-                            "cost_points": cost,
-                        },
-                    )
-                except IntegrityError:
-                    unlock = Unlock.objects.filter(content=content, user=user).first()
-                    created = False
+    if is_owner or is_privileged:
+        is_unlocked = True
+        if is_htmx:
+            if is_owner:
+                action_message = _("You own this content. Download is ready.")
+            else:
+                action_message = _("Access granted. Download is ready.")
+            return render(
+                request,
+                "library/_download_action.html",
+                {
+                    **base_context,
+                    "is_unlocked": True,
+                    "action_message": action_message,
+                    "action_level": "success",
+                },
+            )
+    else:
+        with transaction.atomic():
+            user_model = get_user_model()
+            user = user_model.objects.select_for_update().get(pk=request.user.pk)
+            unlock = Unlock.objects.filter(content=content, user=user).first()
+            if not unlock:
+                cost = content.download_cost_points
+                if cost > 0 and user.points_balance < cost:
+                    message_text = _("Not enough points to unlock this download.")
+                    if is_htmx:
+                        return render(
+                            request,
+                            "library/_download_action.html",
+                            {
+                                **base_context,
+                                "is_unlocked": False,
+                                "action_message": message_text,
+                                "action_level": "error",
+                            },
+                        )
+                    messages.error(request, message_text)
+                    return redirect("library:content-detail", pk=pk)
 
-                if created:
-                    PointLedger.record(user, -cost, f"Unlock {content.title}")
-                did_unlock = True
+                if cost > 0:
+                    try:
+                        unlock, created = Unlock.objects.get_or_create(
+                            content=content,
+                            user=user,
+                            defaults={
+                                "method": Unlock.Method.POINTS,
+                                "cost_points": cost,
+                            },
+                        )
+                    except IntegrityError:
+                        unlock = Unlock.objects.filter(content=content, user=user).first()
+                        created = False
+
+                    if created:
+                        PointLedger.record(user, -cost, f"Unlock {content.title}")
+                    did_unlock = True
+        is_unlocked = content.download_cost_points == 0 or bool(unlock)
 
     if did_unlock:
         if request.LANGUAGE_CODE == "vi":
@@ -822,7 +896,7 @@ def content_download(request, pk):
                 request,
                 "library/_download_action.html",
                 {
-                    "content": content,
+                    **base_context,
                     "is_unlocked": True,
                     "action_message": action_message,
                     "action_level": "success",
@@ -843,7 +917,7 @@ def content_download(request, pk):
                 request,
                 "library/_download_action.html",
                 {
-                    "content": content,
+                    **base_context,
                     "is_unlocked": True,
                     "action_message": action_message,
                     "action_level": "success",
@@ -857,7 +931,7 @@ def content_download(request, pk):
             request,
             "library/_download_action.html",
             {
-                "content": content,
+                **base_context,
                 "is_unlocked": False,
                 "action_message": action_message,
                 "action_level": "error",

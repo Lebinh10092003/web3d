@@ -1,0 +1,27 @@
+{% load static i18n %}
+<article class="content-card profile-content-card" data-stagger="{{ stagger|default:0 }}">
+  <a href="{% url 'library:content-detail' item.id %}" class="card-media">
+    {% if item.preview_url %}
+      <img src="{{ item.preview_url }}" alt="{{ item.title }}" loading="lazy">
+    {% else %}
+      <img src="{% static 'img/test.jpg' %}" alt="{{ item.title }}" loading="lazy">
+    {% endif %}
+  </a>
+  <div class="card-body">
+    <div class="card-tags">
+      <span class="tag">{{ item.get_content_type_display }}</span>
+      {% if item.download_cost_points == 0 %}
+        <span class="points-badge points-free">{% trans "Free" %}</span>
+      {% else %}
+        <span class="points-badge points-paid">
+          {% blocktrans with points=item.download_cost_points %}{{ points }} pts{% endblocktrans %}
+        </span>
+      {% endif %}
+    </div>
+    <h3><a href="{% url 'library:content-detail' item.id %}">{{ item.title }}</a></h3>
+    <p>{{ item.description|default:""|truncatechars:80 }}</p>
+    <a class="button button-ghost button-xs" href="{% url 'library:content-detail' item.id %}">
+      {% trans "View details" %}
+    </a>
+  </div>
+</article>

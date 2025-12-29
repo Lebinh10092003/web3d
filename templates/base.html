@@ -369,6 +369,32 @@
     </div>
   </dialog>
 
+  <dialog id="points-modal" class="auth-modal points-modal">
+    <div class="auth-modal-content points-modal-content">
+      <button class="modal-close" type="button" data-modal-close>&times;</button>
+      <div class="points-modal-body">
+        <h2>{% trans "Get more points" %}</h2>
+        <p class="points-modal-note">
+          {% trans "Choose a quick action to earn or top up points." %}
+        </p>
+        <div class="points-options">
+          <a class="points-option" href="{% url 'contributions:submit' %}">
+            <div class="points-option-title">{% trans "Upload learning material" %}</div>
+            <div class="points-option-desc">
+              {% trans "Submit a PDF or 3D file to earn points after approval." %}
+            </div>
+          </a>
+          <a class="points-option" href="{% url 'contact' %}">
+            <div class="points-option-title">{% trans "Buy points" %}</div>
+            <div class="points-option-desc">
+              {% trans "Contact us to top up points for premium models." %}
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="auth-modal" class="auth-modal">
     <div class="auth-modal-content">
       <button class="modal-close" type="button" data-modal-close>&times;</button>

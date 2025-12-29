@@ -5,7 +5,7 @@
 
 {% block content %}
 <section class="profile-grid">
-  <div class="panel">
+  <div class="panel profile-panel">
     <h1>{% trans "Your profile" %}</h1>
     <div class="profile-avatar">
       <img
@@ -28,36 +28,89 @@
     </form>
   </div>
 
-  <div class="panel">
-    <h2>{% trans "Points" %}</h2>
-    <div class="metric">{% blocktrans with points=request.user.points_balance %}{{ points }} points{% endblocktrans %}</div>
-    <h3>{% trans "Unlocked content" %}</h3>
-    <ul class="simple-list">
-      {% for unlock in unlocks %}
-        <li><a href="{% url 'library:content-detail' unlock.content.id %}">{{ unlock.content.title }}</a></li>
-      {% empty %}
-        <li>{% trans "No unlocks yet." %}</li>
-      {% endfor %}
-    </ul>
+  <div class="panel profile-panel">
+    <div class="profile-section">
+      <h2>{% trans "Points" %}</h2>
+      <div class="metric">{% blocktrans with points=request.user.points_balance %}{{ points }} points{% endblocktrans %}</div>
+      <button class="button button-ghost" type="button" data-points-modal-open>
+        {% trans "Get more points" %}
+      </button>
+    </div>
+    <div class="profile-section">
+      <div class="profile-section-header">
+        <h3>{% trans "Unlocked content" %}</h3>
+        <span class="profile-section-note">{% trans "Your recent unlocks" %}</span>
+      </div>
+      {% if unlocks %}
+        <div class="profile-content-grid">
+          {% for unlock in unlocks %}
+            {% include "accounts/_profile_content_card.html" with item=unlock.content stagger=forloop.counter0 %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="profile-empty">{% trans "No unlocks yet." %}</p>
+      {% endif %}
+    </div>
+    <div class="profile-section">
+      <div class="profile-section-header">
+        <h3>{% trans "Favorite models" %}</h3>
+        <span class="profile-section-note">{% trans "Saved for later" %}</span>
+      </div>
+      {% if favorites %}
+        <div class="profile-content-grid">
+          {% for favorite in favorites %}
+            {% include "accounts/_profile_content_card.html" with item=favorite.content stagger=forloop.counter0 %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="profile-empty">{% trans "No favorites yet." %}</p>
+      {% endif %}
+    </div>
   </div>
 
-  <div class="panel">
-    <h2>{% trans "Your submissions" %}</h2>
-    <ul class="simple-list">
-      {% for submission in submissions %}
-        <li>{{ submission.title }} ({{ submission.status }})</li>
-      {% empty %}
-        <li>{% trans "No submissions yet." %}</li>
-      {% endfor %}
-    </ul>
-    <h3>{% trans "Your published items" %}</h3>
-    <ul class="simple-list">
-      {% for item in own_content %}
-        <li><a href="{% url 'library:content-detail' item.id %}">{{ item.title }}</a></li>
-      {% empty %}
-        <li>{% trans "No items yet." %}</li>
-      {% endfor %}
-    </ul>
+  <div class="panel profile-panel">
+    <div class="profile-section">
+      <h2>{% trans "Your submissions" %}</h2>
+      <ul class="profile-submission-list">
+        {% for submission in submissions %}
+          <li class="profile-submission-item">
+            <div class="profile-submission-main">
+              {% if submission.published_content %}
+                <a href="{% url 'library:content-detail' submission.published_content.id %}">{{ submission.title }}</a>
+                <span class="tag tag-muted">{{ submission.get_status_display }}</span>
+                <span class="points-badge points-free">{% trans "Unlocked" %}</span>
+              {% else %}
+                <span>{{ submission.title }}</span>
+                <span class="tag tag-muted">{{ submission.get_status_display }}</span>
+              {% endif %}
+            </div>
+            {% if submission.published_content %}
+              <a class="button button-ghost button-xs" href="{% url 'library:content-detail' submission.published_content.id %}">
+                {% trans "View details" %}
+              </a>
+            {% endif %}
+          </li>
+        {% empty %}
+          <li class="profile-empty">{% trans "No submissions yet." %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="profile-section">
+      <div class="profile-section-header">
+        <h3>{% trans "Your published items" %}</h3>
+        <span class="profile-section-note">{% trans "Public items in the library" %}</span>
+      </div>
+      {% if own_content %}
+        <div class="profile-content-grid">
+          {% for item in own_content %}
+            {% include "accounts/_profile_content_card.html" with item=item stagger=forloop.counter0 %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="profile-empty">{% trans "No items yet." %}</p>
+      {% endif %}
+    </div>
   </div>
 </section>
+
 {% endblock %}

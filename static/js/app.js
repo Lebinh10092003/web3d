@@ -29,8 +29,19 @@ function getContactModal() {
   return document.getElementById("contact-modal");
 }
 
+function getPointsModal() {
+  return document.getElementById("points-modal");
+}
+
 function openContactModal() {
   const modal = getContactModal();
+  if (modal && !modal.open) {
+    modal.showModal();
+  }
+}
+
+function openPointsModal() {
+  const modal = getPointsModal();
   if (modal && !modal.open) {
     modal.showModal();
   }
@@ -97,6 +108,7 @@ function bindBackdropClose(modal) {
 function bindModalEvents() {
   bindBackdropClose(getAuthModal());
   bindBackdropClose(getContactModal());
+  bindBackdropClose(getPointsModal());
 }
 
 function bindContactTriggers() {
@@ -112,6 +124,23 @@ function bindContactTriggers() {
       }
       event.preventDefault();
       openContactModal();
+    });
+  });
+}
+
+function bindPointsTriggers() {
+  const triggers = document.querySelectorAll("[data-points-modal-open]");
+  if (!triggers.length) {
+    return;
+  }
+  triggers.forEach((trigger) => {
+    trigger.addEventListener("click", (event) => {
+      const modal = getPointsModal();
+      if (!modal) {
+        return;
+      }
+      event.preventDefault();
+      openPointsModal();
     });
   });
 }
@@ -455,6 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
   applyStagger(document);
   bindModalEvents();
   bindContactTriggers();
+  bindPointsTriggers();
   bindBackButtons();
   bindLanguageSwitcher();
   bindRecapLibrary();
@@ -473,6 +503,7 @@ document.addEventListener("htmx:afterSwap", (event) => {
   }
   bindRecapLibrary();
   bindDownloadBanner();
+  bindPointsTriggers();
 });
 
 document.addEventListener("htmx:beforeRequest", (event) => {

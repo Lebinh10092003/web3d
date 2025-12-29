@@ -48,6 +48,7 @@ class ContentItem(models.Model):
     content_type = models.CharField(max_length=20, choices=ContentType.choices)
     categories = models.ManyToManyField(Category, blank=True, related_name="items")
     download_cost_points = models.PositiveIntegerField(default=0)
+    price_vnd = models.PositiveIntegerField(default=0)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PUBLISHED)
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -55,6 +56,13 @@ class ContentItem(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["is_public", "status", "created_at"],
+                name="content_pub_status_created_idx",
+            ),
+            models.Index(fields=["title"], name="content_title_idx"),
+        ]
 
     def __str__(self):
         return self.title

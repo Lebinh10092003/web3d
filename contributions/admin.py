@@ -16,3 +16,4 @@ class ContributionSubmissionAdmin(admin.ModelAdmin):
     )
     list_filter = ("status", "content_type", "competition", "category")
     search_fields = ("title", "description")
+    exclude = ("price_vnd",)

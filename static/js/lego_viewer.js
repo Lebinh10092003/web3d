@@ -1,22 +1,30 @@
-const THREE_CDN = "https://cdn.jsdelivr.net/npm/three@0.160.0";
-const MODULES = {
-  three: `${THREE_CDN}/build/three.module.js`,
-  orbitControls: `${THREE_CDN}/examples/jsm/controls/OrbitControls.js`,
-  ldrawLoader: `${THREE_CDN}/examples/jsm/loaders/LDrawLoader.js`,
-};
+﻿const THREE_CDN = "https://cdn.jsdelivr.net/npm/three@0.160.0";
 
 const CANVAS_DEFAULT_HEIGHT = 420;
 globalThis.__legoViewerLoaded = true;
 
 let threeDepsPromise = null;
+let threeDepsBase = null;
 
-async function loadThreeDeps() {
-  if (!threeDepsPromise) {
+function buildModuleUrls(baseUrl) {
+  const base = (baseUrl || THREE_CDN).replace(/\/+$/, "");
+  return {
+    three: `${base}/build/three.module.js`,
+    orbitControls: `${base}/examples/jsm/controls/OrbitControls.js`,
+    ldrawLoader: `${base}/examples/jsm/loaders/LDrawLoader.js`,
+  };
+}
+
+async function loadThreeDeps(baseUrl) {
+  const base = (baseUrl || THREE_CDN).replace(/\/+$/, "");
+  if (!threeDepsPromise || threeDepsBase !== base) {
+    threeDepsBase = base;
     threeDepsPromise = (async () => {
+      const modules = buildModuleUrls(base);
       const [THREE, orbitModule, ldrawModule] = await Promise.all([
-        import(MODULES.three),
-        import(MODULES.orbitControls),
-        import(MODULES.ldrawLoader),
+        import(modules.three),
+        import(modules.orbitControls),
+        import(modules.ldrawLoader),
       ]);
       return {
         THREE,
@@ -27,7 +35,6 @@ async function loadThreeDeps() {
   }
   return threeDepsPromise;
 }
-
 function ensureTrailingSlash(value) {
   if (!value) {
     return "/";
@@ -35,12 +42,48 @@ function ensureTrailingSlash(value) {
   return value.endsWith("/") ? value : `${value}/`;
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function waitForModelReady(url, status, attempts = 8) {
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      const response = await fetch(url, { method: "HEAD", cache: "no-store" });
+      if (response.status === 200) {
+        return true;
+      }
+      if (response.status === 202) {
+        setStatus(
+          status,
+          "Đang chuẩn bị mô hình 3D. Vui lòng đợi trong giây lát...",
+          "loading"
+        );
+        await sleep(1200 + i * 500);
+        continue;
+      }
+      if (response.status === 403) {
+        setStatus(status, "Bạn cần mở khóa để xem mô hình 3D.", "error");
+        return false;
+      }
+    } catch (error) {
+      await sleep(1200);
+    }
+    break;
+  }
+  return true;
+}
+
 function setStatus(node, message, level = "") {
   if (!node) {
     return;
   }
-  node.textContent = message;
+  const textNode = node.querySelector("[data-lego-status-text]") || node;
+  textNode.textContent = message;
   node.dataset.level = level;
+  node.dataset.visible = message ? "true" : "false";
 }
 
 async function preloadLDrawMaterials(loader, partsPath) {
@@ -174,6 +217,8 @@ async function initViewer(root) {
   const modelUrl = root.dataset.modelUrl;
   const partsPath = ensureTrailingSlash(root.dataset.partsPath);
   const zoomEnabled = root.dataset.zoomEnabled !== "false";
+  const threeBase = root.dataset.threeBase;
+  const fitOffset = zoomEnabled ? 1.25 : 2.85;
 
   if (!canvas || !modelUrl) {
     setStatus(status, "Missing 3D model source.", "error");
@@ -182,9 +227,9 @@ async function initViewer(root) {
 
   try {
     root.dataset.legoBound = "true";
-    setStatus(status, "Loading 3D viewer…", "loading");
+    setStatus(status, "Loading 3D viewer...", "loading");
 
-    const { THREE, OrbitControls, LDrawLoader } = await loadThreeDeps();
+    const { THREE, OrbitControls, LDrawLoader } = await loadThreeDeps(threeBase);
 
     if (!canvas.style.height) {
       canvas.style.height = `${CANVAS_DEFAULT_HEIGHT}px`;
@@ -221,10 +266,14 @@ async function initViewer(root) {
     const loader = new LDrawLoader();
     loader.setPartsLibraryPath(partsPath);
 
-    setStatus(status, "Loading LEGO colors…", "loading");
+    setStatus(status, "Loading LEGO colors...", "loading");
     await preloadLDrawMaterials(loader, partsPath);
 
-    setStatus(status, "Loading 3D model…", "loading");
+    const ready = await waitForModelReady(modelUrl, status);
+    if (!ready) {
+      return;
+    }
+    setStatus(status, "Loading 3D model...", "loading");
 
     loader.load(
       modelUrl,
@@ -253,7 +302,7 @@ async function initViewer(root) {
 
         applyTransform();
         scene.add(group);
-        fitCamera(THREE, camera, controls, group);
+        fitCamera(THREE, camera, controls, group, fitOffset);
         initialCamera = {
           position: camera.position.clone(),
           target: controls.target.clone(),
@@ -267,7 +316,7 @@ async function initViewer(root) {
             }
             flipped = !flipped;
             applyTransform();
-            fitCamera(THREE, camera, controls, modelGroup);
+            fitCamera(THREE, camera, controls, modelGroup, fitOffset);
             initialCamera = {
               position: camera.position.clone(),
               target: controls.target.clone(),
@@ -283,7 +332,7 @@ async function initViewer(root) {
           100,
           Math.round((event.loaded / event.total) * 100)
         );
-        setStatus(status, `Loading 3D model… ${percent}%`, "loading");
+        setStatus(status, `Loading 3D model... ${percent}%`, "loading");
       },
       () => {
         setStatus(
@@ -299,7 +348,7 @@ async function initViewer(root) {
         if (!modelGroup) {
           return;
         }
-        fitCamera(THREE, camera, controls, modelGroup);
+        fitCamera(THREE, camera, controls, modelGroup, fitOffset);
       });
     }
 
@@ -350,3 +399,4 @@ if (document.readyState === "loading") {
 }
 
 document.body?.addEventListener?.("htmx:afterSwap", initAll);
+

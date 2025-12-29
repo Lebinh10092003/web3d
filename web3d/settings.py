@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_rq",
     "accounts",
     "library",
     "interactions",
@@ -124,9 +125,34 @@ MEDIA_URL = os.environ.get("MEDIA_URL", "/media/")
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_SIGNED_URLS = os.environ.get("MEDIA_SIGNED_URLS", "1") == "1"
 MEDIA_SIGNED_URL_TTL = int(os.environ.get("MEDIA_SIGNED_URL_TTL", "300"))
+MEDIA_SIGNED_URL_HIDE_PATH = os.environ.get("MEDIA_SIGNED_URL_HIDE_PATH", "1") == "1"
+MEDIA_SIGNED_URL_OG_TTL = int(os.environ.get("MEDIA_SIGNED_URL_OG_TTL", "86400"))
 MEDIA_ACCEL_REDIRECT_PREFIX = os.environ.get("MEDIA_ACCEL_REDIRECT_PREFIX", "")
 USE_SIGNED_DOWNLOADS = os.environ.get("USE_SIGNED_DOWNLOADS", "1") == "1"
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
+
+LEGO_THREE_BASE_URL = os.environ.get(
+    "LEGO_THREE_BASE_URL", "https://cdn.jsdelivr.net/npm/three@0.160.0"
+)
+
+USE_BACKGROUND_JOBS = os.environ.get("USE_BACKGROUND_JOBS", "1") == "1"
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+RQ_DEFAULT_TIMEOUT = int(os.environ.get("RQ_DEFAULT_TIMEOUT", "600"))
+RQ_QUEUES = {
+    "default": {
+        "URL": REDIS_URL,
+        "DEFAULT_TIMEOUT": RQ_DEFAULT_TIMEOUT,
+    }
+}
+
+ZALOPAY_APP_ID = os.environ.get("ZALOPAY_APP_ID", "")
+ZALOPAY_KEY1 = os.environ.get("ZALOPAY_KEY1", "")
+ZALOPAY_KEY2 = os.environ.get("ZALOPAY_KEY2", "")
+ZALOPAY_ENDPOINT_CREATE = os.environ.get(
+    "ZALOPAY_ENDPOINT_CREATE", "https://sb-openapi.zalopay.vn/v2/create"
+)
+ZALOPAY_CALLBACK_URL = os.environ.get("ZALOPAY_CALLBACK_URL", "")
+ZALOPAY_RETURN_URL = os.environ.get("ZALOPAY_RETURN_URL", "")
 
 
 AUTH_USER_MODEL = "accounts.User"

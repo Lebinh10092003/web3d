@@ -12,7 +12,8 @@ from django.utils.translation import gettext as _
 
 from contributions.models import ContributionSubmission
 from gating.models import Unlock
-from library.models import ContentItem
+from interactions.models import Favorite
+from library.models import ContentFile, ContentItem
 
 from .forms import ProfileForm, UserRegistrationForm
 
@@ -27,6 +28,33 @@ def _upload_avatar(file_obj, user_id):
     storage_path = f"avatars/{user_id}/{timestamp}_{safe_name}"
     saved_path = default_storage.save(storage_path, file_obj)
     return default_storage.url(saved_path)
+
+
+def _attach_previews(contents):
+    content_ids = [content.id for content in contents if content]
+    if not content_ids:
+        return
+    preview_files = (
+        ContentFile.objects.filter(
+            content_id__in=content_ids,
+            kind=ContentFile.FileKind.PREVIEW,
+        )
+        .only("content_id", "storage_path")
+        .order_by("content_id")
+    )
+    preview_map = {}
+    for preview_file in preview_files:
+        preview_map.setdefault(preview_file.content_id, preview_file)
+    for content in contents:
+        preview_file = preview_map.get(content.id)
+        if preview_file:
+            try:
+                content.preview_url = preview_file.get_signed_url()
+                continue
+            except Exception:
+                content.preview_url = ""
+        else:
+            content.preview_url = ""
 
 
 def register(request):
@@ -74,19 +102,51 @@ def profile(request):
         .select_related("content")
         .order_by("-created_at")[:5]
     )
-    submissions = (
+    submissions = list(
         ContributionSubmission.objects.filter(user=request.user)
         .order_by("-created_at")[:5]
     )
+    submission_paths = [s.file_path for s in submissions if s.file_path]
+    content_by_path = {}
+    if submission_paths:
+        sources = (
+            ContentFile.objects.filter(
+                storage_path__in=submission_paths,
+                kind=ContentFile.FileKind.SOURCE,
+            )
+            .select_related("content")
+            .only("storage_path", "content_id", "content")
+        )
+        for source in sources:
+            content_by_path[source.storage_path] = source.content
+    for submission in submissions:
+        submission.published_content = content_by_path.get(submission.file_path)
     own_content = (
         ContentItem.objects.filter(owner=request.user).order_by("-created_at")[:5]
     )
+    favorites = (
+        Favorite.objects.filter(user=request.user)
+        .select_related("content")
+        .order_by("-created_at")[:5]
+    )
+    content_pool = {}
+    for unlock in unlocks:
+        content_pool[unlock.content_id] = unlock.content
+    for favorite in favorites:
+        content_pool[favorite.content_id] = favorite.content
+    for item in own_content:
+        content_pool[item.id] = item
+    for submission in submissions:
+        if submission.published_content:
+            content_pool[submission.published_content.id] = submission.published_content
+    _attach_previews(list(content_pool.values()))
 
     context = {
         "form": form,
         "unlocks": unlocks,
         "submissions": submissions,
         "own_content": own_content,
+        "favorites": favorites,
     }
     return render(request, "accounts/profile.html", context)
 

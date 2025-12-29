@@ -6,8 +6,10 @@
 {% block meta_description %}{{ meta_description }}{% endblock %}
 {% block og_description %}{{ meta_description }}{% endblock %}
 {% block og_type %}article{% endblock %}
+{% block og_image %}{{ og_image_url|default:DEFAULT_OG_IMAGE }}{% endblock %}
 {% block twitter_title %}{{ content.title }} | V+ STEAM LAB Library{% endblock %}
 {% block twitter_description %}{{ meta_description }}{% endblock %}
+{% block twitter_image %}{{ og_image_url|default:DEFAULT_OG_IMAGE }}{% endblock %}
 
 {% block content %}
 <section class="detail-hero">
@@ -33,8 +35,8 @@
 </section>
 
 <section class="detail-grid">
-  <div class="detail-preview">
-    {% if lego_model_url %}
+  <div class="detail-preview{% if lock_preview %} detail-preview--locked{% endif %}">
+    {% if lego_model_url and can_view_lego_model %}
       {% include "library/_lego_viewer.html" with model_url=lego_model_url zoom_enabled=is_unlocked %}
     {% else %}
       {% if preview_pages %}
@@ -54,6 +56,19 @@
           <a href="#download-actions">{% trans "Download to view more." %}</a>
         </p>
       {% endif %}
+      {% if lego_model_url and not can_view_lego_model %}
+        <p class="preview-note">
+          {% trans "Unlock with points to view the full 3D model." %}
+          <a href="#download-actions">{% trans "Unlock to view details." %}</a>
+        </p>
+      {% endif %}
+    {% endif %}
+    {% if lock_preview %}
+      <div class="preview-lock-overlay">
+        <div class="preview-lock-card">
+          {% trans "Unlock with points to see the full model preview." %}
+        </div>
+      </div>
     {% endif %}
   </div>
 
@@ -130,6 +145,7 @@
 {% endblock %}
 
 {% block structured_data %}
+{{ block.super }}
 <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -141,6 +157,26 @@
       "@type": "Person",
       "name": "{{ content.owner|escapejs }}"
     }
+  }
+</script>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Library",
+        "item": "{{ SITE_URL }}"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "{{ content.title|escapejs }}",
+        "item": "{{ canonical_url|default:request.build_absolute_uri }}"
+      }
+    ]
   }
 </script>
 {% endblock %}

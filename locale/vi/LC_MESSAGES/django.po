@@ -336,6 +336,15 @@ msgstr "Điểm"
 msgid "%(points)s points"
 msgstr "%(points)s điểm"
 
+msgid "Get more points"
+msgstr "Nhận thêm điểm"
+
+msgid "You own this content. Download is ready."
+msgstr "Bạn sở hữu nội dung này. Có thể tải ngay."
+
+msgid "Access granted. Download is ready."
+msgstr "Đã cấp quyền truy cập. Có thể tải ngay."
+
 msgid "Unlocked content"
 msgstr "Nội dung đã mở khóa"
 

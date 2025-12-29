@@ -1,4 +1,5 @@
 import os
+import zipfile
 
 from django import forms
 from django.conf import settings
@@ -50,7 +51,11 @@ class ContributionSubmissionForm(forms.ModelForm):
 
     class Meta:
         model = ContributionSubmission
-        fields = ("title", "description", "competition")
+        fields = (
+            "title",
+            "description",
+            "competition",
+        )
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
         }
@@ -95,6 +100,10 @@ class ContributionSubmissionForm(forms.ModelForm):
             raise forms.ValidationError(
                 _("Uploaded file does not look like a valid %(ext)s archive.")
                 % {"ext": ext}
+            )
+        if ext == "io" and self._has_encrypted_zip_entries(upload):
+            raise forms.ValidationError(
+                _("This .io archive is password-protected. Please export without a password.")
             )
         self._inferred_content_type = ext[:20]
         return upload
@@ -147,6 +156,24 @@ class ContributionSubmissionForm(forms.ModelForm):
             except Exception:
                 pass
         return header == b"PK"
+
+    def _has_encrypted_zip_entries(self, upload):
+        try:
+            upload.seek(0)
+            with zipfile.ZipFile(upload) as archive:
+                for info in archive.infolist():
+                    if info.flag_bits & 0x1:
+                        return True
+        except zipfile.BadZipFile:
+            return False
+        except RuntimeError:
+            return True
+        finally:
+            try:
+                upload.seek(0)
+            except Exception:
+                pass
+        return False
 
     def _validate_pdf_keywords(self, upload):
         try:

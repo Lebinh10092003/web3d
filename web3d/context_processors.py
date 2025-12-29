@@ -21,6 +21,7 @@ def site_meta(request):
     return {
         "SITE_NAME": site_name,
         "SITE_URL": base_url,
+        "LEGO_THREE_BASE_URL": getattr(settings, "LEGO_THREE_BASE_URL", ""),
         "DEFAULT_META_TITLE": _("%(site)s | V for tech, V for future")
         % {"site": site_name},
         "DEFAULT_META_DESCRIPTION": _(

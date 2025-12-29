@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import PointLedger, Unlock
+from .models import PaymentTransaction, PointLedger, Unlock
 
 
 @admin.register(PointLedger)
@@ -14,3 +14,10 @@ class PointLedgerAdmin(admin.ModelAdmin):
 class UnlockAdmin(admin.ModelAdmin):
     list_display = ("user", "content", "method", "cost_points", "created_at")
     list_filter = ("method",)
+
+
+@admin.register(PaymentTransaction)
+class PaymentTransactionAdmin(admin.ModelAdmin):
+    list_display = ("app_trans_id", "user", "content", "amount", "status", "created_at")
+    list_filter = ("status", "provider", "currency")
+    search_fields = ("app_trans_id", "zp_trans_id", "user__username")

@@ -1144,6 +1144,7 @@ textarea:focus {
     box-shadow: 0 12px 30px var(--shadow);
     max-height: 60vh;
     overflow-y: auto;
+    position: relative;
   }
 
   .preview-stack {
@@ -1178,9 +1179,39 @@ textarea:focus {
     object-fit: contain;
   }
 
+  .detail-preview--locked .preview-image {
+    filter: blur(10px);
+  }
+
+  .detail-preview--locked .preview-stack img {
+    filter: blur(10px);
+  }
+
+  .preview-lock-overlay {
+    position: absolute;
+    inset: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 24, 18, 0.45);
+    border-radius: 12px;
+    backdrop-filter: blur(2px);
+  }
+
+  .preview-lock-card {
+    background: rgba(255, 255, 255, 0.92);
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    color: #143624;
+    text-align: center;
+    box-shadow: 0 12px 24px var(--shadow);
+  }
+
   .lego-viewer {
     display: grid;
     gap: 10px;
+    position: relative;
   }
 
   .lego-viewer-toolbar {
@@ -1190,22 +1221,70 @@ textarea:focus {
     gap: 8px;
   }
 
+  .lego-viewer-stage {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
   .lego-viewer-canvas {
     width: 100%;
     height: 420px;
     border-radius: 12px;
     background: radial-gradient(circle at 20% 15%, rgba(69, 224, 107, 0.16), transparent 55%),
       rgba(18, 61, 42, 0.06);
+    display: block;
   }
 
   .lego-viewer-status {
-    min-height: 20px;
-    font-size: 13px;
-    color: var(--muted);
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    text-align: center;
+    background: rgba(15, 20, 24, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 2;
   }
 
-  .lego-viewer-status[data-level="error"] {
-    color: #b40000;
+  .lego-viewer-status[data-visible="true"] {
+    display: flex;
+  }
+
+  .lego-viewer-status-card {
+    max-width: 320px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--ink);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+    display: grid;
+    gap: 8px;
+  }
+
+  .lego-viewer-status[data-level="loading"] .lego-viewer-status-card::before {
+    content: "";
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 3px solid rgba(69, 224, 107, 0.35);
+    border-top-color: #25c556;
+    animation: spin 0.9s linear infinite;
+    margin: 0 auto;
+  }
+
+  .lego-viewer-status[data-level="error"] .lego-viewer-status-card {
+    color: #8a1f1f;
+    background: rgba(255, 235, 235, 0.98);
+    border: 1px solid rgba(242, 96, 79, 0.45);
+  }
+
+  .lego-viewer-note {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
   }
 
 .detail-actions {
@@ -1524,6 +1603,132 @@ textarea:focus {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.profile-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.profile-section-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.profile-content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.profile-content-grid .content-card {
+  min-height: 210px;
+  animation: fadeUp 0.4s ease forwards;
+}
+
+.profile-content-grid .card-media {
+  height: 120px;
+}
+
+.profile-content-grid .card-body h3 {
+  font-size: 15px;
+}
+
+.profile-submission-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-submission-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.profile-submission-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.button.button-xs {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.points-modal-content {
+  width: min(560px, 92vw);
+}
+
+.points-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.points-modal-note {
+  margin: 0;
+  color: var(--muted);
+}
+
+.points-options {
+  display: grid;
+  gap: 12px;
+}
+
+.points-option {
+  display: block;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.points-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px var(--shadow);
+}
+
+.points-option-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.points-option-desc {
+  font-size: 13px;
+  color: var(--muted);
 }
 
 .form {
@@ -1979,6 +2184,15 @@ textarea:focus {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 

@@ -7,11 +7,13 @@ from django.views.generic.base import RedirectView
 
 from . import views
 
+FAVICON_URL = static_url("img/logoV+.png").replace("%", "%%")
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path(
         "favicon.ico",
-        RedirectView.as_view(url=static_url("img/logoV+.png"), permanent=True),
+        RedirectView.as_view(url=FAVICON_URL, permanent=True),
     ),
     path("sitemap.xml", views.sitemap_xml, name="sitemap"),
     path("robots.txt", views.robots_txt, name="robots"),
@@ -23,6 +25,7 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     path("interactions/", include("interactions.urls")),
     path("contributions/", include("contributions.urls")),
+    path("payments/", include("gating.urls")),
     path("", include("library.urls")),
 ]
 

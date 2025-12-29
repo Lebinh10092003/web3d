@@ -24,5 +24,9 @@ def build_signed_url(blob_path, expires_in=None, method="GET", user_id=None, dow
     query = {"token": token}
     if download:
         query["download"] = "1"
-    url = reverse("library:protected-media", args=[blob_path])
+    hide_path = getattr(settings, "MEDIA_SIGNED_URL_HIDE_PATH", True)
+    if hide_path:
+        url = reverse("library:protected-media")
+    else:
+        url = reverse("library:protected-media-path", args=[blob_path])
     return f"{url}?{urlencode(query)}"

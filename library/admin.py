@@ -12,10 +12,19 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(ContentItem)
 class ContentItemAdmin(admin.ModelAdmin):
-    list_display = ("title", "content_type", "owner", "status", "is_public", "created_at")
+    list_display = (
+        "title",
+        "content_type",
+        "owner",
+        "download_cost_points",
+        "status",
+        "is_public",
+        "created_at",
+    )
     list_filter = ("content_type", "status", "is_public")
     search_fields = ("title", "description")
     filter_horizontal = ("categories",)
+    exclude = ("price_vnd",)
 
 
 @admin.register(ContentFile)

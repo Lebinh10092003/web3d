@@ -30,6 +30,7 @@ class Unlock(models.Model):
         AD = "AD", "Ad"
         SOCIAL = "SOCIAL", "Social"
         CONTRIBUTION = "CONTRIBUTION", "Contribution"
+        PAYMENT = "PAYMENT", "Payment"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name="unlocks", on_delete=models.CASCADE
@@ -44,3 +45,33 @@ class Unlock(models.Model):
 
     def __str__(self):
         return f"{self.user_id}:{self.content_id}"
+
+
+class PaymentTransaction(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        PAID = "PAID", "Paid"
+        FAILED = "FAILED", "Failed"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name="payment_transactions", on_delete=models.CASCADE
+    )
+    content = models.ForeignKey(
+        ContentItem, related_name="payment_transactions", on_delete=models.CASCADE
+    )
+    amount = models.PositiveIntegerField()
+    currency = models.CharField(max_length=6, default="VND")
+    provider = models.CharField(max_length=30, default="ZALOPAY")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    app_trans_id = models.CharField(max_length=64, unique=True)
+    zp_trans_id = models.CharField(max_length=64, blank=True)
+    app_time = models.BigIntegerField(default=0)
+    raw_callback = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.app_trans_id}:{self.status}"

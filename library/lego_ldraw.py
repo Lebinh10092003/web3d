@@ -98,6 +98,24 @@ def get_cached_ldraw_model_path(*, content_id, source_path):
     return cache_path
 
 
+def find_cached_ldraw_model_path(*, content_id, source_path):
+    ext = _file_extension(source_path)
+    if ext == "lxf":
+        mode, cmd = _resolve_lxf_converter_settings()
+        variants = _lxf_cache_variants_for_mode(mode, cmd)
+        for variant in variants:
+            cache_path = f"derived/lego/{content_id}/model-{variant}.ldr"
+            if default_storage.exists(cache_path):
+                return cache_path
+        return ""
+
+    cache_variant = _ldraw_cache_variant(source_path)
+    cache_path = f"derived/lego/{content_id}/model-{cache_variant}.ldr"
+    if default_storage.exists(cache_path):
+        return cache_path
+    return ""
+
+
 def build_ldraw_model_bytes(source_path):
     ext = _file_extension(source_path)
     if ext in {"ldr", "mpd"}:
@@ -139,8 +157,20 @@ def _extract_ldraw_from_io(source_path):
             ]
             if not candidates:
                 raise UnsupportedLegoModel("No LDraw files found inside .io archive.")
-            best = min(candidates, key=_score_ldraw_candidate)
-            return archive.read(best)
+            readable = [info for info in candidates if not (info.flag_bits & 0x1)]
+            if not readable:
+                raise UnsupportedLegoModel(
+                    "The .io archive is encrypted. Please export without a password."
+                )
+            best = min(readable, key=_score_ldraw_candidate)
+            try:
+                return archive.read(best)
+            except RuntimeError as exc:
+                if "password" in str(exc).lower() or "encrypted" in str(exc).lower():
+                    raise UnsupportedLegoModel(
+                        "The .io archive is encrypted. Please export without a password."
+                    ) from exc
+                raise
 
 
 def _score_ldraw_candidate(info):

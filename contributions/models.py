@@ -1,4 +1,3 @@
-import logging
 import mimetypes
 import os
 import shutil
@@ -13,9 +12,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from library.models import Category, ContentFile, ContentItem
-from library.lego_ldraw import UnsupportedLegoModel, get_cached_ldraw_model_path
-
-logger = logging.getLogger(__name__)
+from library.tasks import enqueue_ldraw_prebuild
 
 
 class ContributionSubmission(models.Model):
@@ -55,6 +52,10 @@ class ContributionSubmission(models.Model):
     download_cost_points = models.PositiveIntegerField(
         default=10,
         help_text=_("Points required to unlock and download this content."),
+    )
+    price_vnd = models.PositiveIntegerField(
+        default=0,
+        help_text=_("Price in VND for paid content. Set 0 for free/points."),
     )
     points_awarded = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
@@ -137,11 +138,19 @@ class ContributionSubmission(models.Model):
             .select_related("content")
             .first()
         )
+        effective_points = self.download_cost_points
+
         if existing_source:
             content = existing_source.content
-            if content.download_cost_points != self.download_cost_points:
-                content.download_cost_points = self.download_cost_points
-                content.save(update_fields=["download_cost_points"])
+            update_fields = []
+            if content.download_cost_points != effective_points:
+                content.download_cost_points = effective_points
+                update_fields.append("download_cost_points")
+            if getattr(content, "price_vnd", 0):
+                content.price_vnd = 0
+                update_fields.append("price_vnd")
+            if update_fields:
+                content.save(update_fields=update_fields)
             if self.category:
                 content.categories.add(self.category)
             competition_category = self._get_or_create_competition_category()
@@ -158,7 +167,8 @@ class ContributionSubmission(models.Model):
             title=self.title,
             description=self.description,
             content_type=self._resolve_content_type(),
-            download_cost_points=self.download_cost_points,
+            download_cost_points=effective_points,
+            price_vnd=0,
             status=ContentItem.Status.PUBLISHED,
             is_public=True,
         )
@@ -196,20 +206,13 @@ class ContributionSubmission(models.Model):
         if ext not in {"lxf", "io", "ldr", "mpd"}:
             return
 
-        def build():
-            try:
-                get_cached_ldraw_model_path(content_id=content.id, source_path=file_path)
-            except UnsupportedLegoModel as exc:
-                logger.warning(
-                    "LDraw prebuild skipped for content %s: %s", content.id, exc
-                )
-            except Exception:
-                logger.exception("Unexpected LDraw prebuild failure for content %s", content.id)
+        def enqueue():
+            enqueue_ldraw_prebuild(content.id, file_path)
 
         try:
-            transaction.on_commit(build)
+            transaction.on_commit(enqueue)
         except Exception:
-            build()
+            enqueue()
 
     def save(self, *args, **kwargs):
         old_status = None
