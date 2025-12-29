@@ -79,10 +79,16 @@ class ContentFile(models.Model):
     def __str__(self):
         return f"{self.content_id}:{self.kind}"
 
-    def get_signed_url(self, expires_in=None, method="GET"):
+    def get_signed_url(self, expires_in=None, method="GET", user_id=None, download=False):
         from .storage import build_signed_url
 
-        return build_signed_url(self.storage_path, expires_in=expires_in, method=method)
+        return build_signed_url(
+            self.storage_path,
+            expires_in=expires_in,
+            method=method,
+            user_id=user_id,
+            download=download,
+        )
 
 
 class RecapVideo(models.Model):

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static i18n %}
 
-{% block title %}{{ content.title }} | Vsteam Lab{% endblock %}
-{% block meta_title %}{{ content.title }} | Vsteam Lab{% endblock %}
+{% block title %}{{ content.title }} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}{{ content.title }} | V+ STEAM LAB Library{% endblock %}
 {% block meta_description %}{{ meta_description }}{% endblock %}
 {% block og_description %}{{ meta_description }}{% endblock %}
 {% block og_type %}article{% endblock %}
-{% block twitter_title %}{{ content.title }} | Vsteam Lab{% endblock %}
+{% block twitter_title %}{{ content.title }} | V+ STEAM LAB Library{% endblock %}
 {% block twitter_description %}{{ meta_description }}{% endblock %}
 
 {% block content %}
@@ -19,8 +19,8 @@
     <h1>{{ content.title }}</h1>
     <p>{{ content.description }}</p>
     <div class="detail-meta">
-      <span>{% blocktrans with count=rating_count %}{{ count }} ratings{% endblocktrans %}</span>
-      <span>{% blocktrans with count=favorites_count %}{{ count }} saves{% endblocktrans %}</span>
+      <span id="detail-rating-count">{% blocktrans with count=rating_count %}{{ count }} ratings{% endblocktrans %}</span>
+      <span id="detail-favorites-count">{% blocktrans with count=favorites_count %}{{ count }} saves{% endblocktrans %}</span>
       {% if content.download_cost_points == 0 %}
         <span class="points-badge points-free">{% trans "Free download" %}</span>
       {% else %}
@@ -59,41 +59,8 @@
 
   <div class="detail-actions" id="download-actions">
     <div class="panel panel-stack">
-      <div class="panel-section">
-        <h2>{% trans "Unlock & download" %}</h2>
-        <p>{% trans "Download requires points. Earn points by contributing or community engagement." %}</p>
-        {% if request.user.is_authenticated %}
-          <form
-            method="post"
-            action="{% url 'library:content-download' content.id %}"
-            data-download-form
-            data-download-unlocked="{{ is_unlocked|yesno:'true,false' }}"
-            data-download-cost="{{ content.download_cost_points }}"
-            data-user-points="{{ request.user.points_balance }}"
-            data-download-insufficient-message="{% trans 'Not enough points to unlock this download.' %}"
-          >
-            {% csrf_token %}
-            {% if is_unlocked %}
-              <button class="button" type="submit">{% trans "Download now" %}</button>
-            {% else %}
-              {% if content.download_cost_points > 0 and request.user.points_balance < content.download_cost_points %}
-                <button class="button" type="submit">{% trans "Unlock with points" %}</button>
-                <p class="field-hint">{% trans "Not enough points to unlock this download." %}</p>
-              {% else %}
-                <button class="button" type="submit">{% trans "Unlock with points" %}</button>
-              {% endif %}
-            {% endif %}
-          </form>
-        {% else %}
-          <a
-            class="button"
-            href="{% url 'accounts:login' %}"
-            hx-get="{% url 'accounts:login' %}?modal=1"
-            hx-target="#auth-modal-body"
-            hx-swap="innerHTML"
-          >{% trans "Login to download" %}</a>
-          <p class="field-hint">{% trans "Please sign in to unlock downloads." %}</p>
-        {% endif %}
+      <div class="panel-section" id="download-action-section">
+        {% include "library/_download_action.html" %}
       </div>
 
       <div class="panel-section" id="favorite-button">
@@ -113,11 +80,11 @@
   <div class="download-banner-card" role="dialog" aria-modal="true" aria-labelledby="download-banner-title">
     <button class="download-banner-close" type="button" data-download-banner-close>&times;</button>
     <div class="download-banner-media">
-      <img src="{% static 'img/test.jpg' %}" alt="{% trans 'Vsteam Lab banner' %}">
+      <img src="{% static 'img/test.jpg' %}" alt="V+ STEAM LAB Library banner">
     </div>
     <div class="download-banner-body">
-      <span class="download-banner-eyebrow">{% trans "Vsteam Lab" %}</span>
-      <h3 id="download-banner-title">{% trans "Vsteam Lab - STEAM + Robotics community" %}</h3>
+      <span class="download-banner-eyebrow">V+ STEAM LAB Library</span>
+      <h3 id="download-banner-title">V+ STEAM LAB Library - STEAM + Robotics resources</h3>
       <p>{% trans "Thanks for downloading! Explore lessons, PDFs, and 3D builds created by teachers and students." %}</p>
       <p class="download-banner-timer">
         {% trans "Download available in" %} <span data-download-banner-countdown>5</span>s

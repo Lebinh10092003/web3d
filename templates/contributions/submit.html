@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Submit content" %} | Vsteam Lab{% endblock %}
+{% block title %}{% trans "Submit content" %} | V+ STEAM LAB Library{% endblock %}
 
 {% block content %}
 <section class="submit-shell">
@@ -92,7 +92,13 @@
         <div class="submit-actions">
           <button class="button" type="submit">{% trans "Submit for review" %}</button>
           <p class="submit-note">
-            {% trans "Review usually takes 24-48 hours. Approved submissions earn points." %}
+            {% if request.LANGUAGE_CODE == "vi" %}
+              Xét duyệt thường mất 24-48 giờ. Bài được duyệt sẽ nhận điểm.
+              Điền càng đầy đủ thông tin càng dễ được duyệt. Hãy quay lại sau để kiểm tra kết quả.
+            {% else %}
+              Review usually takes 24-48 hours. Approved submissions earn points.
+              The more complete the details, the faster the approval. Please check back later for the result.
+            {% endif %}
           </p>
         </div>
       </form>

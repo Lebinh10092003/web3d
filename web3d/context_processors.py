@@ -13,7 +13,7 @@ def adsense(request):
 
 
 def site_meta(request):
-    site_name = getattr(settings, "SITE_NAME", "Vsteam Lab")
+    site_name = getattr(settings, "SITE_NAME", "V+ STEAM LAB Library")
     site_url = getattr(settings, "SITE_URL", "")
     if not site_url:
         site_url = f"{request.scheme}://{request.get_host()}"
@@ -21,9 +21,11 @@ def site_meta(request):
     return {
         "SITE_NAME": site_name,
         "SITE_URL": base_url,
-        "DEFAULT_META_TITLE": _("%(site)s | STEAM + Robotics resources")
+        "DEFAULT_META_TITLE": _("%(site)s | V for tech, V for future")
         % {"site": site_name},
         "DEFAULT_META_DESCRIPTION": _(
+            "V+ STEAM LAB Library is a learning resource library from Vietnam. "
+            "V for tech, V for future. "
             "Share and discover lessons, PDFs, and 3D LEGO builds for robotics competitions."
         ),
         "DEFAULT_OG_IMAGE": f"{base_url}{static('img/logoV+.png')}",

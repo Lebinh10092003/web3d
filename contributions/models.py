@@ -1,3 +1,4 @@
+import logging
 import mimetypes
 import os
 import shutil
@@ -6,11 +7,15 @@ from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db import models
 from django.db.models.signals import pre_delete
+from django.db import transaction
 from django.dispatch import receiver
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from library.models import Category, ContentFile, ContentItem
+from library.lego_ldraw import UnsupportedLegoModel, get_cached_ldraw_model_path
+
+logger = logging.getLogger(__name__)
 
 
 class ContributionSubmission(models.Model):
@@ -143,6 +148,7 @@ class ContributionSubmission(models.Model):
             if competition_category:
                 content.categories.add(competition_category)
             self._attach_preview(content)
+            self._prebuild_ldraw(content, self.file_path)
             return
         if not default_storage.exists(self.file_path):
             return
@@ -179,6 +185,31 @@ class ContributionSubmission(models.Model):
             checksum="",
         )
         self._attach_preview(content)
+        self._prebuild_ldraw(content, self.file_path)
+
+    def _prebuild_ldraw(self, content, file_path):
+        if not getattr(settings, "PREBUILD_LDRAW_ON_APPROVAL", True):
+            return
+        if not content or not file_path:
+            return
+        ext = os.path.splitext(file_path)[1].lstrip(".").lower()
+        if ext not in {"lxf", "io", "ldr", "mpd"}:
+            return
+
+        def build():
+            try:
+                get_cached_ldraw_model_path(content_id=content.id, source_path=file_path)
+            except UnsupportedLegoModel as exc:
+                logger.warning(
+                    "LDraw prebuild skipped for content %s: %s", content.id, exc
+                )
+            except Exception:
+                logger.exception("Unexpected LDraw prebuild failure for content %s", content.id)
+
+        try:
+            transaction.on_commit(build)
+        except Exception:
+            build()
 
     def save(self, *args, **kwargs):
         old_status = None

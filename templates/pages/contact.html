@@ -1,18 +1,24 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Contact" %} | Vsteam Lab{% endblock %}
-{% block meta_title %}{% trans "Contact Vsteam Lab" %}{% endblock %}
-{% block meta_description %}{% trans "Get in touch with Vsteam Lab for STEAM and robotics resource collaboration." %}{% endblock %}
-{% block og_description %}{% trans "Get in touch with Vsteam Lab for STEAM and robotics resource collaboration." %}{% endblock %}
-{% block twitter_title %}{% trans "Contact Vsteam Lab" %}{% endblock %}
-{% block twitter_description %}{% trans "Get in touch with Vsteam Lab for STEAM and robotics resource collaboration." %}{% endblock %}
+{% block title %}{% trans "Contact" %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}Contact V+ STEAM LAB Library{% endblock %}
+{% block meta_description %}Contact V+ STEAM LAB Library for STEAM, robotics, and learning resource collaborations.{% endblock %}
+{% block og_description %}Contact V+ STEAM LAB Library for STEAM, robotics, and learning resource collaborations.{% endblock %}
+{% block twitter_title %}Contact V+ STEAM LAB Library{% endblock %}
+{% block twitter_description %}Contact V+ STEAM LAB Library for STEAM, robotics, and learning resource collaborations.{% endblock %}
 
 {% block content %}
 {% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
 <section class="panel">
   <h1>{% trans "Contact" %}</h1>
-  <p>{% trans "Email" %}: support@web3d.local</p>
-  <p>{% trans "We respond within 2 business days." %}</p>
+  {% if request.LANGUAGE_CODE == "vi" %}
+    <p>Liên hệ với V+ STEAM LAB Library để trao đổi tài liệu, hợp tác chương trình và quảng bá dự án STEAM.</p>
+  {% else %}
+    <p>Contact V+ STEAM LAB Library to exchange resources, collaborate on programs, and promote STEAM projects.</p>
+  {% endif %}
+  <p>{% trans "Email" %}: 09.levanbinh2003@gmail.com</p>
+  <p>{% trans "Phone" %}: 0374202948</p>
+  <p><a href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">facebook.com/VPlusSteamLab</a></p>
 </section>
 {% endblock %}

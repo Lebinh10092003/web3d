@@ -35,7 +35,7 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, _("Welcome to Vsteam Lab."))
+            messages.success(request, _("Welcome to V+ STEAM LAB Library."))
             if request.headers.get("HX-Request") == "true":
                 response = HttpResponse("")
                 response["HX-Redirect"] = reverse("library:home")

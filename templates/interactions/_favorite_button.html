@@ -1,5 +1,10 @@
 {% load i18n %}
 <div class="favorite-box">
+  {% if is_htmx %}
+    <span id="detail-favorites-count" hx-swap-oob="true">
+      {% blocktrans with count=favorites_count %}{{ count }} saves{% endblocktrans %}
+    </span>
+  {% endif %}
   <form
     method="post"
     hx-post="{% url 'interactions:favorite' content.id %}"

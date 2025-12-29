@@ -164,8 +164,18 @@ def submit(request):
             submission.file_path = saved_path
             submission.preview_path = saved_preview_path
             submission.save()
-            messages.success(request, _("Submission received for review."))
-            return redirect("accounts:profile")
+            if request.LANGUAGE_CODE == "vi":
+                success_message = (
+                    "Đã nhận bài gửi để xét duyệt. "
+                    "Bạn có thể gửi thêm tài liệu khác hoặc quay lại sau để kiểm tra kết quả."
+                )
+            else:
+                success_message = (
+                    "Submission received for review. "
+                    "You can submit another file or check back later for the result."
+                )
+            messages.success(request, success_message)
+            return redirect("contributions:submit")
     else:
         form = ContributionSubmissionForm()
 

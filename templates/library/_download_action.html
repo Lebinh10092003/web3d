@@ -1,0 +1,45 @@
+{% load i18n %}
+<h2>{% trans "Unlock & download" %}</h2>
+<p>{% trans "Download requires points. Earn points by contributing or community engagement." %}</p>
+{% if action_message %}
+  <div class="action-note{% if action_level %} action-note--{{ action_level }}{% endif %}">
+    {{ action_message }}
+  </div>
+{% endif %}
+{% if request.user.is_authenticated %}
+  <form
+    method="post"
+    action="{% url 'library:content-download' content.id %}"
+    data-download-form
+    data-download-unlocked="{{ is_unlocked|yesno:'true,false' }}"
+    data-download-cost="{{ content.download_cost_points }}"
+    data-user-points="{{ request.user.points_balance }}"
+    data-download-insufficient-message="{% trans 'Not enough points to unlock this download.' %}"
+    {% if not is_unlocked %}
+      hx-post="{% url 'library:content-download' content.id %}"
+      hx-target="#download-action-section"
+      hx-swap="innerHTML"
+    {% endif %}
+  >
+    {% csrf_token %}
+    {% if is_unlocked %}
+      <button class="button" type="submit">{% trans "Download now" %}</button>
+    {% else %}
+      {% if content.download_cost_points > 0 and request.user.points_balance < content.download_cost_points %}
+        <button class="button" type="submit">{% trans "Unlock with points" %}</button>
+        <p class="field-hint">{% trans "Not enough points to unlock this download." %}</p>
+      {% else %}
+        <button class="button" type="submit">{% trans "Unlock with points" %}</button>
+      {% endif %}
+    {% endif %}
+  </form>
+{% else %}
+  <a
+    class="button"
+    href="{% url 'accounts:login' %}"
+    hx-get="{% url 'accounts:login' %}?modal=1"
+    hx-target="#auth-modal-body"
+    hx-swap="innerHTML"
+  >{% trans "Login to download" %}</a>
+  <p class="field-hint">{% trans "Please sign in to unlock downloads." %}</p>
+{% endif %}

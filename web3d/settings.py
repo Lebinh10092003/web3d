@@ -24,7 +24,7 @@ if not SECRET_KEY:
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
-SITE_NAME = os.environ.get("SITE_NAME", "Vsteam Lab")
+SITE_NAME = os.environ.get("SITE_NAME", "V+ STEAM LAB Library")
 SITE_URL = os.environ.get("SITE_URL", "")
 
 
@@ -91,6 +91,7 @@ DATABASES = {
         "PASSWORD": DB_PASSWORD,
         "HOST": os.environ.get("DB_HOST", "localhost"),
         "PORT": os.environ.get("DB_PORT", "5432"),
+        "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
     }
 }
 
@@ -121,6 +122,10 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = os.environ.get("MEDIA_URL", "/media/")
 MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_SIGNED_URLS = os.environ.get("MEDIA_SIGNED_URLS", "1") == "1"
+MEDIA_SIGNED_URL_TTL = int(os.environ.get("MEDIA_SIGNED_URL_TTL", "300"))
+MEDIA_ACCEL_REDIRECT_PREFIX = os.environ.get("MEDIA_ACCEL_REDIRECT_PREFIX", "")
+USE_SIGNED_DOWNLOADS = os.environ.get("USE_SIGNED_DOWNLOADS", "1") == "1"
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
 
 
@@ -134,6 +139,27 @@ CONTRIBUTION_APPROVAL_POINTS = int(os.environ.get("CONTRIBUTION_APPROVAL_POINTS"
 MAX_CONTRIBUTION_UPLOAD_MB = int(os.environ.get("MAX_CONTRIBUTION_UPLOAD_MB", "50"))
 MAX_PREVIEW_UPLOAD_MB = int(os.environ.get("MAX_PREVIEW_UPLOAD_MB", "5"))
 MAX_PDF_PREVIEW_MB = int(os.environ.get("MAX_PDF_PREVIEW_MB", "20"))
+PREBUILD_LDRAW_ON_APPROVAL = os.environ.get("PREBUILD_LDRAW_ON_APPROVAL", "1") == "1"
+RATE_LIMIT_LDRAW_PER_MIN = int(os.environ.get("RATE_LIMIT_LDRAW_PER_MIN", "30"))
+RATE_LIMIT_PREVIEW_PER_MIN = int(os.environ.get("RATE_LIMIT_PREVIEW_PER_MIN", "60"))
+RATE_LIMIT_DOWNLOAD_PER_MIN = int(os.environ.get("RATE_LIMIT_DOWNLOAD_PER_MIN", "20"))
+
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "1") == "1"
+    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "1") == "1"
+    CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", "1") == "1"
+    SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "31536000"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+        os.environ.get("SECURE_HSTS_INCLUDE_SUBDOMAINS", "1") == "1"
+    )
+    SECURE_HSTS_PRELOAD = os.environ.get("SECURE_HSTS_PRELOAD", "0") == "1"
+    if os.environ.get("SECURE_PROXY_SSL_HEADER", "1") == "1":
+        SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 ADSENSE_CLIENT = os.environ.get("ADSENSE_CLIENT", "")
 ADSENSE_SLOT_HOME = os.environ.get("ADSENSE_SLOT_HOME", "")

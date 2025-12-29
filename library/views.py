@@ -2,6 +2,7 @@ import logging
 import mimetypes
 import os
 import re
+import time
 from pathlib import Path, PurePosixPath
 from urllib.parse import urlencode
 
@@ -10,8 +11,10 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.staticfiles import finders
+from django.core import signing
 from django.core.paginator import Paginator
 from django.core.files.storage import default_storage
+from django.core.cache import cache
 from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count, Q
 from django.http import FileResponse, Http404, HttpResponse
@@ -40,7 +43,7 @@ logger = logging.getLogger(__name__)
 def _build_meta_description(content):
     description = (content.description or "").strip()
     if not description:
-        description = _("%(title)s - %(type)s resource from Vsteam Lab.") % {
+        description = _("%(title)s - %(type)s resource from V+ STEAM LAB Library.") % {
             "title": content.title,
             "type": content.get_content_type_display(),
         }
@@ -65,6 +68,46 @@ def _safe_signed_url(content_file):
         return content_file.get_signed_url()
     except Exception:
         return ""
+
+
+def _rate_limit(request, key, limit, window):
+    if not limit or limit <= 0:
+        return True
+    identity = ""
+    if request.user.is_authenticated:
+        identity = f"user:{request.user.id}"
+    else:
+        identity = _get_client_ip(request) or "anon"
+
+    cache_key = f"rl:{key}:{identity}"
+    try:
+        count = cache.incr(cache_key)
+    except ValueError:
+        cache.set(cache_key, 1, timeout=window)
+        count = 1
+    if count > limit:
+        return False
+    return True
+
+
+def _rate_limit_response(window):
+    response = HttpResponse("Too Many Requests", status=429, content_type="text/plain")
+    response["Retry-After"] = str(window)
+    return response
+
+
+def rate_limit(limit, window, key_prefix):
+    def decorator(view):
+        def wrapped(request, *args, **kwargs):
+            if not _rate_limit(request, key_prefix, limit, window):
+                return _rate_limit_response(window)
+            return view(request, *args, **kwargs)
+
+        wrapped.__name__ = getattr(view, "__name__", "wrapped")
+        wrapped.__doc__ = getattr(view, "__doc__", None)
+        return wrapped
+
+    return decorator
 
 
 def _extract_extension(path):
@@ -194,6 +237,19 @@ def home(request):
         favorites_count=Count("favorites", distinct=True),
     )
 
+    sort = request.GET.get("sort", "newest").strip().lower()
+    if sort == "oldest":
+        items = items.order_by("created_at")
+    elif sort == "rating":
+        items = items.order_by("-rating_avg", "-created_at")
+    elif sort == "favorites":
+        items = items.order_by("-favorites_count", "-created_at")
+    elif sort == "title":
+        items = items.order_by("title")
+    else:
+        sort = "newest"
+        items = items.order_by("-created_at")
+
     paginator = Paginator(items, 8)
     page_obj = paginator.get_page(request.GET.get("page") or 1)
     _annotate_preview(page_obj)
@@ -207,6 +263,8 @@ def home(request):
         params["category"] = category_slug
     if content_type:
         params["content_type"] = content_type
+    if sort:
+        params["sort"] = sort
     filter_query = urlencode(params)
     page_range = paginator.get_elided_page_range(number=page_obj.number, on_each_side=1, on_ends=1)
     file_types = [{"value": ext, "label": ext.upper()} for ext in _collect_file_types()]
@@ -217,6 +275,7 @@ def home(request):
         "query": query,
         "category_slug": category_slug,
         "content_type": content_type,
+        "sort": sort,
         "file_types": file_types,
         "filter_query": filter_query,
         "page_range": page_range,
@@ -300,6 +359,9 @@ def content_detail(request, pk):
         "user_rating": user_rating,
         "is_favorited": is_favorited,
         "is_unlocked": is_unlocked,
+        "is_htmx": False,
+        "action_message": None,
+        "action_level": "",
         "comments": comments,
         "edit_form": None,
         "editing_comment_id": None,
@@ -310,6 +372,11 @@ def content_detail(request, pk):
 
 
 @require_GET
+@rate_limit(
+    limit=int(getattr(settings, "RATE_LIMIT_PREVIEW_PER_MIN", 60) or 60),
+    window=60,
+    key_prefix="preview",
+)
 def content_preview_image(request, pk):
     content = get_object_or_404(
         ContentItem, pk=pk, is_public=True, status=ContentItem.Status.PUBLISHED
@@ -358,6 +425,48 @@ def content_preview_image(request, pk):
 @require_GET
 def ldraw_index(request):
     return HttpResponse("LDraw assets", content_type="text/plain; charset=utf-8")
+
+
+@require_GET
+def protected_media(request, blob_path):
+    token = request.GET.get("token", "")
+    if not token:
+        return HttpResponse("Missing token.", status=403, content_type="text/plain")
+    try:
+        payload = signing.loads(token, salt="media")
+    except signing.BadSignature:
+        return HttpResponse("Invalid token.", status=403, content_type="text/plain")
+    path = payload.get("path")
+    if path != blob_path:
+        return HttpResponse("Invalid token.", status=403, content_type="text/plain")
+    exp = payload.get("exp")
+    if exp and int(exp) < int(time.time()):
+        return HttpResponse("Expired token.", status=403, content_type="text/plain")
+    uid = int(payload.get("uid") or 0)
+    if uid:
+        if not request.user.is_authenticated or request.user.id != uid:
+            return HttpResponse("Invalid user.", status=403, content_type="text/plain")
+
+    try:
+        file_handle = default_storage.open(blob_path, "rb")
+    except Exception:
+        raise Http404
+
+    filename = os.path.basename(blob_path)
+    guessed, _ = mimetypes.guess_type(filename)
+    content_type = guessed or "application/octet-stream"
+    response = FileResponse(file_handle, content_type=content_type)
+    if request.GET.get("download") == "1":
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    accel_prefix = getattr(settings, "MEDIA_ACCEL_REDIRECT_PREFIX", "")
+    if accel_prefix:
+        response = HttpResponse(content_type=content_type)
+        response["X-Accel-Redirect"] = f"{accel_prefix.rstrip('/')}/{blob_path.lstrip('/')}"
+        if request.GET.get("download") == "1":
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response["Cache-Control"] = "private, max-age=60"
+    return response
 
 
 def _get_ldraw_root():
@@ -557,6 +666,11 @@ def ldraw_asset(request, relative_path):
 
 
 @require_GET
+@rate_limit(
+    limit=int(getattr(settings, "RATE_LIMIT_LDRAW_PER_MIN", 30) or 30),
+    window=60,
+    key_prefix="ldraw",
+)
 def content_lego_model(request, pk):
     content = get_object_or_404(
         ContentItem, pk=pk, is_public=True, status=ContentItem.Status.PUBLISHED
@@ -568,6 +682,16 @@ def content_lego_model(request, pk):
     source_path = source_file.storage_path
     if not source_path:
         raise Http404
+
+    is_unlocked = content.download_cost_points == 0
+    if request.user.is_authenticated:
+        is_unlocked = is_unlocked or Unlock.objects.filter(
+            content=content, user=request.user
+        ).exists()
+        if content.owner_id == request.user.id:
+            is_unlocked = True
+    if not is_unlocked:
+        return HttpResponse("Unlock required.", status=403, content_type="text/plain")
 
     try:
         cache_path = get_cached_ldraw_model_path(content_id=content.id, source_path=source_path)
@@ -617,16 +741,35 @@ def content_lego_model(request, pk):
 
 @require_POST
 @login_required
+@rate_limit(
+    limit=int(getattr(settings, "RATE_LIMIT_DOWNLOAD_PER_MIN", 20) or 20),
+    window=60,
+    key_prefix="download",
+)
 def content_download(request, pk):
     content = get_object_or_404(
         ContentItem, pk=pk, is_public=True, status=ContentItem.Status.PUBLISHED
     )
+    is_htmx = request.headers.get("HX-Request") == "true"
     if not content.files.exists():
-        messages.error(request, _("No files available for this content yet."))
+        message_text = _("No files available for this content yet.")
+        if is_htmx:
+            return render(
+                request,
+                "library/_download_action.html",
+                {
+                    "content": content,
+                    "is_unlocked": False,
+                    "action_message": message_text,
+                    "action_level": "error",
+                },
+            )
+        messages.error(request, message_text)
         return redirect("library:content-detail", pk=pk)
 
     did_unlock = False
     user = None
+    unlock = None
     with transaction.atomic():
         user_model = get_user_model()
         user = user_model.objects.select_for_update().get(pk=request.user.pk)
@@ -634,7 +777,19 @@ def content_download(request, pk):
         if not unlock:
             cost = content.download_cost_points
             if cost > 0 and user.points_balance < cost:
-                messages.error(request, _("Not enough points to unlock this download."))
+                message_text = _("Not enough points to unlock this download.")
+                if is_htmx:
+                    return render(
+                        request,
+                        "library/_download_action.html",
+                        {
+                            "content": content,
+                            "is_unlocked": False,
+                            "action_message": message_text,
+                            "action_level": "error",
+                        },
+                    )
+                messages.error(request, message_text)
                 return redirect("library:content-detail", pk=pk)
 
             if cost > 0:
@@ -656,11 +811,58 @@ def content_download(request, pk):
                 did_unlock = True
 
     if did_unlock:
-        messages.success(
-            request,
-            _('Unlocked successfully. Click "Download now" to start downloading.'),
-        )
+        if request.LANGUAGE_CODE == "vi":
+            action_message = (
+                'Mở khóa thành công. Nhấn "Tải ngay" để bắt đầu tải.'
+            )
+        else:
+            action_message = 'Unlocked successfully. Click "Download now" to start downloading.'
+        if is_htmx:
+            return render(
+                request,
+                "library/_download_action.html",
+                {
+                    "content": content,
+                    "is_unlocked": True,
+                    "action_message": action_message,
+                    "action_level": "success",
+                },
+            )
+        messages.success(request, action_message)
         return redirect("library:content-detail", pk=pk)
+
+    if is_htmx:
+        if content.download_cost_points == 0 or unlock:
+            if request.LANGUAGE_CODE == "vi":
+                action_message = (
+                    'Nội dung đã được mở khóa. Nhấn "Tải ngay" để bắt đầu tải.'
+                )
+            else:
+                action_message = 'Content already unlocked. Click "Download now" to start downloading.'
+            return render(
+                request,
+                "library/_download_action.html",
+                {
+                    "content": content,
+                    "is_unlocked": True,
+                    "action_message": action_message,
+                    "action_level": "success",
+                },
+            )
+        if request.LANGUAGE_CODE == "vi":
+            action_message = "Không đủ điểm để mở khóa nội dung này."
+        else:
+            action_message = "Not enough points to unlock this download."
+        return render(
+            request,
+            "library/_download_action.html",
+            {
+                "content": content,
+                "is_unlocked": False,
+                "action_message": action_message,
+                "action_level": "error",
+            },
+        )
 
     source_file = content.files.filter(kind=ContentFile.FileKind.SOURCE).first()
     if not source_file:
@@ -671,6 +873,14 @@ def content_download(request, pk):
     if not file_path:
         messages.error(request, _("Download service is not configured yet."))
         return redirect("library:content-detail", pk=pk)
+
+    if getattr(settings, "USE_SIGNED_DOWNLOADS", True):
+        signed_url = source_file.get_signed_url(
+            expires_in=getattr(settings, "MEDIA_SIGNED_URL_TTL", 300),
+            user_id=request.user.id,
+            download=True,
+        )
+        return redirect(signed_url)
 
     try:
         file_handle = default_storage.open(file_path, "rb")
@@ -686,7 +896,7 @@ def content_download(request, pk):
     )
 
     filename = os.path.basename(file_path) or f"download-{content.id}"
-    mime_type, _ = mimetypes.guess_type(filename)
+    mime_type, _encoding = mimetypes.guess_type(filename)
     return FileResponse(
         file_handle,
         as_attachment=True,

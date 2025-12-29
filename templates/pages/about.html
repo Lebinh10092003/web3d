@@ -1,18 +1,151 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load static i18n %}
 
-{% block title %}{% trans "About" %} | Vsteam Lab{% endblock %}
-{% block meta_title %}{% trans "About Vsteam Lab" %}{% endblock %}
-{% block meta_description %}{% trans "Learn about Vsteam Lab, a STEAM education center in Vietnam with strong achievements in robotics competitions." %}{% endblock %}
-{% block og_description %}{% trans "Learn about Vsteam Lab, a STEAM education center in Vietnam with strong achievements in robotics competitions." %}{% endblock %}
-{% block twitter_title %}{% trans "About Vsteam Lab" %}{% endblock %}
-{% block twitter_description %}{% trans "Learn about Vsteam Lab, a STEAM education center in Vietnam with strong achievements in robotics competitions." %}{% endblock %}
+{% block title %}{% trans "About" %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}V+ STEAM LAB Library | V for tech, V for future{% endblock %}
+{% block meta_description %}V+ STEAM LAB Library is a learning resource library from Vietnam. V for tech, V for future. Discover programs, achievements, and the founder story.{% endblock %}
+{% block og_description %}V+ STEAM LAB Library is a learning resource library from Vietnam. V for tech, V for future. Discover programs, achievements, and the founder story.{% endblock %}
+{% block og_image %}{{ SITE_URL }}{% static 'img/test.jpg' %}{% endblock %}
+{% block twitter_title %}V+ STEAM LAB Library | V for tech, V for future{% endblock %}
+{% block twitter_description %}V+ STEAM LAB Library is a learning resource library from Vietnam. V for tech, V for future. Discover programs, achievements, and the founder story.{% endblock %}
 
 {% block content %}
 {% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
-<section class="panel">
-  <h1>{% trans "About Vsteam Lab" %}</h1>
-  <p>{% trans "Vsteam Lab is a STEAM education center in Vietnam with strong achievements in robotics competitions." %}</p>
-  <p>{% trans "We provide learning resources, 3D models, and practical guides that help teachers and students build creative and technical skills." %}</p>
+
+<section class="brand-hero">
+  <div class="brand-hero-content">
+    <div class="hero-badge">V+ STEAM LAB Library</div>
+    <h1>V for tech, V for future</h1>
+    {% if request.LANGUAGE_CODE == "vi" %}
+      <p>V+ STEAM LAB Library là thư viện học tập và chia sẻ tài nguyên STEAM/robotics tại Việt Nam. V for tech, V for future là lời cam kết giúp học sinh tiếp cận công nghệ, sáng tạo và tương lai bền vững.</p>
+    {% else %}
+      <p>V+ STEAM LAB Library is a learning resource library from Vietnam. V for tech, V for future is our promise to help learners access technology, creativity, and a sustainable future.</p>
+    {% endif %}
+    <div class="brand-hero-actions">
+      <a class="button" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">Facebook</a>
+      <a class="button button-ghost" href="{% url 'library:home' %}">{% trans "Library" %}</a>
+      <a class="button button-ghost" href="{% url 'contributions:submit' %}">{% trans "Submit" %}</a>
+    </div>
+  </div>
+  <div class="brand-hero-media">
+    <img src="{% static 'img/test.jpg' %}" alt="V+ STEAM LAB Library hero">
+  </div>
 </section>
+
+<section class="brand-grid">
+  <div class="brand-card">
+    {% if request.LANGUAGE_CODE == "vi" %}
+      <h2>Chương trình / Hoạt động chính</h2>
+      <ul class="brand-list">
+        <li>Khoá học STEAM & Robotics nền tảng (LEGO, Spike, IoT).</li>
+        <li>Huấn luyện đội tuyển WRO, FLL, Enjoy AI, VEX.</li>
+        <li>Workshop AI, lập trình và tư duy thuật toán.</li>
+        <li>Thiết kế 3D, mô hình hoá và prototyping.</li>
+        <li>Đào tạo giáo viên & cộng đồng chia sẻ tài nguyên.</li>
+      </ul>
+    {% else %}
+      <h2>Core programs & activities</h2>
+      <ul class="brand-list">
+        <li>STEAM & Robotics foundations (LEGO, Spike, IoT).</li>
+        <li>Competition coaching for WRO, FLL, Enjoy AI, VEX.</li>
+        <li>AI, coding, and algorithmic thinking workshops.</li>
+        <li>3D design, modeling, and prototyping.</li>
+        <li>Teacher training & community resource sharing.</li>
+      </ul>
+    {% endif %}
+  </div>
+  <div class="brand-card">
+    {% if request.LANGUAGE_CODE == "vi" %}
+      <h2>Thành tựu nổi bật</h2>
+      <ul class="brand-list brand-list--highlight">
+        <li>2 chức vô địch Enjoy AI thế giới.</li>
+        <li>Xây dựng thư viện tài liệu STEAM + 3D dễ tiếp cận cho giáo viên.</li>
+        <li>Kết nối cộng đồng học sinh, phụ huynh và giáo viên qua dự án thực hành.</li>
+      </ul>
+    {% else %}
+      <h2>Highlights & achievements</h2>
+      <ul class="brand-list brand-list--highlight">
+        <li>2-time Enjoy AI world championship.</li>
+        <li>Built an accessible STEAM + 3D resource library for teachers.</li>
+        <li>Connected students, parents, and teachers through hands-on projects.</li>
+      </ul>
+    {% endif %}
+  </div>
+  <div class="brand-card">
+    {% if request.LANGUAGE_CODE == "vi" %}
+      <h2>Logo & màu thương hiệu</h2>
+      <p class="brand-note">Logo chính là logo thương hiệu hiện trên website.</p>
+    {% else %}
+      <h2>Logo & brand colors</h2>
+      <p class="brand-note">The website logo is the official brand logo.</p>
+    {% endif %}
+    <div class="brand-assets">
+      <div class="brand-logo-card">
+        <img src="{% static 'img/logoV+.png' %}" alt="V+ STEAM LAB Library logo">
+      </div>
+      <div class="brand-swatches">
+        <div class="brand-swatch">
+          <span class="brand-swatch-color brand-swatch-color--accent"></span>
+          <div>
+            <div class="brand-swatch-label">Accent</div>
+            <div class="brand-swatch-value">#45E06B</div>
+          </div>
+        </div>
+        <div class="brand-swatch">
+          <span class="brand-swatch-color brand-swatch-color--secondary"></span>
+          <div>
+            <div class="brand-swatch-label">Secondary</div>
+            <div class="brand-swatch-value">#39D2C2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="brand-founder">
+  <div class="bio-card">
+    <img src="{% static 'img/avatar.jpg' %}" alt="V+ STEAM LAB Library founder" class="bio-avatar">
+    <div class="bio-content">
+      {% if request.LANGUAGE_CODE == "vi" %}
+        <h2>Thông tin cá nhân</h2>
+        <p>Tôi là Lê Bình, người sáng lập V+ STEAM LAB Library và đang phát triển các chương trình STEAM cho học sinh Việt Nam. Tôi tập trung vào việc kết hợp robotics, 3D design và tư duy công nghệ để tạo trải nghiệm học tập thực tế. Mong muốn của tôi là xây dựng một cộng đồng chia sẻ tài nguyên mở và đồng hành cùng các đội tuyển thi đấu.</p>
+      {% else %}
+        <h2>Founder bio</h2>
+        <p>I am Le Binh, the founder of V+ STEAM LAB Library, building STEAM programs for learners in Vietnam. I focus on combining robotics, 3D design, and technology thinking to create hands-on learning experiences. My goal is to grow an open-resource community and support competition teams.</p>
+      {% endif %}
+      <div class="bio-actions">
+        <a class="button button-ghost" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noreferrer">
+          {% if request.LANGUAGE_CODE == "vi" %}Facebook cá nhân{% else %}Personal Facebook{% endif %}
+        </a>
+        <a class="button button-ghost" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">
+          V+ STEAM LAB Library
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block structured_data %}
+{{ block.super }}
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "V+ STEAM LAB Library",
+    "url": "{{ SITE_URL }}",
+    "logo": "{{ SITE_URL }}{% static 'img/logoV+.png' %}",
+    "sameAs": ["https://www.facebook.com/VPlusSteamLab"]
+  }
+</script>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Le Binh",
+    "url": "{{ SITE_URL }}",
+    "sameAs": ["https://www.facebook.com/lebinh.24082003/"]
+  }
+</script>
 {% endblock %}

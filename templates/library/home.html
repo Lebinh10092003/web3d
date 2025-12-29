@@ -1,19 +1,31 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load static i18n %}
 
-{% block title %}{% trans "Library" %} | Vsteam Lab{% endblock %}
-{% block meta_title %}{% trans "Vsteam Lab | Robotics competition resources" %}{% endblock %}
-{% block meta_description %}{% trans "Share and discover lessons, PDFs, and 3D LEGO builds for WRO, FLL, Enjoy AI, VEX, and more." %}{% endblock %}
-{% block og_description %}{% trans "Share and discover lessons, PDFs, and 3D LEGO builds for WRO, FLL, Enjoy AI, VEX, and more." %}{% endblock %}
-{% block twitter_title %}{% trans "Vsteam Lab | Robotics competition resources" %}{% endblock %}
-{% block twitter_description %}{% trans "Share and discover lessons, PDFs, and 3D LEGO builds for WRO, FLL, Enjoy AI, VEX, and more." %}{% endblock %}
+{% block title %}V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}V+ STEAM LAB Library{% endblock %}
+{% block meta_description %}V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.{% endblock %}
+{% block og_description %}V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.{% endblock %}
+{% block twitter_title %}V+ STEAM LAB Library{% endblock %}
+{% block twitter_description %}V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.{% endblock %}
 
 {% block content %}
-<section class="hero">
+<section class="hero hero--brand">
   <div class="hero-content">
-    <div class="hero-badge">{% trans "STEAM + Robotics Vault" %}</div>
-    <h1>{% trans "Share resources for WRO, FLL, Enjoy AI, VEX, and more." %}</h1>
-    <p>{% trans "Find lessons, PDFs, and 3D LEGO builds from the competition community. Preview first, unlock downloads with points." %}</p>
+    <div class="hero-badge">V+ STEAM LAB Library</div>
+    <h1>V for tech, V for future</h1>
+    {% if request.LANGUAGE_CODE == "vi" %}
+      <p>V+ STEAM LAB Library là website chứa tài liệu và trao đổi tài nguyên STEAM, robotics cho giáo viên, học sinh và cộng đồng. Khám phá PDF, mô hình LEGO 3D và giáo án thực hành từ các mùa giải thi đấu.</p>
+    {% else %}
+      <p>V+ STEAM LAB Library is a resource library for teachers, students, and the community. Exchange PDFs, 3D LEGO builds, and hands-on lesson plans from competition seasons.</p>
+    {% endif %}
+    <div class="hero-actions">
+      <a class="button" href="{% url 'about' %}">{% trans "Learn more" %}</a>
+      <a class="button button-ghost" href="{% url 'contributions:submit' %}">{% trans "Submit" %}</a>
+      <a class="button button-ghost" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">Facebook</a>
+    </div>
+  </div>
+  <div class="hero-media">
+    <img src="{% static 'img/test.jpg' %}" alt="V+ STEAM LAB Library hero">
   </div>
 </section>
 
@@ -33,6 +45,21 @@
       {% for category in categories %}
         <option value="{{ category.slug }}" {% if category.slug == category_slug %}selected{% endif %}>{{ category.name }}</option>
       {% endfor %}
+    </select>
+    <select name="sort">
+      {% if request.LANGUAGE_CODE == "vi" %}
+        <option value="newest" {% if sort == "newest" %}selected{% endif %}>Mới nhất</option>
+        <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Cũ nhất</option>
+        <option value="rating" {% if sort == "rating" %}selected{% endif %}>Đánh giá cao</option>
+        <option value="favorites" {% if sort == "favorites" %}selected{% endif %}>Được lưu nhiều</option>
+        <option value="title" {% if sort == "title" %}selected{% endif %}>Theo tiêu đề</option>
+      {% else %}
+        <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
+        <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Oldest</option>
+        <option value="rating" {% if sort == "rating" %}selected{% endif %}>Top rated</option>
+        <option value="favorites" {% if sort == "favorites" %}selected{% endif %}>Most saved</option>
+        <option value="title" {% if sort == "title" %}selected{% endif %}>Title A-Z</option>
+      {% endif %}
     </select>
     <button class="button" type="submit">{% trans "Apply" %}</button>
   </form>

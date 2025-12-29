@@ -5,9 +5,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>{% block title %}Vsteam Lab{% endblock %}</title>
+  <title>{% block title %}V+ STEAM LAB Library{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}{{ DEFAULT_META_DESCRIPTION }}{% endblock %}">
   <meta name="robots" content="index,follow">
+  <link rel="icon" type="image/png" href="{% static 'img/logoV+.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'img/logoV+.png' %}">
   <link rel="canonical" href="{% block canonical_url %}{{ canonical_url|default:request.build_absolute_uri }}{% endblock %}">
   <meta property="og:site_name" content="{{ SITE_NAME }}">
   <meta property="og:locale" content="{% if request.LANGUAGE_CODE == 'vi' %}vi_VN{% else %}en_US{% endif %}">
@@ -30,10 +32,10 @@
 <body>
   <header class="site-header">
     <a class="brand" href="{% url 'library:home' %}">
-      <img src="{% static 'img/logoV+.png' %}" alt="Vsteam Lab" class="brand-logo">
+      <img src="{% static 'img/logoV+.png' %}" alt="V+ STEAM LAB Library" class="brand-logo">
       <div>
-        <div class="brand-title">Vsteam Lab</div>
-        <div class="brand-subtitle">{% trans "PDF + 3D learning vault" %}</div>
+        <div class="brand-title">V+ STEAM LAB Library</div>
+        <div class="brand-subtitle">V for tech, V for future</div>
       </div>
     </a>
     <nav class="site-nav">
@@ -55,6 +57,12 @@
           <path d="M9 12l4 3-4 3z" fill="currentColor"/>
         </svg>
         <span>{% trans "Recaps" %}</span>
+      </a>
+      <a class="nav-link" href="{% url 'about' %}">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 5a1.5 1.5 0 1 1-1.5 1.5A1.5 1.5 0 0 1 12 7zm2 10h-4v-2h1v-3h-1V10h3v5h1z" fill="currentColor"/>
+        </svg>
+        <span>{% trans "About" %}</span>
       </a>
       {% if request.user.is_authenticated %}
         <a class="user-chip nav-link" href="{% url 'accounts:profile' %}">
@@ -147,10 +155,14 @@
   <footer class="site-footer">
     <div class="footer-grid">
       <div class="footer-brand">
-        <img src="{% static 'img/logoV+.png' %}" alt="Vsteam Lab" class="footer-logo">
+        <img src="{% static 'img/logoV+.png' %}" alt="V+ STEAM LAB Library" class="footer-logo">
         <div>
-          <div class="footer-title">Vsteam Lab</div>
-          <div class="footer-text">{% trans "PDF + 3D learning vault for robotics classrooms." %}</div>
+          <div class="footer-title">V+ STEAM LAB Library</div>
+          {% if request.LANGUAGE_CODE == "vi" %}
+            <div class="footer-text">V for tech, V for future. Thư viện trao đổi tài liệu STEAM + Robotics.</div>
+          {% else %}
+            <div class="footer-text">V for tech, V for future. A STEAM + Robotics resource library.</div>
+          {% endif %}
         </div>
       </div>
       <div class="footer-group">
@@ -212,11 +224,21 @@
       <div class="footer-group">
         <div class="footer-heading">{% trans "Social" %}</div>
         <div class="footer-list">
+          <a class="footer-link" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
+            </svg>
+            <span>V+ STEAM LAB Library</span>
+          </a>
           <a class="footer-link" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
             </svg>
-            <span>{% trans "Facebook" %}</span>
+            {% if request.LANGUAGE_CODE == "vi" %}
+              <span>Facebook cá nhân</span>
+            {% else %}
+              <span>Personal Facebook</span>
+            {% endif %}
           </a>
           <a class="footer-link" href="https://www.tiktok.com/@lebinh240803" target="_blank" rel="noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -233,7 +255,11 @@
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5z" fill="currentColor"/>
             </svg>
-            <span>{% trans "Created by: Le Binh" %}</span>
+            {% if request.LANGUAGE_CODE == "vi" %}
+              <span>Người sáng lập: Lê Bình</span>
+            {% else %}
+              <span>Founder: Le Binh</span>
+            {% endif %}
           </div>
           <a class="footer-link" href="mailto:09.levanbinh2003@gmail.com">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -252,7 +278,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>&copy; {% now "Y" %} Vsteam Lab. {% trans "Preview ready. Download gated by points." %}</span>
+      <span>&copy; {% now "Y" %} V+ STEAM LAB Library. {% trans "Preview ready. Download gated by points." %}</span>
     </div>
   </footer>
 
@@ -270,23 +296,44 @@
         <div>
           <h2>{% trans "Contact" %}</h2>
           <p class="contact-modal-text">
-            {% trans "I am from Vietnam" %}
+            {% if request.LANGUAGE_CODE == "vi" %}
+              Tôi đến từ Việt Nam
+            {% else %}
+              {% trans "I am from Vietnam" %}
+            {% endif %}
             <span class="flag-icon" aria-hidden="true">
               <svg viewBox="0 0 36 24" aria-hidden="true" focusable="false">
                 <rect width="36" height="24" fill="#da251d"/>
                 <polygon points="18,5.4 19.53,9.9 24.28,9.96 20.47,12.8 21.88,17.34 18,14.6 14.12,17.34 15.53,12.8 11.72,9.96 16.47,9.9" fill="#ffde00"/>
               </svg>
             </span>
-            {% trans "and this website is a place to connect, share, and exchange ideas about STEAM, robotics, and learning resources." %}
+            {% if request.LANGUAGE_CODE == "vi" %}
+              và V+ STEAM LAB Library là nơi kết nối, chia sẻ tài nguyên STEAM, robotics và các bài học thực hành.
+            {% else %}
+              {% trans "and this website is a place to connect, share, and exchange ideas about STEAM, robotics, and learning resources." %}
+            {% endif %}
           </p>
         </div>
         <div class="contact-modal-grid">
+          <a class="contact-item" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
+            </svg>
+            <div>
+              <div class="contact-label">V+ STEAM LAB Library</div>
+              <div class="contact-value">/VPlusSteamLab</div>
+            </div>
+          </a>
           <a class="contact-item" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
             </svg>
             <div>
-              <div class="contact-label">{% trans "Facebook" %}</div>
+              {% if request.LANGUAGE_CODE == "vi" %}
+                <div class="contact-label">Facebook cá nhân</div>
+              {% else %}
+                <div class="contact-label">Personal Facebook</div>
+              {% endif %}
               <div class="contact-value">/lebinh.24082003</div>
             </div>
           </a>

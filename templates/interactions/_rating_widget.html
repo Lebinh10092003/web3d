@@ -4,6 +4,11 @@
     <strong>{{ rating_avg|default_if_none:"-" }}</strong>
     <span>{% blocktrans with count=rating_count %}{{ count }} votes{% endblocktrans %}</span>
   </div>
+  {% if is_htmx %}
+    <span id="detail-rating-count" hx-swap-oob="true">
+      {% blocktrans with count=rating_count %}{{ count }} ratings{% endblocktrans %}
+    </span>
+  {% endif %}
   {% if request.user.is_authenticated %}
     <form
       method="post"

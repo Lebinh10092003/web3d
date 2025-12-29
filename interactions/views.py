@@ -128,6 +128,7 @@ def rate_content(request, pk):
         "rating_count": rating_stats["count"],
         "user_rating": user_rating,
         "stars": [5, 4, 3, 2, 1],
+        "is_htmx": request.headers.get("HX-Request") == "true",
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -152,6 +153,7 @@ def toggle_favorite(request, pk):
         "content": content,
         "is_favorited": is_favorited,
         "favorites_count": favorites_count,
+        "is_htmx": request.headers.get("HX-Request") == "true",
     }
 
     if request.headers.get("HX-Request") == "true":
