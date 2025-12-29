@@ -21,7 +21,7 @@ from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from analytics.models import ContentDownload, ContentView
 from gating.models import PointLedger, Unlock
@@ -696,7 +696,7 @@ def ldraw_asset(request, relative_path):
     return response
 
 
-@require_GET
+@require_http_methods(["GET", "HEAD"])
 @rate_limit(
     limit=int(getattr(settings, "RATE_LIMIT_LDRAW_PER_MIN", 30) or 30),
     window=60,
