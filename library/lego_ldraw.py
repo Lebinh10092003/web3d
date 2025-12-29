@@ -1,4 +1,5 @@
 import hashlib
+import math
 import os
 import re
 import shutil
@@ -6,8 +7,10 @@ import shlex
 import subprocess
 import tempfile
 import zipfile
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path, PurePosixPath
+from typing import Dict, List, Optional, Tuple
 from xml.etree import ElementTree
 
 from django.contrib.staticfiles import finders
@@ -23,10 +26,68 @@ class UnsupportedLegoModel(LegoModelError):
     pass
 
 
-LXF_PY_CONVERTER_VERSION = 2
+LXF_PY_CONVERTER_VERSION = 3
+
+
+@dataclass(frozen=True)
+class Transform:
+    translation: List[float]
+    rotation: List[List[float]]
+
+
+@dataclass(frozen=True)
+class SimpleSubstitute:
+    datfile: str
+    overwrite: bool
+
+
+@dataclass(frozen=True)
+class Substitute:
+    datfile: str
+    transformation: Optional[Transform]
+
+
+@dataclass(frozen=True)
+class DecorMatch:
+    usecolor: int
+    colors: List[Dict[int, SimpleSubstitute]]
+    decorations: Dict[str, Substitute]
+
+
+@dataclass(frozen=True)
+class ColorSubstitute:
+    usecolor: int
+    substitute: Optional[Substitute]
+
+
+@dataclass(frozen=True)
+class Counted:
+    count: int
+    transformation: Optional[Transform]
+
+
+@dataclass(frozen=True)
+class BiCounted:
+    before: int
+    after: int
+    transformation: Optional[Transform]
+
+
+@dataclass(frozen=True)
+class Flexible:
+    type: str
+    head: Optional[Counted]
+    body: Optional[BiCounted]
+    tail: Optional[Counted]
+    head_plus: Optional[Substitute]
+    tail_plus: Optional[Substitute]
 
 
 def get_cached_ldraw_model_path(*, content_id, source_path):
+    ext = _file_extension(source_path)
+    if ext == "lxf":
+        return _get_cached_lxf_model_path(content_id=content_id, source_path=source_path)
+
     cache_variant = _ldraw_cache_variant(source_path)
     cache_path = f"derived/lego/{content_id}/model-{cache_variant}.ldr"
     if default_storage.exists(cache_path):
@@ -91,15 +152,13 @@ def _score_ldraw_candidate(info):
 
 
 def _convert_lxf_to_ldraw(source_path):
-    mode = (os.environ.get("LXF_CONVERTER_MODE", "auto") or "auto").strip().lower()
-    if mode not in {"auto", "cli", "python"}:
-        mode = "auto"
-
-    converter_cmd = (os.environ.get("LXF_CONVERTER_CMD") or "").strip()
-    if mode == "auto" and not converter_cmd:
-        converter_cmd = _detect_lxf_converter_cmd()
+    mode, converter_cmd = _resolve_lxf_converter_settings()
     if mode != "python" and converter_cmd:
-        return _convert_lxf_to_ldraw_with_cli(source_path, converter_cmd)
+        try:
+            return _convert_lxf_to_ldraw_with_cli(source_path, converter_cmd)
+        except UnsupportedLegoModel:
+            if mode != "auto":
+                raise
 
     if mode == "cli":
         raise UnsupportedLegoModel(
@@ -276,6 +335,450 @@ def _parse_timeout_seconds(value):
     return min(parsed, 300.0)
 
 
+_IDENTITY_ROT = [
+    [1.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0],
+    [0.0, 0.0, 1.0],
+]
+
+_AXIS_BASIS = [
+    [1.0, 0.0, 0.0],
+    [0.0, -1.0, 0.0],
+    [0.0, 0.0, -1.0],
+]
+
+
+def _axis_angle_to_matrix(ax, ay, az, angle_deg):
+    length = math.sqrt(ax * ax + ay * ay + az * az)
+    if length < 1e-12:
+        return _IDENTITY_ROT
+    ux = ax / length
+    uy = ay / length
+    uz = az / length
+    angle = math.radians(angle_deg)
+    cos_a = math.cos(angle)
+    sin_a = math.sin(angle)
+    one_c = 1.0 - cos_a
+    return [
+        [
+            one_c * ux * ux + cos_a,
+            one_c * ux * uy - sin_a * uz,
+            one_c * ux * uz + sin_a * uy,
+        ],
+        [
+            one_c * ux * uy + sin_a * uz,
+            one_c * uy * uy + cos_a,
+            one_c * uy * uz - sin_a * ux,
+        ],
+        [
+            one_c * ux * uz - sin_a * uy,
+            one_c * uy * uz + sin_a * ux,
+            one_c * uz * uz + cos_a,
+        ],
+    ]
+
+
+def _apply_axis_basis(rotation, translation):
+    rotation = _matmul_3x3(_matmul_3x3(_AXIS_BASIS, rotation), _AXIS_BASIS)
+    translation = _matvec_3x3(_AXIS_BASIS, translation)
+    return rotation, translation
+
+
+@lru_cache(maxsize=1)
+def _load_ldraw_xml_maps():
+    xml_path = finders.find("cli/ldraw.xml")
+    if not xml_path:
+        return {}, {}, {}
+    try:
+        root = ElementTree.parse(xml_path).getroot()
+    except OSError:
+        return {}, {}, {}
+
+    lego_to_part = {}
+    lego_to_color = {}
+    ldraw_to_transform = {}
+
+    for elem in root.iter():
+        tag = _local_name(elem.tag)
+        if tag == "Material":
+            lego = elem.attrib.get("lego")
+            ldraw = elem.attrib.get("ldraw")
+            if lego and ldraw and lego.isdigit():
+                try:
+                    lego_to_color[int(lego)] = int(ldraw)
+                except ValueError:
+                    continue
+        elif tag in {"Brick", "Assembly"}:
+            lego = elem.attrib.get("lego")
+            ldraw = elem.attrib.get("ldraw") or ""
+            if lego and lego.isdigit() and ldraw:
+                lego_to_part[int(lego)] = ldraw.lower()
+        elif tag == "Transformation":
+            ldraw = (elem.attrib.get("ldraw") or "").lower()
+            if not ldraw:
+                continue
+            try:
+                tx = float(elem.attrib.get("tx", "0") or "0")
+                ty = float(elem.attrib.get("ty", "0") or "0")
+                tz = float(elem.attrib.get("tz", "0") or "0")
+                ax = float(elem.attrib.get("ax", "0") or "0")
+                ay = float(elem.attrib.get("ay", "0") or "0")
+                az = float(elem.attrib.get("az", "0") or "0")
+                angle = float(elem.attrib.get("angle", "0") or "0")
+            except ValueError:
+                continue
+            rotation = _axis_angle_to_matrix(ax, ay, az, -math.degrees(angle))
+            translation = [-tx, -ty, -tz]
+            ldraw_to_transform[ldraw] = Transform(translation, rotation)
+
+    return lego_to_part, lego_to_color, ldraw_to_transform
+
+
+@lru_cache(maxsize=1)
+def _load_decors_map():
+    yaml_path = finders.find("cli/decors_lxf2ldr.yaml")
+    if not yaml_path:
+        return {}
+    try:
+        import yaml
+    except ImportError:
+        return {}
+
+    try:
+        raw = Path(yaml_path).read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return {}
+
+    data = yaml.safe_load(raw)
+    if not data:
+        return {}
+
+    decors = {}
+    for lego_key, entry in data.items():
+        if entry is None:
+            continue
+        try:
+            lego_id = int(lego_key)
+        except (TypeError, ValueError):
+            continue
+
+        usecolor = int(entry.get("usecolor", 0) or 0)
+        colors = _parse_decor_colors(entry.get("colors"))
+        decorations = _parse_decor_decorations(entry.get("decorations"))
+        decors[lego_id] = DecorMatch(usecolor, colors, decorations)
+
+    return decors
+
+
+def _parse_decor_colors(node):
+    if node is None:
+        return []
+    colors = []
+    for item in node:
+        if item is None:
+            colors.append({})
+            continue
+        if not isinstance(item, dict):
+            colors.append({})
+            continue
+        colormap = {}
+        for key, value in item.items():
+            try:
+                color_id = int(key)
+            except (TypeError, ValueError):
+                continue
+            if value is None:
+                continue
+            parts = str(value).split()
+            if not parts:
+                continue
+            datfile = parts[0].lower()
+            overwrite = len(parts) > 1 and parts[1].upper() == "OW"
+            colormap[color_id] = SimpleSubstitute(datfile, overwrite)
+        colors.append(colormap)
+    return colors
+
+
+def _parse_decor_decorations(node):
+    if node is None:
+        return {}
+
+    local_rot = {
+        "x": _axis_angle_to_matrix(1, 0, 0, 90),
+        "xx": _axis_angle_to_matrix(1, 0, 0, 180),
+        "xxx": _axis_angle_to_matrix(1, 0, 0, -90),
+        "y": _axis_angle_to_matrix(0, 1, 0, 90),
+        "yy": _axis_angle_to_matrix(0, 1, 0, 180),
+        "yyy": _axis_angle_to_matrix(0, 1, 0, -90),
+        "z": _axis_angle_to_matrix(0, 0, 1, 90),
+        "zz": _axis_angle_to_matrix(0, 0, 1, 180),
+        "zzz": _axis_angle_to_matrix(0, 0, 1, -90),
+    }
+    special_rot = re.compile(r"\A([xyz])(\d+)\Z")
+
+    decorations = {}
+    for key, value in node.items():
+        if value is None:
+            continue
+        parts = str(value).split()
+        if not parts:
+            continue
+        datfile = parts[0].lower()
+        rotation = parts[1] if len(parts) > 1 else ""
+
+        transform = None
+        if rotation in local_rot:
+            transform = Transform([0.0, 0.0, 0.0], local_rot[rotation])
+        else:
+            match = special_rot.match(rotation)
+            if match:
+                axis = match.group(1)
+                angle = float(match.group(2))
+                if axis == "x":
+                    rot = _axis_angle_to_matrix(1, 0, 0, angle)
+                elif axis == "y":
+                    rot = _axis_angle_to_matrix(0, 1, 0, angle)
+                else:
+                    rot = _axis_angle_to_matrix(0, 0, 1, angle)
+                transform = Transform([0.0, 0.0, 0.0], rot)
+
+        decorations[str(key)] = Substitute(datfile, transform)
+
+    return decorations
+
+
+@lru_cache(maxsize=1)
+def _load_flex_map():
+    yaml_path = finders.find("cli/flex_lxf2ldr.yaml")
+    if not yaml_path:
+        return {}
+    try:
+        import yaml
+    except ImportError:
+        return {}
+
+    try:
+        raw = Path(yaml_path).read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return {}
+
+    data = yaml.safe_load(raw)
+    if not data:
+        return {}
+
+    flex = {}
+    for lego_key, entry in data.items():
+        if entry is None:
+            continue
+        try:
+            lego_id = int(lego_key)
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(entry, dict):
+            continue
+
+        flex_type = str(entry.get("type", "") or "")
+        head = _parse_flex_counted(entry.get("head"))
+        body = _parse_flex_bicounted(entry.get("body"))
+        tail = _parse_flex_counted(entry.get("tail"))
+        head_plus = _parse_flex_substitute(entry.get("head+"))
+        tail_plus = _parse_flex_substitute(entry.get("tail+"))
+        flex[lego_id] = Flexible(flex_type, head, body, tail, head_plus, tail_plus)
+
+    return flex
+
+
+def _parse_flex_transformation(value):
+    if not value:
+        return None
+    parts = str(value).split(",")
+    if len(parts) != 7:
+        return None
+    try:
+        tx, ty, tz, ax, ay, az, angle = [float(part) for part in parts]
+    except ValueError:
+        return None
+    rotation = _axis_angle_to_matrix(ax, ay, az, angle)
+    return Transform([tx, ty, tz], rotation)
+
+
+def _parse_flex_counted(value):
+    if not value:
+        return None
+    parts = str(value).split()
+    try:
+        count = int(parts[0])
+    except (IndexError, ValueError):
+        return None
+    transform = _parse_flex_transformation(parts[1]) if len(parts) > 1 else None
+    return Counted(count, transform)
+
+
+def _parse_flex_bicounted(value):
+    if not value:
+        return None
+    parts = str(value).split()
+    counts = parts[0].split(",")
+    if len(counts) != 2:
+        return None
+    try:
+        before = int(counts[0])
+        after = int(counts[1])
+    except ValueError:
+        return None
+    transform = _parse_flex_transformation(parts[1]) if len(parts) > 1 else None
+    return BiCounted(before, after, transform)
+
+
+def _parse_flex_substitute(value):
+    if not value:
+        return None
+    parts = str(value).split()
+    if not parts:
+        return None
+    datfile = parts[0].lower()
+    transform = _parse_flex_transformation(parts[1]) if len(parts) > 1 else None
+    return Substitute(datfile, transform)
+
+
+def _resolve_decor_substitute(lego_id, decorations, colors):
+    decors = _load_decors_map()
+    decor = decors.get(lego_id)
+    if not decor:
+        return ColorSubstitute(0, None)
+
+    substitute = None
+    maxcol = min(len(colors), len(decor.colors))
+    for idx in range(maxcol):
+        cur_color = colors[idx] if colors[idx] != 0 else colors[0]
+        color_map = decor.colors[idx]
+        if cur_color in color_map:
+            candidate = color_map[cur_color]
+            if substitute is None or candidate.overwrite:
+                substitute = Substitute(candidate.datfile, None)
+
+    if decorations in decor.decorations:
+        substitute = decor.decorations[decorations]
+
+    return ColorSubstitute(decor.usecolor, substitute)
+
+
+def _extract_lxf_colors(part):
+    materials = (part.attrib.get("materials") or "").strip()
+    if not materials:
+        return []
+    colors = []
+    for token in materials.split(","):
+        token = token.split(":", 1)[0].strip()
+        if not token:
+            continue
+        try:
+            colors.append(int(token))
+        except ValueError:
+            continue
+    return colors
+
+
+def _extract_lxf_part_transforms(part):
+    positions = []
+    rotations = []
+    for bone in list(part):
+        if _local_name(bone.tag) != "Bone":
+            continue
+        numbers = _parse_number_list(bone.attrib.get("transformation") or "")
+        if len(numbers) not in {12, 16}:
+            continue
+        rotation, translation = _normalize_transform(numbers)
+        positions.append(translation)
+        rotations.append(rotation)
+
+    if not positions:
+        numbers = _find_transform_numbers(part)
+        if numbers:
+            rotation, translation = _normalize_transform(numbers)
+            positions.append(translation)
+            rotations.append(rotation)
+
+    return positions, rotations
+
+
+def _compose_ldraw_transform(ldd_pos, ldd_rot, x2l_tr, local_tr, scale, axis_conversion):
+    x2l_rot = x2l_tr.rotation if x2l_tr else _IDENTITY_ROT
+    x2l_trans = x2l_tr.translation if x2l_tr else [0.0, 0.0, 0.0]
+    local_rot = local_tr.rotation if local_tr else _IDENTITY_ROT
+    local_trans = local_tr.translation if local_tr else [0.0, 0.0, 0.0]
+
+    rot_base = _matmul_3x3(ldd_rot, x2l_rot)
+    move = [
+        local_trans[0] + x2l_trans[0],
+        local_trans[1] + x2l_trans[1],
+        local_trans[2] + x2l_trans[2],
+    ]
+    pos = _vec_add(ldd_pos, _matvec_3x3(rot_base, move))
+    rot_final = _matmul_3x3(rot_base, local_rot)
+
+    if axis_conversion:
+        rot_final, pos = _apply_axis_basis(rot_final, pos)
+
+    if scale:
+        pos = [value * scale for value in pos]
+    return rot_final, pos
+
+
+def _format_ldraw_line(color, part, ldd_pos, ldd_rot, x2l_tr, local_tr, scale, axis_conversion):
+    rotation, translation = _compose_ldraw_transform(
+        ldd_pos, ldd_rot, x2l_tr, local_tr, scale, axis_conversion
+    )
+    a, b, c = rotation[0]
+    d, e, f = rotation[1]
+    g, h, i = rotation[2]
+    x, y, z = translation
+    return (
+        "1 {color} {x} {y} {z} {a} {b} {c} {d} {e} {f} {g} {h} {i} {part}".format(
+            color=int(color),
+            x=_fmt_num(x),
+            y=_fmt_num(y),
+            z=_fmt_num(z),
+            a=_fmt_num(a),
+            b=_fmt_num(b),
+            c=_fmt_num(c),
+            d=_fmt_num(d),
+            e=_fmt_num(e),
+            f=_fmt_num(f),
+            g=_fmt_num(g),
+            h=_fmt_num(h),
+            i=_fmt_num(i),
+            part=part,
+        )
+    )
+
+
+def _format_flexnode(ldd_pos, ldd_rot, x2l_tr, local_tr, scale, axis_conversion):
+    rotation, translation = _compose_ldraw_transform(
+        ldd_pos, ldd_rot, x2l_tr, local_tr, scale, axis_conversion
+    )
+    a, b, c = rotation[0]
+    d, e, f = rotation[1]
+    g, h, i = rotation[2]
+    x, y, z = translation
+    return (
+        "0 LXF2LDR FLEXNODE {x} {y} {z} {a} {b} {c} {d} {e} {f} {g} {h} {i}".format(
+            x=_fmt_num(x),
+            y=_fmt_num(y),
+            z=_fmt_num(z),
+            a=_fmt_num(a),
+            b=_fmt_num(b),
+            c=_fmt_num(c),
+            d=_fmt_num(d),
+            e=_fmt_num(e),
+            f=_fmt_num(f),
+            g=_fmt_num(g),
+            h=_fmt_num(h),
+            i=_fmt_num(i),
+        )
+    )
+
+
 def _convert_lxf_to_ldraw_python(source_path):
     lxfml_bytes = _extract_lxfml_bytes(source_path)
     try:
@@ -283,7 +786,9 @@ def _convert_lxf_to_ldraw_python(source_path):
     except ElementTree.ParseError as exc:
         raise UnsupportedLegoModel("Invalid LXFML payload.") from exc
 
-    color_map = _load_ldd_to_ldraw_color_map()
+    ldraw_parts, ldraw_colors, ldraw_transforms = _load_ldraw_xml_maps()
+    fallback_colors = _load_ldd_to_ldraw_color_map()
+    flex_map = _load_flex_map()
     scale = float(os.environ.get("LXF_LDRAW_SCALE", "25") or "25")
     apply_axis_conversion = os.environ.get("LXF_LDRAW_AXIS_CONVERT", "1") != "0"
 
@@ -293,60 +798,172 @@ def _convert_lxf_to_ldraw_python(source_path):
         "0 Author: web3d",
     ]
 
-    bone_transforms = _resolve_lxf_bone_transforms(root)
-    rigid_transforms = _extract_lxf_rigid_transforms(root)
-
     for part in _iter_elements(root, "Part"):
-        design_id = (part.attrib.get("designID") or "").strip()
-        if not design_id:
+        design_id = (part.attrib.get("designID") or "").split(";", 1)[0].strip()
+        if not design_id or not design_id.isdigit():
+            continue
+        lego_id = int(design_id)
+        colors = _extract_lxf_colors(part)
+        if not colors:
             continue
 
-        material_id = _extract_lxf_material_id(part)
-        color = color_map.get(material_id, 16) if material_id is not None else 16
-
-        transform_numbers = []
-        bone_ref_id = _first_lxf_bone_ref_id(part)
-        if bone_ref_id is not None:
-            transform_numbers = bone_transforms.get(bone_ref_id, [])
-            if not transform_numbers:
-                transform_numbers = _find_transform_numbers(part)
-            if not transform_numbers:
-                transform_numbers = rigid_transforms.get(bone_ref_id, [])
-        if not transform_numbers:
-            transform_numbers = _find_transform_numbers(part)
-        if not transform_numbers:
+        decorations = (part.attrib.get("decoration") or "").strip()
+        positions, rotations = _extract_lxf_part_transforms(part)
+        if not positions:
             continue
 
-        rotation, translation = _normalize_transform(transform_numbers)
-        translation = [value * scale for value in translation]
+        part_filename = ldraw_parts.get(lego_id, f"{lego_id}.dat")
+        x2l_tr = ldraw_transforms.get(part_filename)
 
-        if apply_axis_conversion:
-            rotation, translation = _convert_ldd_axes_to_ldraw(rotation, translation)
+        csub = _resolve_decor_substitute(lego_id, decorations, colors)
+        if csub.substitute and csub.substitute.datfile:
+            part_filename = csub.substitute.datfile
 
-        a, b, c = rotation[0]
-        d, e, f = rotation[1]
-        g, h, i = rotation[2]
-        x, y, z = translation
+        def map_color(value):
+            if value in ldraw_colors:
+                return ldraw_colors[value]
+            if value in fallback_colors:
+                return fallback_colors[value]
+            return value
 
-        part_filename = f"{design_id}.dat"
-        lines.append(
-            "1 {color} {x} {y} {z} {a} {b} {c} {d} {e} {f} {g} {h} {i} {part}".format(
-                color=int(color),
-                x=_fmt_num(x),
-                y=_fmt_num(y),
-                z=_fmt_num(z),
-                a=_fmt_num(a),
-                b=_fmt_num(b),
-                c=_fmt_num(c),
-                d=_fmt_num(d),
-                e=_fmt_num(e),
-                f=_fmt_num(f),
-                g=_fmt_num(g),
-                h=_fmt_num(h),
-                i=_fmt_num(i),
-                part=part_filename,
+        main_color = map_color(colors[0])
+        mapped_colors = []
+        for color in colors:
+            mapped_colors.append(map_color(color) if color else main_color)
+
+        usecolor = csub.usecolor if csub.usecolor < len(mapped_colors) else 0
+        main_color = mapped_colors[usecolor]
+
+        if len(rotations) == 1:
+            lines.append(
+                _format_ldraw_line(
+                    main_color,
+                    part_filename,
+                    positions[0],
+                    rotations[0],
+                    x2l_tr,
+                    csub.substitute.transformation if csub.substitute else None,
+                    scale,
+                    apply_axis_conversion,
+                )
             )
-        )
+            continue
+
+        lines.append("0 LXF2LDR BEGIN FLEXIBLE PART")
+
+        flex = flex_map.get(lego_id)
+        if not flex:
+            lines.append(
+                _format_ldraw_line(
+                    main_color,
+                    part_filename,
+                    positions[0],
+                    rotations[0],
+                    x2l_tr,
+                    csub.substitute.transformation if csub.substitute else None,
+                    scale,
+                    apply_axis_conversion,
+                )
+            )
+            for idx in range(1, len(rotations)):
+                lines.append(
+                    _format_flexnode(
+                        positions[idx],
+                        rotations[idx],
+                        x2l_tr,
+                        csub.substitute.transformation if csub.substitute else None,
+                        scale,
+                        apply_axis_conversion,
+                    )
+                )
+            lines.append("0 LXF2LDR END FLEXIBLE PART")
+            continue
+
+        color_ends = mapped_colors[1] if len(mapped_colors) > 1 else main_color
+
+        if flex.head_plus:
+            lines.append(
+                _format_ldraw_line(
+                    color_ends,
+                    flex.head_plus.datfile,
+                    positions[0],
+                    rotations[0],
+                    None,
+                    flex.head_plus.transformation,
+                    scale,
+                    apply_axis_conversion,
+                )
+            )
+
+        if flex.type:
+            lines.append(f"0 SYNTH BEGIN {flex.type} {int(main_color)}")
+        else:
+            lines.append(f"0 SYNTH BEGIN  {int(main_color)}")
+
+        max_count = len(rotations)
+        if flex.head:
+            for idx in range(min(flex.head.count, max_count)):
+                lines.append(
+                    _format_ldraw_line(
+                        2,
+                        "ls01.dat",
+                        positions[idx],
+                        rotations[idx],
+                        None,
+                        flex.head.transformation,
+                        scale,
+                        apply_axis_conversion,
+                    )
+                )
+        if flex.body:
+            start = max(0, flex.body.before)
+            end = max(0, max_count - flex.body.after)
+            for idx in range(start, min(end, max_count)):
+                lines.append(
+                    _format_ldraw_line(
+                        main_color,
+                        "ls01.dat",
+                        positions[idx],
+                        rotations[idx],
+                        None,
+                        flex.body.transformation,
+                        scale,
+                        apply_axis_conversion,
+                    )
+                )
+        if flex.tail:
+            start = max(0, max_count - flex.tail.count)
+            for idx in range(start, max_count):
+                lines.append(
+                    _format_ldraw_line(
+                        4,
+                        "ls01.dat",
+                        positions[idx],
+                        rotations[idx],
+                        None,
+                        flex.tail.transformation,
+                        scale,
+                        apply_axis_conversion,
+                    )
+                )
+
+        lines.append("0 SYNTH END")
+
+        if flex.tail_plus:
+            lines.append(
+                _format_ldraw_line(
+                    color_ends,
+                    flex.tail_plus.datfile,
+                    positions[-1],
+                    rotations[-1],
+                    None,
+                    flex.tail_plus.transformation,
+                    scale,
+                    apply_axis_conversion,
+                )
+            )
+
+        lines.append("0 LXF2LDR END FLEXIBLE PART")
 
     return ("\n".join(lines) + "\n").encode("utf-8")
 
@@ -470,21 +1087,74 @@ def _ldraw_cache_variant(source_path):
     if not ext:
         return "model"
     if ext == "lxf":
-        cmd = (os.environ.get("LXF_CONVERTER_CMD") or "").strip()
-        mode = (os.environ.get("LXF_CONVERTER_MODE", "auto") or "auto").strip().lower()
-        if mode == "auto" and not cmd:
-            cmd = _detect_lxf_converter_cmd()
+        mode, cmd = _resolve_lxf_converter_settings()
         if mode == "python" or not cmd:
-            scale = (os.environ.get("LXF_LDRAW_SCALE", "25") or "25").strip()
-            axis = (os.environ.get("LXF_LDRAW_AXIS_CONVERT", "1") or "1").strip()
-            key = f"py|v={LXF_PY_CONVERTER_VERSION}|scale={scale}|axis={axis}"
-            digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:8]
-            return f"lxf-py-{digest}"
-
-        key = f"cli|cmd={cmd}"
-        digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:8]
-        return f"lxf-cli-{digest}"
+            return _lxf_python_variant()
+        return _lxf_cli_variant(cmd)
     return ext
+
+
+def _resolve_lxf_converter_settings():
+    mode = (os.environ.get("LXF_CONVERTER_MODE", "auto") or "auto").strip().lower()
+    if mode not in {"auto", "cli", "python"}:
+        mode = "auto"
+    cmd = (os.environ.get("LXF_CONVERTER_CMD") or "").strip()
+    if mode == "auto" and not cmd:
+        cmd = _detect_lxf_converter_cmd()
+    return mode, cmd
+
+
+def _lxf_python_variant():
+    scale = (os.environ.get("LXF_LDRAW_SCALE", "25") or "25").strip()
+    axis = (os.environ.get("LXF_LDRAW_AXIS_CONVERT", "1") or "1").strip()
+    key = f"py|v={LXF_PY_CONVERTER_VERSION}|scale={scale}|axis={axis}"
+    digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:8]
+    return f"lxf-py-{digest}"
+
+
+def _lxf_cli_variant(cmd):
+    key = f"cli|cmd={cmd}"
+    digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:8]
+    return f"lxf-cli-{digest}"
+
+
+def _lxf_cache_variants_for_mode(mode, cmd):
+    if mode == "cli":
+        return [_lxf_cli_variant(cmd)] if cmd else []
+    if mode == "python" or not cmd:
+        return [_lxf_python_variant()]
+    return [_lxf_cli_variant(cmd), _lxf_python_variant()]
+
+
+def _get_cached_lxf_model_path(*, content_id, source_path):
+    mode, cmd = _resolve_lxf_converter_settings()
+    variants = _lxf_cache_variants_for_mode(mode, cmd)
+    for variant in variants:
+        cache_path = f"derived/lego/{content_id}/model-{variant}.ldr"
+        if default_storage.exists(cache_path):
+            return cache_path
+
+    if mode != "python" and cmd:
+        try:
+            model_bytes = _convert_lxf_to_ldraw_with_cli(source_path, cmd)
+            variant = _lxf_cli_variant(cmd)
+        except UnsupportedLegoModel:
+            if mode != "auto":
+                raise
+            model_bytes = _convert_lxf_to_ldraw_python(source_path)
+            variant = _lxf_python_variant()
+    else:
+        if mode == "cli":
+            raise UnsupportedLegoModel(
+                "LXF conversion requires an external converter. Set LXF_CONVERTER_CMD "
+                "(e.g. lxf2ldr/ldd2ldraw)."
+            )
+        model_bytes = _convert_lxf_to_ldraw_python(source_path)
+        variant = _lxf_python_variant()
+
+    cache_path = f"derived/lego/{content_id}/model-{variant}.ldr"
+    default_storage.save(cache_path, ContentFile(model_bytes))
+    return cache_path
 
 
 def _extract_lxfml_bytes(source_path):
@@ -569,37 +1239,28 @@ def _parse_number_list(value):
 
 def _normalize_transform(numbers):
     if len(numbers) == 12:
-        a, b, c, d, e, f, g, h, i, x, y, z = numbers
         rotation = [
-            [a, b, c],
-            [d, e, f],
-            [g, h, i],
+            [numbers[0], numbers[3], numbers[6]],
+            [numbers[1], numbers[4], numbers[7]],
+            [numbers[2], numbers[5], numbers[8]],
         ]
-        translation = [x, y, z]
+        translation = [numbers[9], numbers[10], numbers[11]]
         return rotation, translation
 
     if len(numbers) == 16:
         rotation = [
-            [numbers[0], numbers[1], numbers[2]],
-            [numbers[4], numbers[5], numbers[6]],
-            [numbers[8], numbers[9], numbers[10]],
+            [numbers[0], numbers[4], numbers[8]],
+            [numbers[1], numbers[5], numbers[9]],
+            [numbers[2], numbers[6], numbers[10]],
         ]
-        translation = [numbers[3], numbers[7], numbers[11]]
+        translation = [numbers[12], numbers[13], numbers[14]]
         return rotation, translation
 
     raise UnsupportedLegoModel("Unsupported transform matrix size.")
 
 
 def _convert_ldd_axes_to_ldraw(rotation, translation):
-    basis = [
-        [1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0],
-        [0.0, -1.0, 0.0],
-    ]
-    basis_t = _transpose_3x3(basis)
-    rotation_converted = _matmul_3x3(_matmul_3x3(basis, rotation), basis_t)
-    translation_converted = _matvec_3x3(basis, translation)
-    return rotation_converted, translation_converted
+    return _apply_axis_basis(rotation, translation)
 
 
 def _transpose_3x3(matrix):
@@ -620,6 +1281,14 @@ def _matmul_3x3(left, right):
                 + left[row][2] * right[2][col]
             )
     return out
+
+
+def _vec_add(left, right):
+    return [
+        left[0] + right[0],
+        left[1] + right[1],
+        left[2] + right[2],
+    ]
 
 
 def _matvec_3x3(matrix, vector):

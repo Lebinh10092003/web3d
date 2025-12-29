@@ -1,8 +1,12 @@
 import mimetypes
+import os
+import shutil
 
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db import models
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
@@ -206,3 +210,92 @@ class ContributionSubmission(models.Model):
             self.points_awarded = True
 
         self._publish_if_approved()
+
+
+def _collect_contents_for_source(path, skip):
+    if not path or skip:
+        return []
+    contents = {}
+    for source in (
+        ContentFile.objects.filter(
+            storage_path=path,
+            kind=ContentFile.FileKind.SOURCE,
+        )
+        .select_related("content")
+        .only("content_id", "content")
+    ):
+        contents[source.content_id] = source.content
+    return list(contents.values())
+
+
+def _delete_storage_path(path, skip):
+    if not path or skip:
+        return
+    if ContentFile.objects.filter(storage_path=path).exists():
+        return
+    try:
+        if default_storage.exists(path):
+            default_storage.delete(path)
+    except Exception:
+        return
+
+
+def _delete_storage_entry(path):
+    if not path:
+        return
+    try:
+        if default_storage.exists(path):
+            default_storage.delete(path)
+    except Exception:
+        return
+
+
+def _delete_storage_tree(prefix):
+    if not prefix:
+        return
+    local_path = ""
+    try:
+        local_path = default_storage.path(prefix)
+    except Exception:
+        local_path = ""
+    if local_path and os.path.isdir(local_path):
+        shutil.rmtree(local_path, ignore_errors=True)
+        return
+    try:
+        dirs, files = default_storage.listdir(prefix)
+    except Exception:
+        _delete_storage_entry(prefix)
+        return
+    for filename in files:
+        _delete_storage_entry(f"{prefix}/{filename}")
+    for dirname in dirs:
+        _delete_storage_tree(f"{prefix}/{dirname}")
+    _delete_storage_entry(prefix)
+
+
+@receiver(pre_delete, sender=ContributionSubmission)
+def _cleanup_submission_files(sender, instance, using, **kwargs):
+    file_path = instance.file_path or ""
+    preview_path = instance.preview_path or ""
+
+    other_source = False
+    if file_path:
+        other_source = (
+            sender.objects.using(using).exclude(pk=instance.pk).filter(file_path=file_path).exists()
+        )
+    other_preview = False
+    if preview_path:
+        other_preview = (
+            sender.objects.using(using)
+            .exclude(pk=instance.pk)
+            .filter(preview_path=preview_path)
+            .exists()
+        )
+
+    contents = _collect_contents_for_source(file_path, other_source)
+    for content in contents:
+        content.delete()
+        _delete_storage_tree(f"derived/lego/{content.id}")
+
+    _delete_storage_path(file_path, other_source)
+    _delete_storage_path(preview_path, other_preview)

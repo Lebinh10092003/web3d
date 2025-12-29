@@ -1,0 +1,2918 @@
+---
+# Format:
+# ""
+#   legoid:
+#     usecolor: <index of the color used to paint the ldr part>
+#     colors:
+#       - # where
+#         <LEGO color id>: <ldr part file> [OW]
+#       …
+#     decorations:
+#       <lxf decorations field>: <ldr part file> [rotation]
+#       …
+# ""
+#
+# Decorations beat colors.
+#
+# Color zones are tested in order.  One color, one replacement.
+# Once a replacement is found, it’s not changed unless next replacement has
+# option “OW“.
+#
+# <rotation> is one of x, xx, xxx, y, yy, yyy, z, zz, zzz
+#            or x#, y#, z# where # is a positive integer
+# meaning resp. 90° around x, 180° around x, 270° around x, … y, … z
+#           and #° around x, … y, …z
+#
+# Example:
+# 12895:
+#   colors:
+#     - # hat
+#     - # visor
+#       26: 12895p01.dat # black
+#       308: 12895p03.dat # dark brown
+#     - # chin strap
+#       297: 12895p01.dat # gold
+#       310: 12895p01.dat # gold
+#       21: 12895p02.dat OW # red
+#       309: 12895p04.dat # silver
+#       315: 12895p04.dat # silver
+# reads as:
+#   main color is the first one (defaults to 0)
+#   hat color doesn’t lead to any replacement
+#   if visor color is black or dark brown, replace with p01 or p03
+#   otherwise
+#     if chin strap color is gold or silver, replace with p01 or p04
+#   but if chin strap color is red, replace with p02 anyway
+
+
+6251:
+  decorations:
+    '92824': 6251p03.dat
+93094:
+  usecolor: 1
+  colors:
+    - # handle
+      194: 25866p01.dat # lbg
+      1: 25866p02.dat # white
+      26: 25866p03.dat # black
+    - # stick
+10055:
+  colors:
+    - # hair
+    - # ears
+     283: 10055p01.dat # light nougat
+10066:
+  colors:
+    - # hair
+    - # ears
+      138: 10066p01.dat # dark tan
+      312: 10066p02.dat # medium brown
+      330: 10066p03.dat # olive green
+10128:
+  colors:
+    - # body
+    - # trousers
+      268: 10128p01.dat # dark purple
+      138: 10128p02.dat # dark tan
+    - # ?
+    - # hair
+10164:
+  colors:
+    - # hat
+    - # top
+      21: 10164p01.dat # red
+10168:
+  colors:
+    - # hat
+    - # hair
+      312: 10168p01.dat # medium nougat
+    - # 
+  decorations:
+    '601148': 10168p01.dat
+10908:
+  colors:
+    - # chin
+    - # face
+      297: 10908p01.dat # gold
+      310: 10908p01.dat # gold
+      309: 10908p03.dat # silver
+      315: 10908p03.dat # silver
+    - # eyes
+      1: 10908p01.dat # white
+      23: 10908p02.dat OW # blue
+    - # eyelids
+      # 26: p0[1234] # black
+11055:
+  colors:
+    - # flag
+    - # face 1
+    - # face 2
+  decorations:
+    '57592,55510': 2335p03.dat
+11262:
+  colors:
+    - # head
+    - # cockscomb + wattle
+      21: 11262p01.dat # red
+    - # beak
+      24: 11262p01.dat # yellow
+    - #
+  decorations:
+    '601870': 11262p01.dat
+11264:
+  colors:
+    - # hair
+    - # crown
+      297: 11264p01.dat # gold
+      310: 11264p01.dat # gold
+11459:
+  usecolor: 1
+  colors:
+    - # handle
+      312: 11459p01.dat # medium brown
+    - # plunger
+11467:
+  colors:
+    - # bird
+    - # beak
+    - # left eye
+    - # right eye
+    - # tail
+      308: 11467p01.dat # dark brown
+12607:
+  colors:
+    - # head
+    - # eyemask
+      23: 12607p01.dat # blue
+      21: 12607p02.dat # red
+      106: 12607p03.dat # orange
+      268: 12607p04.dat # medium lilac
+12609:
+  colors:
+    - # shell
+    - # belt
+      308: 12609p01.dat # dark brown
+12892:
+  colors:
+    - # helmet
+    - # antennas
+      26: 12892p01.dat # black
+12893:
+  colors:
+    - # underside
+    - # hair
+      1: 12893p01.dat # white
+      199: 12893p02.dat # dark bluish grey
+    - # headtop
+12894:
+  colors:
+    - # hat
+    - # rim
+      26: 12894p01.dat # black
+    - # 
+  decorations:
+    '0,603961': 12894p01.dat
+12895:
+  colors:
+    - # hat
+    - # visor
+      26: 12895p01.dat # black
+      # 26: 12895p02.dat # black
+      308: 12895p03.dat # dark brown
+    - # chin strap
+      297: 12895p01.dat # gold
+      310: 12895p01.dat # gold
+      21: 12895p02.dat OW # red
+      # 297: 12895p03.dat # gold
+      # 310: 12895p03.dat # gold
+      309: 12895p04.dat # silver
+      315: 12895p04.dat # silver
+13746:
+  colors:
+    - # hat
+    - # band + feather
+      21: 13746p02.dat # red
+    - # left feather
+      26: 13746p01.dat # black
+      21: 13746p02.dat # red
+13766:
+  colors:
+    - # hair
+    - # right ear
+      283: 13766p01.dat # light nougat
+    - # left ear
+      283: 13766p01.dat # light nougat
+13786:
+  decorations:
+    # eyes, muzzle, chest
+    '605409,605410,0': 13786p05.dat
+    '605409,606597,606598': 13786p02.dat
+13787:
+  usecolor: 1
+  colors:
+    - # hat
+      37: 13787p01.dat # bright green
+      21: 13787p02.dat # red
+      222: 13787p03.dat # dark pink
+    - # ears
+13792:
+  colors:
+    - # mask
+    - # glass
+      26: 13792p01.dat # black (with stripes)
+13808:
+  colors:
+    - # handle
+    - # body
+    - # mouth
+      26: 13808p01.dat # black
+13809:
+  colors:
+    - # head
+    - # fangs
+     226: 13809p01.dat # bright light yellow
+     1: 13809p03.dat # white
+    - # 
+14397:
+  colors:
+    - # head
+    - # cream
+      192: 14397p04c01.dat # reddish brown
+      23: 14397p01c01.dat # bulue
+      #192: 14397p02c01.dat # reddish brown + moustache
+      222: 14397p03c01.dat # bright pink
+  decorations:
+    #custom
+    '0,36643': 14397p01c01.dat yy
+15284:
+  colors:
+    - # hair
+    - # visor
+      22: 15284p01.dat # dark pink
+15400:
+  usecolor: 1
+  colors:
+    - # brick
+      199: 15400c01.dat # dark bluish grey
+    - # top
+15427:
+  colors:
+    - # hair
+    - # lock
+      124: 15427p02.dat # magenta
+      322: 15427p01.dat # magenta + medium azure
+  decorations:
+    '606285': 15427p01.dat
+15437:
+  colors:
+    - # armor
+    - # front
+      21: 15437p01.dat # red
+15553:
+  colors:
+    - # mask
+    - # hair
+      21: 15553p01.dat # red
+15557:
+  colors:
+    - # hair
+    - # neck
+      5: 15557p01.dat # tan
+15851:
+  colors:
+    - # helmet
+    - # top
+      1: 15851p01.dat # white
+16000:
+  colors:
+    - # arm
+    - # lower arm
+      24: 16000p01.dat # yellow
+      283: 16000p02.dat # light nougat
+      102: 16000p03.dat # medium blue
+      26: 16000p04.dat # black
+      312: 16000p05.dat # medium nougat
+      28: 16000p06.dat # green
+      37: 16000p07.dat # bright green
+      1: 16000p00.dat # white
+16001:
+  colors:
+    - # arm
+    - # lower arm
+      24: 16001p01.dat # yellow
+      283: 16001p02.dat # light nougat
+      102: 16001p03.dat # medium blue
+      26: 16001p04.dat # black
+      312: 16001p05.dat # medium nougat
+      28: 16001p06.dat # green
+      37: 16001p07.dat # bright green
+      1: 16001p00.dat # white
+16175:
+  colors:
+    - # helmet
+    - # hair
+      192: 16175p01.dat # reddish brown
+      312: 16175p02.dat # medium nougat
+16178:
+  colors:
+    - # helmet
+    - # hair
+      308: 16178p01.dat # dark brown
+      18: 16178p02.dat # nougat
+17018:
+  colors:
+    - # helmet
+    - # eyes + ears
+      26: 17018p01.dat # black
+17351:
+  decorations:
+    '609491': 17351p01.dat
+18826:
+  usecolor: 1
+  colors:
+    - # saw
+      192: 18826p01.dat # reddish brown
+    - # handle
+18829:
+  colors:
+    - # hat
+    - # hair
+      38: 18829p01.dat # dark orange
+      21: 18829p02.dat # red
+18835:
+  colors:
+    - # hair
+    - # crown
+      297: 18835p01.dat # gold
+      310: 18835p01.dat # gold
+      23: 18835p02.dat # blue
+19026:
+  colors:
+    - # helmet
+    - # top right
+      26: 19026p01.dat # black
+    - # 
+    - # 
+19206:
+  usecolor: 2
+  colors:
+    - # global/antistud
+    - # ears
+      312: 19206p03.dat # medium nougat
+      283: 19206p01.dat # light nougat
+      #283: 19206p02.dat # light nougat
+    - # hair
+2634:
+  colors:
+    - # frame
+    - # glass
+      42: 2634c01.dat # trans light blue
+      111: 2634c02.dat # trans brown
+20460:
+  colors:
+    - # leg
+    - # boot
+      1: 20460bp00.dat # white
+      21: 20460bp01.dat # red
+      23: 20460bp02.dat # blue
+      191: 20460bp03.dat # bright light orange
+      24: 20460bp04.dat # yellow
+      26: 20460bp05.dat # black
+      308: 20460bp06.dat # dark brown
+      154: 20460bp07.dat # dark red
+      141: 20460bp08.dat # dark green
+      140: 20460bp09.dat # dark blue
+      192: 20460bp0a.dat # reddish brown
+      197: 20460bp0c.dat # medium lilac
+      38: 20460bp0e.dat # dark orange
+      283: 20460bpx0.dat # light nougat
+      106: 20460bpde7.dat # orange
+    - #
+    - #
+    - #
+20461:
+  colors:
+    - # leg
+    - # boot
+      1: 20461p00.dat # white
+      21: 20461p01.dat # red
+      23: 20461p02.dat # blue
+      191: 20461p03.dat # bright light orange
+      24: 20461p04.dat # yellow
+      26: 20461p05.dat # black
+      308: 20461p06.dat # dark brown
+      154: 20461p07.dat # dark red
+      141: 20461p08.dat # dark green
+      140: 20461p09.dat # dark blue
+      192: 20461bp0a.dat # reddish brown
+      197: 20461bp0c.dat # medium lilac
+      38: 20461bp0e.dat # dark orange
+      283: 20461px0.dat # light nougat
+      106: 20461bpde7.dat # orange
+    - #
+    - #
+    - #
+20179:
+  usecolor: 2
+  colors:
+    - # dome
+    - # bottom + straw (don’t work)
+    - # =1 (don’t work)
+20592:
+  colors:
+    - # hair
+    - # ears
+      191: 20592p01.dat # bright light orange
+      26: 20592p02.dat # black
+      323: 20592p03.dat # light aqua
+20693:
+  colors:
+    - # pumkin
+    - # tail
+      28: 20695p01.dat # green
+21700:
+  colors:
+    - # screwdriver
+    - # tip
+      37: 21700p01.dat # bright green
+    - # wheel/handle
+      1: 21700p01.dat # white
+23816:
+  colors:
+  - # connectors
+  - # top
+  - # bottom
+  - # wire
+    1: 23816c02.dat # white
+    26: 23816c01.dat # black
+23945:
+  usecolor: 1
+  colors:
+    - # case
+      40: 23945p01.dat # trans clear
+    - # inside
+24314:
+  colors:
+    - # wheel
+    - # tyre
+      26: 24314p01.dat # black
+      37: 24314p02.dat # bright green
+25126:
+  colors:
+    - # body
+    - # hands
+      24: 25128p01.dat # yellow
+      283: 25128p03.dat # light nougat
+      151: 25128p04.dat # sand green
+  decorations:
+    #custom
+    '251261': 25128p05.dat
+    '27985': 25128p02.dat
+    '74642': 25128p04.dat
+25269:
+  colors:
+    - # part
+    - # top
+  decorations:
+    #custom
+    '68933': 25269p0b.dat
+    '69092': 25269p0a.dat
+29034:
+  usecolor: 5
+  colors:
+  - # bottom
+  - # wire
+  - # top right sensor
+  - # top left sensor
+  - # bottom sensor
+  - # top
+30152:
+  usecolor: 1
+  colors:
+    - # glass
+      41: 30152ap02.dat # trans red
+      40: 30152ap01.dat # trans clear
+    - # handle
+30258:
+  colors:
+    - # sign
+    - # front
+  decorations:
+    '93337': 30258pc0.dat zz
+30261:
+  colors:
+    - # sign
+    - # front
+  decorations:
+    '57818': 30261p02.dat
+    # custom
+    '10261007': 30261d02.dat
+30287:
+  colors:
+    - # hat
+    - # fur
+      1: 30287p01.dat # white
+      194: 30287p02.dat # LBG
+      138: 30287p03.dat # dark tan
+30361:
+  colors:
+    - # cylinder
+    - # front
+  decorations:
+    '86700': 30361dps1.dat yy
+    '94274': 30361dps8.dat yy
+30367:
+  colors:
+    - # dome
+    - # large band
+    - # thin band
+    - #
+    - #
+    - #
+  decorations:
+    '0,0,94270,94271,94272': 30367cps0.dat yy
+30480:
+  colors:
+    - # head
+    - # eyes
+      3: 30480ps0.dat # light yellow
+30483:
+  colors:
+    - # head
+    - # nose
+      26: 30483p01.dat # black
+    - #
+    - #
+30527:
+  colors:
+    - # tube
+    - # stud tip
+      26: 30527c01.dat # black
+      27: 30527c02.dat # dark grey
+      199: 30527c03.dat # dark bluish grey
+    - # antistud tip
+      26: 30527c01.dat # black
+      27: 30527c02.dat # dark grey
+      199: 30527c03.dat # dark bluish grey
+45406:
+  colors:
+    - # cockpit
+    - # glass
+      111: 45406c01.dat # trans brown
+      40: 45406c02.dat # trans clear
+      42: 45406c03.dat # trans light blue
+47899:
+  colors:
+    - # door
+    - # glass
+      40: 47899c01.dat # trans clear
+      #42: 47899c02.dat # trans light blue # removed
+      111: 47899c03.dat # trans brown
+      192: 47899c04.dat # reddish brown
+50944:
+  colors:
+    - # rim
+    - # spokes
+      315: 50944p01.dat # metallic silver
+      309: 50944p01.dat # metallic silver
+      310: 50944p02.dat # metallic gold
+54654:
+  usecolor: 1
+  colors:
+    - # bottom
+      194: 54654c02.dat # light bluish grey
+      199: 54654c03.dat # dark bluish grey
+      106: 54654c04.dat # orange
+      1: 54654c06.dat # white
+    - # top
+    - # tip
+      1: 54654c05.dat # white
+54779:
+  usecolor: 1
+  colors:
+    - # top
+      194: 54779c01.dat # light bluish grey
+      199: 54779c02.dat # dark bluish grey
+    - # bottom
+54923:
+  colors:
+    - # cockpit
+    - # glass
+      111: 54923c01.dat # trans brown
+      42: 54923c02.dat # trans light blue
+57028:
+  colors:
+    - # arrow
+    - # head
+      26: 57028p01.dat # black
+      119: 57028p02.dat # lime
+      194: 57028p03.dat # light bluish grey
+      24: 57028p04.dat # yellow
+59278:
+  usecolor: 1
+  colors:
+    - # deck
+      194: 59278p01.dat # light bluish grey
+    - # bottom
+60671:
+  colors:
+    - # feet soles
+    - # spine
+      148: 60671p01.dat # pearl dark gray
+      139: 60671p02.dat # copper
+      26: 60671p03.dat # black
+    - # skin
+    - # back + shoulders
+      337: 60671p01.dat # titanium
+      300: 60671p02.dat # copper ink
+      26: 60671p03.dat # black
+    - # fangs
+    - # helmet
+      148: 60671p01.dat # pearl dark gray
+      139: 60671p02.dat # copper
+      26: 60671p03.dat # black
+    - # belt
+      148: 60671p01.dat # pearl dark gray
+      139: 60671p02.dat # copper
+      26: 60671p03.dat # black
+    - # feet
+    - # skirt
+      26: 60671p01.dat # black
+      308: 60671p02.dat # dark brown
+      # 26: 60671c03p01.dat # black
+60672:
+  usecolor: 1
+  colors:
+    - # arm
+      148: 60672c01.dat # pearl dark grey
+      139: 60672c02.dat # copper
+      26: 60672c03p01.dat # black
+    - # skin
+60673:
+  usecolor: 1
+  colors:
+    - # arm
+      148: 60673c01.dat # pearl dark gray
+      139: 60673c02.dat # copper
+      26: 60673c03p01.dat # black
+    - # skin
+60797:
+  colors:
+    - # door
+    - # glass
+      42: 60797c01.dat # trans light blue
+      111: 60797c02.dat # trans brown
+      192: 60797c03.dat # reddish brown
+      40: 60797c04.dat # trans clear
+61200:
+  colors:
+    - # head
+    - # eyes + mouth
+      199: 61200ps0.dat # dark bluish grey
+61406:
+  colors:
+    - # spike
+    - # tip
+      24: 61406p01.dat # yellow
+      194: 61406p02.dat # light bluish grey
+      106: 61406p03.dat # orange
+      119: 61406p04.dat # lime
+      26: 61406p05.dat # black
+      151: 61406p06.dat # sand green
+      1: 61406p07.dat # white
+      321: 61406p08.dat # dark azur
+62537:
+  colors:
+    - # underside
+    - # left side
+      26: 62537p02.dat # black
+      23: 62537p01.dat # blue
+      268: 62537p04.dat # lilac
+    - # pompoms
+      23: 62537p01.dat # blue # (one)
+      1: 62537p02.dat # white
+      21: 62537p03.dat # red # (one)
+      268: 62537p04.dat # lilac (one)
+      297: 62537p05.dat # gold
+      310: 62537p05.dat # gold
+    - # (don’t work)
+    - # (don’t work)
+    - # right side
+      21: 62537p03.dat # red
+      268: 62537p06.dat # lilac
+6567:
+  colors:
+    - # windscreen
+    - # glass
+      40: 6567c01.dat # trans clear
+      111: 6567c02.dat # trans brown
+      #42: 6567p03.dat # trans light blue # removed
+73194:
+  colors:
+    - # door
+    - # glass
+      40: 73194c01.dat # trans clear
+      42: 73194c02.dat # trans light blue
+      111: 73194c03.dat # trans brown
+      192: 73194c04.dat # reddish brown
+76029:
+  colors:
+    - # window
+    - # glass
+      111: 30185c01.dat # trans brown
+      43: 30185c02.dat # trans blue
+      42: 30185c03.dat # trans light blue
+      40: 30185c04.dat # trans clear
+      48: 30185c05.dat # trans green
+76033:
+  colors:
+    - # window
+    - # glass
+      43: 30343c01.dat # trans dark blue
+      42: 30343c02.dat # trans light blue
+76040:
+  usecolor: 1
+  colors:
+    - # base
+      199: 30187c05.dat # dark bluish grey
+      27: 30187c04.dat # dark grey
+      192: 30187c06.dat # reddish brown
+    - # top
+76041:
+  colors:
+    - # door
+    - # glass
+      40: 30178c01.dat # trans clear
+      111: 30178c02.dat # trans brown
+85947:
+  colors:
+    - #
+    - # eye? (don’t work)
+    - # tongue
+    - # =1 eye? (don’t work)
+    - #
+  decorations:
+    '0,0,0,93500': 85947p01.dat
+    '0,0,93849,93500': 85947p01.dat
+85959:
+  usecolor: 1
+  colors:
+    - # flame
+      182: 85959p01.dat # trans orange
+      44: 85959p02.dat # trans yellow
+      48: 85959p03.dat # trans green
+      40: 85959p04.dat # trans clear
+      227: 85959p05.dat # trans bright green
+      126: 85959p06.dat # trans purple
+    - # base
+    - #
+    - #
+  decorations:
+    '87354,87355,0': 85959p01.dat
+    '87354,0,0': 85959p01.dat
+    '0,87355,0': 85959p01.dat
+    '0,87354,87355': 85959p01.dat
+87610:
+  colors:
+    - # all / back
+    - # cheeks
+      1: 87610ps1.dat # white
+      23: 87610ps2.dat # blue
+      199: 87610ps7.dat # dark bluish grey
+      141: 87610ps0.dat # dark green
+      26: 87610ps4.dat # black
+      315: 87610ps6.dat # silver metallic
+      309: 87610ps6.dat # metalized silver
+    - # neck
+    - # visor
+      23: 87610ps1.dat # blue / could be ps3
+      199: 87610ps2.dat # dark bluish grey
+      192: 87610ps7.dat # reddish brown
+      154: 87610ps0.dat # dark red
+    - # forehead
+    - # top left zone
+    - # right hinge
+      23: 87610ps3.dat # blue
+    - # left hinge
+      23: 87610ps3.dat # blue
+  decorations:
+    #custom
+    '90749,0': 87610ps0.dat
+    '93053,0': 87610ps1.dat
+    '10967,0': 87610ps2.dat
+    '13830,0': 87610ps3.dat
+    '14499,0': 87610ps4.dat
+    '14535,0': 87610ps5.dat
+    '876101,0': 87610ps6.dat
+    '21261,0': 87610ps7.dat
+    '64220,0': 87610ps8.dat
+90391:
+  colors:
+    - # staff
+    - # blade
+      179: 90391p02.dat # flat silver
+      315: 90391p01.dat # metallic silver
+      309: 90391p01.dat # metallic silver
+90393:
+  colors:
+    - # handle
+    - # mike
+      315: 90370p05.dat # metallic silver
+      309: 90370p05.dat # metallic silver
+      310: 90370p03.dat # metallic gold
+      26: 90370p04.dat # black
+9044:
+  colors:
+    - # base
+    - # tap
+      309: 3496c02.dat # chrome
+      315: 3496c02.dat # chrome
+      2: 3496c01.dat # light grey
+90462:
+  colors:
+    - # wig
+    - # front stud
+    - #
+  decorations:
+    '92597': 90462bpq1.dat
+92254:
+  colors:
+    - # hair
+    - # hat
+      26: 92254p01.dat # black
+      124: 92254p02.dat # magenta
+92709:
+  usecolor: 1
+  colors:
+    - #top
+      199: 92709c01.dat # dbg
+      192: 92709c02.dat # reddish brown
+      1: 92709c03.dat # white
+      5: 92709c04.dat # tan
+      138: 92709c05.dat # dark tan
+    - # bottom
+93062:
+  usecolor: 1
+  colors:
+    - # foot
+     26: 93062p01.dat # black
+     148: 93062p02.dat # pearl dark gray
+    - # clip
+93220:
+  colors:
+    - # club
+    - # handle
+      1: 93220p01.dat # white
+      26: 93220p02.dat # black
+93230:
+  colors:
+    - # hair
+    - # ears
+      24: 93230p01.dat # yellow
+      192: 93230p02.dat # reddish brown
+      28: 93230p03.dat # green
+      283: 93230p04.dat # light nougat
+93549:
+  usecolor: 1
+  colors:
+    - # bottle
+      40: u9180c01.dat # trans clear
+    - # content
+      227: 93549.dat # trans bright green
+93552:
+  colors:
+    - # paintbrush
+    - # brush tip
+      # 28: 93552p01.dat # green (half + ring)
+      322: 93552p02.dat # medium azure (half)
+      # 106: 93552p03.dat # orange (half + ring)
+      28: 93552p04.dat # green
+      106: 93552p05.dat # orange
+      23: 93552p06.dat # blue
+    - # ring
+      179: 93552p01.dat # flat silver
+      #179: 93552p02.dat # flat silver
+93564:
+  colors:
+    - # guitar
+    - # plugs
+    - #
+    - #
+  decorations:
+    '0,600099,600385': 93564p02.dat
+    '0,95101,96912': 93564p01.dat
+93568:
+  colors:
+    - # pie
+    - # cream
+      1: 93568p01.dat # white
+      24: 93568p02.dat # yellow
+  decorations:
+    '97265': 93568p01.dat
+93595:
+  colors:
+    - # rim
+    - # spokes
+      315: 93595p01.dat # silver
+      309: 93595p01.dat # silver
+      179: 93595p01.dat # silver
+      297: 93595p02.dat # gold
+      310: 93595p02.dat # gold
+      26: 93595p03.dat # black
+95330:
+  colors:
+    - # handle
+    - # head
+      21: 95330p01.dat # red
+    - # blade
+      315: 95330p01.dat # silver
+      309: 95330p01.dat # silver
+      179: 95330p01.dat # silver
+98382:
+  colors:
+    - # bear
+    - # sole
+    - # muzzle
+      5: 98382p01.dat # tan
+    - # belly?
+    - #
+  decorations:
+    '0,99596,73156,0': 98382p01.dat
+98388:
+  colors:
+    - # bird
+    - # beak
+      124: 98388p03.dat # magenta
+      21: 98388p01.dat # red
+      24: 98388p02.dat # yellow
+    - #
+    - #
+98568:
+  colors:
+    - # sword
+    - # blade
+      227: 98568p01.dat # trans bright green
+      179: 98568p02.dat # flat silver
+      143: 98568p03.dat # trans medium blue
+98570:
+  colors:
+    - # core
+    - # inner disk
+      194: 98570p01.dat # light bluish gray
+98725:
+  colors:
+    - # hair
+    - # band
+      297: 98725p01.dat # gold
+      310: 98725p01.dat # gold
+      335: 98725p01.dat # gold
+      179: 98725p02.dat # silver
+      315: 98725p02.dat # silver
+      336: 98725p02.dat # silver
+      309: 98725p02.dat # silver
+      24: 98725p03.dat # yellow
+99013:
+  colors:
+    - # blade
+    - # tip
+      26: 99013p01.dat # black
+      24: 99013p02.dat # yellow
+99243:
+  colors:
+    - # mask
+    - # feathers tips
+    - # right eye + jaw
+    - #
+  decorations:
+    '600100,600949,600950': 99243p01.dat
+99244:
+  colors:
+    - # head
+    - # ears
+      222: 99244p01.dat # bright pink
+      138: 99244p02.dat # dark tan
+  decorations:
+    '600103': 99244p01.dat
+2431:
+  decorations:
+    '55728': 2431pc0.dat
+    '58858': 2431p04.dat
+    '600778': 2431p01.dat
+    '610633': 2431p03.dat yy
+    #custom
+    '78249': 2431pt6.dat
+    '37096': 2431p70.dat
+    '101322': 2431pt8.dat
+    '104204': 2431pzv.dat
+    '104423': 2431pz9.dat
+    '39707': 2431pz9.dat
+    '69361': 2431p09.dat
+    '69932': 2431p0a.dat
+    '69916': 2431p0b.dat
+    '104512': 2431p27.dat
+    '105890': 2431p73.dat yy
+    '10638': 2431p01.dat
+    '19324': 2431p03.dat yy
+    '48196': 2431pc0.dat
+    '73823': 2431p52.dat
+    '10261016': 2431d05.dat
+2528:
+  decorations:
+    '601244': 2528ap33.dat
+2586:
+  decorations:
+    '93820': 2586p40.dat
+3003:
+  decorations:
+    '57239,57308': 3003pe2.dat
+    '607795,0': 3003px1.dat
+    '610491,0': 3003px0.dat
+    '88625,88624': 3003pe3.dat
+    #custom
+    '76889,0': 3003pe7.dat
+    '14810,0': 3003p01.dat
+    '14813,0': 3003p02.dat
+    '14819,0': 3003p03.dat
+    '14825,0': 3003p04.dat
+    '14832,0': 3003p05.dat
+    '14836,0': 3003p06.dat
+    '14842,0': 3003p07.dat
+    '14844,0': 3003p08.dat
+    '14849,0': 3003p09.dat
+    '14858,0': 3003p10.dat
+    '14864,0': 3003p11.dat
+    '14867,0': 3003p12.dat
+    '14870,0': 3003p13.dat
+    '14873,0': 3003p14.dat
+    '14878,0': 3003p15.dat
+    '14882,0': 3003p16.dat
+    '14885,0': 3003p17.dat
+    '14887,0': 3003p18.dat
+    '14890,0': 3003p19.dat
+    '14895,0': 3003p20.dat
+    '14912,0': 3003p21.dat
+    '14919,0': 3003p22.dat
+    '14921,0': 3003p23.dat
+    '14924,0': 3003p24.dat
+    '14933,0': 3003p25.dat
+    '14935,0': 3003p26.dat
+    '14936,0': 3003p27.dat
+    '14938,0': 3003p28.dat
+    '14941,0': 3003p29.dat
+    '14985,0': 3003p30.dat
+    '14988,0': 3003p31.dat
+3004:
+  decorations:
+    '610489,0,0': 3004ptc1.dat
+    #custom
+    '30049,0,0': 3004p11.dat
+    '33613,0,0': 3004pz0.dat
+    '39088,0,0': 3004pz7.dat
+    '45329,0,0': 3004p0d.dat
+    '76888,0,0': 3004px6.dat
+    '76891,0,0': 3004px4.dat
+    '76892,0,0': 3004px3.dat
+    '21060,0,0': 3004px8.dat
+    '76893,0,0': 3004px5.dat
+    '19181,0,0': 3004px7.dat
+    '300422,0,0': 3004p0e.dat
+    '79872,0,0': 3004p0f.dat
+    '19178,0,0': 3004px0.dat
+    '19180,0,0': 3004pt7.dat
+    #custom v2
+    '610489': 3004ptc1.dat
+    '30049': 3004p11.dat
+    '33613': 3004pz0.dat
+    '39088': 3004pz7.dat
+    '45329': 3004p0d.dat
+    '76888': 3004px6.dat
+    '76891': 3004px4.dat
+    '76892': 3004px3.dat
+    '21060': 3004px8.dat
+    '76893': 3004px5.dat
+    '19181': 3004px7.dat
+    '300422': 3004p0e.dat
+    '79872': 3004p0f.dat
+    '19178': 3004px0.dat
+    '19180': 3004pt7.dat
+3005:
+  decorations:
+    '56918': 3005pe1.dat
+    '88620': 3005pe4.dat
+    '88627': 3005pe4.dat
+    '95551': 3005pf0.dat
+    #custom
+    '12940': 3005p04.dat
+    '17071': 3005p05.dat
+    '18123': 3005pe5.dat
+    '23020': 3005px0.dat
+    '73783': 3005pf2.dat
+    '76908': 3005px1.dat
+3039:
+  decorations:
+    '55123': 3039pce.dat
+    '55132': 3039pc9.dat
+    '55159': 3039pca.dat
+    '56057': 3039pc6.dat
+    '56571': 3039pcb.dat
+    '86666': 3039pcc.dat
+    #custom
+    '303901': 3039p14.dat
+    '60186': 3039p05.dat
+    '30391': 3039p10.dat
+    '69043': 3039pcm.dat
+3040:
+  decorations:
+    '55161': 3040p06.dat
+3068:
+  decorations:
+    '610486': 3068bpx1.dat
+    '63404': 3068bp33.dat
+    '73023': 3068bpt3.dat
+    '55124': 3068bp73.dat
+    '55350': 3068bp72.dat
+    '88256': 3068bpc0.dat
+    '97353': 3068bp71.dat
+    '99825': 3068bp8d.dat
+    #custom
+    '24369': 3068bp0d.dat
+    '25808': 3068bp75.dat
+    '30680': 3068bp07.dat y
+    '68203': 3068bpta.dat
+    '14875': 3068bpt2.dat
+    '102317': 3068bp58.dat yy
+    '102318': 3068bp5b.dat
+    '102319': 3068bp5c.dat
+    '102321': 3068bp5d.dat
+    '102322': 3068bp56.dat yyy
+    '102324': 3068bp5a.dat
+    '23088': 3068bpt4.dat
+    '23884': 3068bpx7.dat
+    '34053': 3068bpx4.dat
+    '39616': 3068bpt7.dat
+    '39850': 3068bpz4.dat
+    '39851': 3068bpz5.dat
+    '73211': 3068bpt9.dat
+    '306802': 3068bp0j.dat
+    '799941': 3068bpte.dat
+    '101868': 3068bpxb.dat
+    '101776': 3068bpm3.dat y
+    '101771': 3068bpm2.dat y
+    '104207': 3068bpz8.dat
+    '80817': 3068bp0i.dat
+    '23035': 3068bp74.dat
+    '69192': 3068bp0l.dat yy
+    '100891': 3068bpm01.dat
+    '69091': 3068bp0o.dat
+    '28444': 3068bp0n.dat
+    '69920': 3068bp0p.dat
+    '38140': 3068bp7c.dat
+    '107567': 3068bp0u.dat
+3069:
+  decorations:
+    '55035': 3069bpc3.dat
+    '55128': 3069bps1.dat
+    '55347': 3069bps6.dat yy
+    '55506': 3069bpw2.dat
+    '55513': 3069bp02.dat yy
+    '56756': 3069bp08.dat yy
+    '58229': 3069bp0c.dat
+    '60382': 3069bpc1.dat yy
+    '609694': 3069bpw4.dat yy
+    '609700': 3069bpw3.dat yy
+    '609713': 3069bpc7.dat yy
+    '62292': 3069bp01.dat
+    '93074': 3069bp17.dat
+    '55160': 3069bpc0.dat
+    '58812': 3069bpc0.dat
+    '608854': 3069bpc9.dat yy
+    #custom
+    '66894': 3069bpsa.dat
+    '73688': 3069bpcc.dat
+    '78286': 3069bpx9.dat
+    '68399': 3069bp04.dat
+    '73779': 3069bpcd.dat
+    '29983': 3069bpn1.dat
+    '94875': 3069bpk0.dat
+    '51582': 3069bpk1.dat
+    '18327': 3069bpc7.dat
+    '30690': 3069bpa1.dat
+    '30691': 3069bp80.dat
+    '30692': 3069bp05.dat
+    '31914': 3069bp20.dat
+    '41781': 3069bp0h.dat
+    '34957': 3069bp56.dat
+    '14892': 3069bpt2.dat
+    '73873': 3069bpce.dat yy
+    '24075': 3069bp0i.dat
+    '78692': 3069bpt9.dat yy
+    '68418': 3069bp68.dat
+    '25395': 3069bph3.dat yy
+    '73791': 3069bp0l.dat
+    '100555': 3069bpzk.dat
+    '67835': 3069bp87.dat
+    '30690': 3069bpa1.dat
+    '67786': 3069bp0o.dat
+    '103639': 3069bp0w.dat
+    '73893': 3069bp0t.dat
+    '101704': 3069bp88.dat
+    '103172': 3069bp0u.dat
+    '10261009': 3069bd0k.dat
+    '10261010': 3069bd0l.dat
+    '10261011': 3069bd0m.dat
+    '10261012': 3069bd0n.dat
+3070:
+  decorations:
+    '55071': 3070bp07.dat yyy
+    #custom
+    '47144': 3070bp0f.dat
+    '48272': 3070bp0l.dat
+    '48277': 3070bp0p.dat
+    '49610': 3070bp0n.dat
+    '66171': 3070bp0m.dat
+    '73777': 3070bpc4.dat
+    '73778': 3070bpc5.dat
+    '36785': 3070bpz1.dat
+    '14808': 3070bpta.dat
+    '14817': 3070bptb.dat
+    '14829': 3070bptc.dat
+    '14835': 3070bptd.dat
+    '14809': 3070bpte.dat
+    '14816': 3070bptf.dat
+    '14822': 3070bptg.dat
+    '14811': 3070bpth.dat
+    '14831': 3070bpti.dat
+    '14815': 3070bptj.dat
+    '14818': 3070bptk.dat
+    '14820': 3070bptl.dat
+    '14824': 3070bptm.dat
+    '14830': 3070bptn.dat
+    '14834': 3070bpto.dat
+    '14814': 3070bptp.dat
+    '14821': 3070bptq.dat
+    '14827': 3070bptr.dat
+    '14833': 3070bpts.dat
+    '14841': 3070bptt.dat
+    '14828': 3070bptu.dat
+    '14840': 3070bptv.dat
+    '14846': 3070bptw.dat
+    '14851': 3070bptx.dat
+    '14837': 3070bpty.dat
+    '14843': 3070bptz.dat
+    '14847': 3070bpv1.dat
+    '14852': 3070bpv2.dat
+    '14848': 3070bpv3.dat
+    '14850': 3070bpv4.dat
+    '14853': 3070bpv5.dat
+    '14855': 3070bpv6.dat
+    '14857': 3070bpv7.dat
+    '14861': 3070bpv8.dat
+    '14845': 3070bpv6.dat yy
+    '14854': 3070bpv0.dat
+    '14865': 3070bpuf.dat
+    '14877': 3070bpuh.dat
+    '14866': 3070bpug.dat
+    '14884': 3070bpuj.dat
+    '68945': 3070bp1l.dat
+    '69904': 3070bp1m.dat
+    '13436': 3070bpua.dat
+    '13437': 3070bpub.dat
+    '13438': 3070bpuc.dat
+    '13449': 3070bpud.dat
+    '13450': 3070bpue.dat
+    '23842': 3070bpe3.dat
+    '100919': 3070bpy0.dat
+    '70686': 3070bpt2.dat
+    '69461': 3070bp1b.dat
+    '69463': 3070bp1a.dat
+    '104367': 3070bpx0.dat
+    '307001': 3070bp1c.dat
+    '67206': 3070bp1d.dat
+    '730021': 3070bpt4.dat
+    '730022': 3070bpt3.dat
+    '730023': 3070bp1i.dat
+    '44286': 3070bp0k.dat
+    '69090': 3070bp1j.dat
+    '107907': 3070bpy1.dat
+    '109405': 3070bp1p.dat
+3678:
+  decorations:
+    '0,85232': 3678bp4x.dat
+3846:
+  decorations:
+    '602054': 3846p4j.dat
+3899:
+  decorations:
+    '600080': 3899p01.dat
+4150:
+  decorations:
+    '55729': 4150ps4.dat yy
+    '59487': 4150p03.dat
+    '87078': 4150p02.dat y
+    '610184': 14769p82.dat yyy
+4492:
+  decorations:
+    '58002,58000': 4492p02.dat
+12888:
+  decorations:
+    '603963,603962': 12888p01.dat
+13789:
+  decorations:
+    '605406': 13789p01.dat
+    '605407': 13792p01.dat
+14769:
+  decorations:
+    '55729': 14769p06.dat yy
+    '606885': 14769p04.dat
+    '606886': 14769p02.dat
+    '606887': 14769p01.dat
+    '87078': 14769p07.dat y
+    '59487': 14769p0f.dat
+    #custom
+    '32647': 14769p83.dat y80
+    '39746': 14769px2.dat y
+    '79409': 14769pt1.dat
+    '79408': 14769pt2.dat
+    '79390': 14769pta.dat
+    '79405': 14769ptb.dat
+    '79403': 14769ptc.dat
+    '79394': 14769ptd.dat
+    '79376': 14769pte.dat
+    '79395': 14769ptf.dat
+    '79396': 14769ptg.dat
+    '79397': 14769pth.dat
+    '79381': 14769pti.dat
+    '79398': 14769ptj.dat
+    '79399': 14769ptk.dat
+    '79400': 14769ptl.dat
+    '79407': 14769ptm.dat
+    '79406': 14769ptn.dat
+    '79382': 14769pto.dat
+    '79383': 14769ptp.dat
+    '79374': 14769ptq.dat
+    '79377': 14769ptr.dat
+    '79391': 14769pts.dat
+    '79378': 14769ptt.dat
+    '79380': 14769ptu.dat
+    '79404': 14769ptv.dat
+    '79375': 14769ptw.dat
+    '79402': 14769ptx.dat
+    '79379': 14769pty.dat
+    '79401': 14769ptz.dat
+    '68956': 14769pz1.dat yyy
+    '102469': 14769pz0.dat
+    '79546': 14769px8.dat
+    '79547': 14769px7.dat
+    '27347': 14769p0a.dat
+    '80819': 14769p0n.dat
+    '101871': 14769px9.dat yyy
+    '79534': 14769p0s.dat
+    '80306': 14769ps4.dat y
+    '106211': 14769p0t.dat
+    '104789': 14769p0u.dat
+    '69885': 14769p0v.dat
+    '106773': 14769ps6.dat
+    '106774': 14769ps5.dat
+15210:
+  decorations:
+    '93337': 15210pc0.dat zz
+    #custom
+    '10261002': 15210d02.dat
+    '10261003': 15210d03.dat
+    '10261004': 15210d04.dat
+    '10261005': 15210d05.dat
+    '10261006': 15210d06.dat
+15530:
+  decorations:
+    '606112': 15530p01.dat
+18836:
+  decorations:
+    '610443': 18836pq0.dat
+19727:
+  decorations:
+    '611560': 19727p01.dat
+    '611555': 19727p02.dat
+    '611554': 19727p03.dat
+    '611558': 19727p00.dat
+19729:
+  decorations:
+    '610423': 19729p00.dat
+    '611551': 19729p01.dat
+    '610378': 19729p02.dat
+    '611897': 19729p03.dat
+    '610418': 19729p05.dat
+    '613093': 19729p07.dat
+    '611468': 19729p08.dat
+20512:
+  decorations:
+    '613479,612440': 20512p01.dat
+    '613480,612440': 20512p01.dat
+    '613479,612441': 20512p01.dat
+    '613480,612441': 20512p01.dat
+30372:
+  decorations:
+    '58425': 30372ps0.dat
+32474:
+  decorations:
+    '606117': 32474p01.dat y
+    #custom
+    '15926': 32474p01.dat yyy
+43898:
+  decorations:
+    '60763': 43898px2.dat y65
+    #custom
+    '1911': 43898p03.dat
+44336:
+  decorations:
+    '87833': 44336p04.dat
+44341:
+  decorations:
+    '87834': 44341p02.dat
+44342:
+  decorations:
+    '87835': 44342p02.dat
+44343:
+  decorations:
+    '87836': 44343p03.dat
+44375:
+  decorations:
+    '60488': 44375aps3.dat
+59231:
+  decorations:
+    '59645': 59231p4h.dat
+75902:
+  decorations:
+    '604009': 75902p03.dat
+    #custom
+    '101769': 75902p06.dat
+    '80915': 75902p08.dat
+    '48883': 75902p07.dat
+    '68025': 75902p0b.dat
+    '104511': 75902p0a.dat
+    '104738': 75902p09.dat
+85984:
+  decorations:
+    '611013': 85984p70.dat
+    '616009': 85984pc1.dat
+    #custom
+    '73784': 85984pc2.dat
+    '19745': 85984pn1.dat
+    '26823': 85984ps1.dat
+    '80808': 85984p00.dat
+    '72187': 85984pc4.dat
+    '72188': 85984pc3.dat
+87990:
+  colors:
+    - # hair
+    - # lock
+    - # band
+      14: 87990p02.dat # yellow
+  decorations:
+    '99783,0': 87990p01.dat
+87997:
+  colors:
+    - # pompom
+    - # top
+      23: 87997p01.dat # blue
+      21: 87997p02.dat # red
+      141: 87997p03.dat # dark green
+      28: 87997p04.dat # green
+90397:
+  decorations:
+    '95059': 90397p02.dat
+90508:
+  decorations:
+    '92125': 90508p01.dat
+91884:
+  decorations:
+    '600331': 91884p04.dat
+    '95056': 91884p03.dat
+    '99762': 91884p02.dat
+92754:
+  colors:
+    - # arm
+    - # fingers
+      5: 92754p01.dat # tan
+92755:
+  colors:
+    - # main
+    - #
+    - # skin
+      5: 92755p01.dat # tan
+    - #
+    - #
+    - #
+    - #
+  decorations:
+    "0,121701,12170,0,0,0": 92755p01.dat
+    "0,0,12170,0,0,0": 92755p01.dat
+    "0,121701,0,0,0,0": 92755p01.dat
+93221:
+  decorations:
+    '93387': 93221p01.dat
+    '97559': 93221p02.dat
+93551:
+  decorations:
+    '94470': 93551p01.dat
+93557:
+  decorations:
+    '94466': 93557p01.dat
+95228:
+  decorations:
+    '97373': 95228p01.dat
+95328:
+  decorations:
+    '97266': 95328p01.dat
+98138:
+  decorations:
+    '603159': 98138p07.dat y210
+    '610549': 98138p0c.dat
+    '610752': 98138p0b.dat
+    '611065': 98138p84.dat y230
+    #custom
+    '13541': 98138pc1.dat
+    '15826': 98138p0j.dat
+    '25313': 98138p0e.dat
+    '25619': 98138pc2.dat
+    '29198': 98138p88.dat
+    '30671': 98138px0.dat
+    '30672': 98138px2.dat
+    '30674': 98138px1.dat
+    '30675': 98138px3.dat
+    '30783': 98138px4.dat
+    '31468': 98138pz0.dat
+    '31906': 98138px5.dat
+    '36089': 98138p0x.dat y330
+    '39486': 98138pz1.dat
+    '66069': 98138p11.dat
+    '67532': 98138p1a.dat
+    '72399': 98138p1h.dat y315
+    '73774': 98138pc4.dat
+    '672221': 98138p17.dat
+    '672171': 98138p27.dat
+    '21610': 98138p0h.dat
+    '68362': 98138pxf.dat
+    '69069': 98138pxd.dat yyy
+    '69070': 98138pxe.dat yyy
+    '69071': 98138pxg.dat
+    '69072': 98138pxh.dat
+    '69074': 98138pxc.dat y45
+    '47182': 98138p0y.dat yyy
+    '78696': 98138pt4.dat
+    '73809': 98138p2g.dat
+    '10792': 98138ps1.dat yy
+    '37615': 98138pt1.dat
+    '981381': 98138pz2.dat
+    '101323': 98138p2h.dat
+    '102577': 98138p2j.dat
+    '102576': 98138p2o.dat
+    '102763': 98138p2k.dat
+    '102764': 98138p2n.dat
+    '102261': 98138pz3.dat
+    '103032': 98138p2l.dat
+    '102702': 98138p2i.dat
+    '73794': 98138p2q.dat
+    '72258': 98138pt3.dat
+    '69457': 98138p2p.dat
+    '104742': 98138p2t.dat
+    '73786': 98138p2w.dat y315
+    '84438': 98138p2x.dat
+    '103348': 98138p2u.dat y315
+    '101027': 98138pz4.dat
+    '102256': 98138pt5.dat y
+    '26819': 98138p87.dat
+    '83519': 98138p2r.dat
+    '99217': 98138p2e.dat yy
+98367:
+  decorations:
+    '99586': 98367p01.dat
+98372:
+  decorations:
+    '99754,99590': 98372p01.dat
+98384:
+  decorations:
+    '99598': 98384p01.dat
+99250:
+  colors:
+    - # band
+    - # medal
+      297: 99250p01.dat # pearl gold
+      310: 99250p01.dat # metallic gold
+      335: 99250p01.dat # gold ink
+  decorations:
+    '600097': 99250p01.dat
+3626:
+  decorations:
+    '55196,0,0': 3626cp01.dat
+    '59715,0,0': 3626bp06.dat
+    '59879,0,59878': 3626cp80.dat yy
+    '59879,0,0': 3626cp80.dat yy
+    '0,0,59878': 3626cp80.dat yy
+    '606096,0,0': 3626bpq3.dat
+    '612956,0,0': 3626cp8l.dat
+    '64901,0,0': 3626bp3r.dat
+    '86295,0,0': 3626cp89.dat
+    '0,0,86296': 3626cp89.dat
+    '86295,0,86296': 3626cp89.dat
+    '89320,0,0': 3626cp8k.dat
+    '93417,0,0': 3626bp61.dat
+    '94062,0,0': 3626bpq2.dat
+    '94097,0,0': 3626bpq4.dat
+    '99280,0,0': 3626bpc6a.dat
+    '99567,0,0': 3626bp84.dat
+    '99571,0,0': 3626cp8c.dat
+    '99575,0,0': 3626bpaq.dat
+    '0,0,608148': 3626cp8e.dat yy
+    '606890,0,0': 3626cp02.dat
+    '89316,0,0': 3626cp8a.dat
+    '89559,0,0': 3626cp88.dat
+    '91342,0,0': 3626cp8b.dat
+    '94064,0,0': 3626cpq0.dat
+3814:
+  decorations:
+    '55059,0': 973p8z.dat
+    '55127,0': 973p8j.dat
+    '55129,0': 973p6j.dat
+    '55518,0': 973p9y.dat
+    '55661,0': 973p8x.dat
+    '55662,0': 973p7q.dat
+    '55663,0': 973p7u.dat
+    '55663,93077': 973p7n.dat
+    '55665,0': 973p7v.dat
+    '56288,0': 973p1r.dat
+    '56289,0': 973p7h.dat
+    '56753,0': 973p8g.dat
+    '57056,0': 973p7z.dat
+    '57497,0': 973p2d.dat
+    '59881,0': 973pf1.dat
+    '60153,0': 973p1j.dat
+    '606424,0': 973p8i.dat
+    '608149,0': 973p91.dat
+    '610390,0': 973p90.dat
+    '612774,612775': 973p8s.dat
+    '612842,612843': 973p8r.dat
+    '612844,612845': 973p8q.dat
+    '61820,0': 973pf0.dat
+    '64913,0': 973p3g.dat
+    '87284,0': 973p9u.dat
+    '87284,87285': 973p9u.dat
+    '88183,0': 973pc11.dat
+    '89174,0': 973ps1.dat
+    '89309,89310': 973p7w.dat
+    '89311,89312': 973p7j.dat
+    '89313,0': 973p9w.dat
+    '91323,0': 973pc23.dat
+    '92100,0': 973pr5.dat
+    '93200,0': 973p7t.dat
+    '93319,93338': 973p7m.dat
+    '93429,0': 973pc3g.dat
+    '96692,97941': 973p7y.dat
+    '99158,99157': 973p8k.dat
+    '99662,0': 973pc6a.dat
+    '99672,0': 973pc67.dat
+3815:
+  decorations:
+    '606647,0': 3815bp8i.dat
+    '95112,0': 3815bpc44.dat
+    '99692,99693': 3815bpc6a.dat
+    '99713,0': 3815bpc67.dat
+    #custom
+    '878716,0': 3815bpk1.dat
+3816:
+  decorations:
+    '73244,0,0': 3816pba.dat
+    '95030,0,0': 3816pc44.dat
+    '99694,99695,99696': 3816bpc6a.dat
+    '99716,605096,0': 3816pc67.dat
+    '99716,99717,0': 3816pc67.dat
+    '0,602300,0': 3816paw.dat
+3817:
+  decorations:
+    '606649,0,0': 3817p8h.dat
+    '95031,0,0': 3817pc44.dat
+    '99697,99698,99699': 3817bpc6a.dat
+    '99718,605097,0': 3817pc67.dat
+    '99718,99719,0': 3817pc67.dat
+    '0,602298,0': 3817paw.dat
+30138:
+  colors:
+    - # hat
+    - # feathers tips
+      26: 30138p01.dat # black
+    - # band
+      21: 30138p01.dat # red
+    - # 
+    - # 
+    - # 
+16501:
+  colors:
+    - # helmet
+    - # eyes
+      26: 16501p01.dat # black
+  decorations:
+    "50051": 16501p01.dat
+19857:
+  colors:
+    - # mask
+    - # bandana
+      1: 19857p01.dat # white
+      21: 19857p02.dat # red
+      23: 19857p03.dat # blue
+      199: 19857p04.dat # dbg
+      28: 19857p05.dat # green
+      321: 19857p06.dat # dark azure
+      154: 19857p07.dat # dark red
+      26: 19857p08.dat # black
+25973:
+  colors:
+    - # hat
+      21: 25973p02.dat # red
+    - # bandana
+      21: 25973p01.dat # red
+11254:
+  colors:
+    - # hair
+    - # jewels
+      310: 11254p01.dat # gold
+      297: 11254p01.dat # gold
+    - # bandana
+      104: 11254p01.dat # Bright Violet
+      124: 11254p01.dat # Bright Reddish Violet
+      21: 11254p02.dat # red
+98119:
+  colors:
+    - # hair
+    - # decor sides
+      310: 98119p01.dat # gold
+      297: 98119p01.dat # gold
+    - # decor lines
+      21: 98119p01.dat # red
+    - # pearls
+      154: 98119p01.dat # dark red
+62699:
+  colors:
+    - # hair
+    - # locks
+      106: 62699p01.dat # orange
+      119: 62699p02.dat # lime
+93556:
+  colors:
+    - # head
+    - # hair
+      26: 93556p02.dat # black
+    - # eyebrows
+    - # 
+  decorations:
+    0,0,600944: 93556p02.dat
+    0,0,94464: 93556p03.dat
+93219:
+  colors:
+    - # hat
+    - # forehead
+      309: 93219p04.dat # metallic silver
+      315: 93219p04.dat # metallic silver
+  decorations:
+    '93362': 93219p01.dat
+    '93364': 93219p02.dat
+
+# custom and customized parts
+26073:
+  colors:
+    - # pack
+    - # roll
+      141: 26073p03.dat # dark green
+      119: 26073p02.dat # lime
+      21: 26073p01.dat # red
+      23: 26073p04.dat # blue
+      322: 26073p05.dat # medium azure
+26078:
+  decorations:
+    '49399,0': 26078p01.dat
+    '27981,0': 26078p02.dat
+35660:
+  colors:
+    - # hair
+    - # cap
+      140: 35660p02.dat # dark blue
+      154: 35660p04.dat # dark red
+      21: 35660p01.dat # red
+      1: 35660p03.dat # white
+      107: 35660p05.dat # dark turquoise
+      222: 35660p06.dat # bright pink
+45755:
+  colors:
+    - # main
+    - # slice
+      24: 45755p02.dat # yellow
+    - # top.dat #
+      28: 45755p01.dat # green
+39802:
+  colors:
+    - # main
+    - # head
+      21: 39802p01.dat # red
+    - # blade tip
+46524:
+  usecolor: 3
+  colors:
+    - # base
+    - # center
+    - # button
+    - # main / sides
+6051:
+  colors:
+    - # top
+    - # base
+      217: 6051c01.dat # brown
+      192: 6051c01.dat # reddish brown
+      27: 6051c02.dat # dark grey
+      199: 6051c02.dat # dark bluish grey
+      26: 6051c03.dat # black
+      1: 6051c04.dat # white
+6053:
+  colors:
+    - # top
+    - # base
+      217: 6053c01.dat # brown
+      192: 6053c01.dat # reddish brown
+      27: 6053c02.dat # dark grey
+      199: 6053c02.dat # dark bluish grey
+      26: 6053c03.dat # black
+      1: 6053c04.dat # white
+2557:
+  colors:
+    - # top
+    - # base
+      217: 2557c01.dat # brown
+      192: 2557c01.dat # reddish brownbrown
+      21: 2557c02.dat # red
+2559:
+  colors:
+    - # top
+    - # base
+      217: 2559c01.dat # brown
+      192: 2559c01.dat # reddish brownbrown
+      21: 2559c02.dat # red
+28925:
+  usecolor: 1
+  colors:
+    - # base
+    - # top
+      199: 28925c01.dat # dbg
+39367:
+  colors:
+    - # wheel
+    - # tyre
+      322: 39367p01.dat # medium azure
+      26: 39367p02.dat # black
+9489:
+  usecolor: 1
+  colors:
+    - # base
+    - # body
+46882:
+  colors:
+    - # bsee
+    - # top line
+      26: 46882p01.dat # black
+  decorations:
+    '69525': 46882p01.dat
+30116:
+  decorations:
+    '301166': 30116p6v.dat
+    '301167': 30116p6u.dat
+    '301168': 30116ps0.dat
+30320:
+  decorations:
+    '301177': 30117p6u.dat
+    '301178': 30117p6v.dat
+30119:
+  decorations:
+    '301198': 30119p6u.dat
+30118:
+  decorations:
+    '301198': 30118p6u.dat
+    '301188': 30118p6v.dat
+26051:
+  decorations:
+    '28317,283171,0': 26051p01.dat
+  colors:
+    - # base
+    - # eyes
+     1: 26051p01.dat # white
+    - # mouth, ears
+     5: 26051p01.dat # tan
+    - # nose
+     26: 26051p01.dat # black
+29096:
+  decorations:
+    '562328': 29096ps0.dat
+49656:
+  colors:
+    - # rock
+    - # geode
+      113: 49656p01.dat # tr medium reddish violet
+      42: 49656p02.dat # tr light blue
+      311: 49656p03.dat # tr bright green
+      44: 49656p04.dat # tr yellow
+      126: 49656p05.dat # tr purple
+      35: 49656p06.dat # tr red
+      43: 49656p07.dat # tr dark blue
+      48: 49656p08.dat # tr green
+30363:
+  decorations:
+    '609090': 30363p90.dat
+3298:
+  decorations:
+    '609090': 3298p90.dat
+67095:
+  decorations:
+    '68370': 67095px0.dat
+    '68368': 67095px1.dat
+    '108330': 67095ps1.dat
+63864:
+  decorations:
+    '54978': 63864px0.dat yy
+    #custom
+    '73904': 63864p04.dat
+    '104206': 63864pz3.dat
+    '104208': 63864pz2.dat
+    '69926': 63864p06.dat
+    '69927': 63864p07.dat
+    '69919': 63864p09.dat
+    '105889': 63864p0a.dat
+68495:
+  colors:
+    - # mug
+    - # liquid
+      182: 68495p01.dat # tr bright orange
+      311: 68495p02.dat # tr bright green
+      192: 68495p03.dat # reddish brown
+24531:
+  decorations:
+    '239311': 2453bdx0.dat y
+3623:
+  decorations:
+    '25078,0': 3623pt1.dat
+    '0,25078': 3623pt1.dat yy
+    '25079,0': 3623pt2.dat
+    '0,25079': 3623pt2.dat yy
+    '38275,0': 3623p05.dat
+    '0,38275': 3623p05.dat yy
+    '39700,0': 3623pz1.dat
+    '0,39700': 3623pz1.dat yy
+    '44368,0': 3623p01.dat
+    '0,44368': 3623p01.dat yy
+    '49118,0': 3623pt3.dat
+    '0,49118': 3623pt3.dat yy
+    '52100,0': 3623p00.dat
+    '0,52100': 3623p00.dat yy
+    '100917,0': 3623p03.dat
+    '0,100917': 3623p03.dat yy
+3023:
+  decorations:
+    '69173': 3023bpb0.dat
+    '88094': 3023bpy0.dat
+3001:
+  decorations:
+    '30011': 3001p02.dat
+    '30013': 3001p03.dat
+    '30014': 3001p04.dat
+    '30016': 3001p12.dat
+    '30017': 3001p05.dat
+    '99187': 3001p01.dat
+    '300111': 3001p11.dat
+    '300119': 3001p10.dat
+    '300123': 3001p0d.dat
+66858:
+  decorations:
+    '68915': 66858p01.dat
+87580:
+  decorations:
+    '66509': 87580p01.dat
+57895:
+  decorations:
+    '35330': 57895p06.dat
+60601:
+  decorations:
+    '41268': 60601p01.dat
+    '63774': 60601px1.dat
+32523:
+  decorations:
+    '28984': 32523p01.dat xx
+    '76933': 32523p02.dat
+66855:
+  decorations:
+    '69085': 66855p01.dat
+    '76907': 66855p03.dat
+    '68967': 66855p02.dat
+    '79532': 66855p04.dat
+    '94664': 66855p05.dat
+    '94866': 66855p06.dat
+    '79548': 66855p07.dat
+26603:
+  decorations:
+    '30723': 26603p04.dat
+    '62688': 26603p03.dat
+    '37097': 26603p01.dat
+    '45356': 26603p02.dat
+    '66761': 26603pb0.dat
+    '34887': 26603pn0.dat
+    '36959': 26603pz0.dat
+    '38617': 26603pz1.dat
+    '34075': 26603px1.dat yy
+    '34802': 26603px0.dat
+    '104209': 26603pz2.dat
+    '80814': 26603p05.dat
+    '107172': 26603p07.dat
+    '10261013': 26603d01.dat
+42918:
+  decorations:
+    '45356': 42918p01.dat
+4162:
+  decorations:
+    '78280': 4162pt3.dat
+    '72303': 4162p1r.dat
+    '37387': 4162pt4.dat
+    '67878': 4162pt2.dat
+    '68209': 4162pt1.dat
+    '980201': 4162d01.dat
+    '81283': 4162p1p.dat
+    '77388': 4162p1o.dat
+    '56295': 4162p1n.dat
+    '68398': 4162p1m.dat
+    '38683': 4162p1l.dat
+    '65957': 4162p1k.dat
+    '32642': 4162p15.dat
+    '18794': 4162p1c.dat
+    '65952': 4162p1j.dat
+    '38198': 4162p1i.dat
+    '38184': 4162p1h.dat
+    '37065': 4162p1g.dat
+    '35147': 4162p18.dat
+    '29584': 4162p19.dat
+    '44096': 4162p1a.dat
+    '33859': 4162p1b.dat
+    '44108': 4162p1d.dat
+    '52998': 4162p1e.dat
+    '36942': 4162p1f.dat
+    '24829': 4162p10.dat
+    '24865': 4162p11.dat
+    '24905': 4162p12.dat
+    '26223': 4162p13.dat
+    '26220': 4162p14.dat
+    '29591': 4162p16.dat
+    '29586': 4162p17.dat
+    '20123': 4162p0w.dat
+    '19686': 4162p0x.dat
+    '19688': 4162p0y.dat
+    '20894': 4162p0z.dat
+    '13639': 4162p0o.dat
+    '15117': 4162p0q.dat
+    '15622': 4162p0r.dat
+    '14152': 4162p0p.dat
+    '16986': 4162p0s.dat
+    '18354': 4162p0t.dat
+    '17324': 4162p0u.dat
+    '18356': 4162p0v.dat
+    '11121': 4162p0g.dat
+    '10571': 4162p0i.dat
+    '10572': 4162p0h.dat
+    '13673': 4162p0j.dat
+    '13674': 4162p0k.dat
+    '11479': 4162p0l.dat
+    '13688': 4162p0n.dat
+    '416201': 4162p0m.dat
+    '31913': 4162p0f.dat
+    '416202': 4162p08.dat
+    '416203': 4162p09.dat
+    '416204': 4162p0a.dat
+    '70140': 4162p01.dat
+    '98314': 4162p02.dat
+    '92191': 4162p03.dat
+    '94031': 4162p04.dat
+    '97709': 4162p05.dat
+    '13231': 4162p0e.dat
+    '10217': 4162p0d.dat
+    '416205': 4162p0c.dat
+    '53000': 4162p0b.dat
+    '10243': 4162p07.dat
+    '70145': 4162p06.dat
+    '72300': 4162p1q.dat
+    '69917': 4162p1t.dat
+    '69918': 4162p1s.dat
+    '10261001': 4162d05.dat
+87552:
+  decorations:
+    '78293': 87552p02.dat
+    '78287': 87552p01.dat
+2723:
+  decorations:
+    '68411': 2723p02.dat
+    '68584': 2723p07.dat
+    '33878': 2723p01.dat
+    '82462': 2723p03.dat
+    '27231': 2723p05.dat
+    '472611': 2723d02.dat y45
+    '10261008': 2723d03.dat
+78267:
+  decorations:
+    '78267': 78267p01.dat
+76798:
+  decorations:
+    '0,10283006': 76798d01.dat
+    '10283005,10283006': 76798d02.dat
+    '10283008,10283006': 76798d03.dat
+34103:
+  decorations:
+    '0,76901': 34103px1.dat
+71772:
+  decorations:
+    '73675': 71772p01.dat
+35787:
+  decorations:
+    '39550': 35787ps1.dat
+15068:
+  decorations:
+    '615868': 15068p09.dat
+    '45356': 15068p06.dat
+    '78284': 15068pt2.dat
+    '78283': 15068pt1.dat
+    '105276': 15068p0k.dat
+87079:
+  decorations:
+    '45356': 87079p0b.dat
+    '93871': 87079p01.dat
+    '13088': 87079p02.dat yy
+    '13093': 87079p03.dat yy
+    '21247': 87079p04.dat
+    '21248': 87079p05.dat
+    '21249': 87079p06.dat
+    '16592': 87079p07.dat
+    '24370': 87079p08.dat
+    '29839': 87079p09.dat
+    '45331': 87079p0a.dat
+    '31915': 87079p0c.dat
+    '31911': 87079p0d.dat yy
+    '37590': 87079p0e.dat
+    '74085': 87079p0f.dat
+    '68384': 87079p0g.dat
+    '20432': 87079pm0.dat
+    '69533': 87079pt4.dat
+    '31912': 87079pt0.dat yy
+    '69193': 87079pt3.dat
+    '78281': 87079pt6.dat
+    '78282': 87079pt7.dat
+    '38995': 87079pt5.dat
+    '66273': 87079pt1.dat
+    '66251': 87079pt2.dat
+    '23082': 87079px0.dat
+    '68244': 87079p50.dat
+    '69534': 87079pxg.dat
+    '73880': 87079pxh.dat
+    '72295': 87079pxi.dat
+    '73883': 87079pxj.dat
+    '26247': 87079pb0.dat
+    '80818': 87079ptb.dat
+    '80820': 87079pta.dat
+    '103629': 87079p0h.dat
+    '105186': 87079p0i.dat
+    '102465': 87079pzg.dat
+    '102467': 87079pzh.dat
+    '69928': 87079p0j.dat
+    '69930': 87079p0k.dat
+    '69931': 87079p0l.dat
+    '77126': 87079pdec.dat
+    '1538': 87079ps1.dat
+    '10261017': 87079d0a.dat
+    '10261018': 87079d09.dat
+    '10261019': 87079d08.dat
+72078:
+  colors:
+    - # base
+    - # diamond
+      360: 72078p01.dat # opal trans-clear
+69944:
+  colors:
+    - # blade
+    - # handle & teeth
+      26: 69944p01.dat # black
+67931:
+  usecolor: 1
+  colors:
+    - # base
+      1: 67931p01.dat # white
+    - #shell
+67013:
+  usecolor: 1
+  colors:
+    - # base
+      1: 67013p01.dat # white
+    - # shell
+47326:
+  colors:
+    - # base
+    - # rubber
+      26: 47326p01.dat # black
+      1: 47326p02.dat # white
+      194: 47326p03.dat # light bluish grey
+87775:
+  decorations:
+    '878713,878711,878714': 87775pk1.dat
+    '878722,878711,878723': 87775pk3.dat
+    '911363,878711,878723': 87775pk4.dat
+87776:
+  decorations:
+    '878712,878711,878715': 87776pk1.dat
+    '878721,878711,878724': 87776pk3.dat
+    '911362,911361,878724': 87776pk4.dat
+24593:
+  decorations:
+    '245931': 24593p01.dat
+24541:
+  decorations:
+    '245405': 2454bpa1.dat
+    '245402': 2454apa0.dat
+    '245406': 2454aph0.dat
+    '686698': 2454bd01.dat
+    '10261014': 2454bd04.dat
+24067:
+  colors:
+  - # body
+  - # face
+    24: 24067p01.dat # yellow
+    # 283: 24067p02.dat # light nougat
+    1: 24067p03.dat # white
+    18: 24067p05.dat # nougat
+    283: 24067p04.dat # light nougat
+  - # decor
+  decorations:
+    '24228,0': 24067p01.dat
+    '65754,0': 24067p03.dat
+    '24228,240671': 24067p02.dat
+    '0,240671': 24067p02.dat
+76796:
+  decorations:
+    '78840': 76796p01.dat
+3960:
+  decorations:
+    '396002': 3960p02.dat y225
+3024:
+  decorations:
+    '35329': 3024p01.dat
+    '49116': 3024p02.dat
+    '49115': 3024p03.dat
+    '34452': 3024ptc9.dat
+    '34047': 3024ptc1.dat
+    '18965': 3024ptc5.dat
+    '18953': 3024ptc4.dat
+    '18952': 3024ptc3.dat
+    '18949': 3024ptc2.dat
+    '18968': 3024ptc8.dat
+    '18966': 3024ptc6.dat
+    '18967': 3024ptc7.dat
+    '100666': 3024pz1.dat
+53075:
+  decorations:
+    '530751': 53075p02.dat
+    '61502': 53075p01.dat
+67887:
+  decorations:
+    '68443': 67887p01.dat
+78522:
+  decorations:
+    '79235': 78522ph0.dat
+    '79236': 78522ph1.dat
+29602:
+  decorations:
+    '32892': 29602p01.dat
+24076:
+  decorations:
+    '0,24231': 24076p01.dat
+    '0,29179': 24076p02.dat
+29685:
+  decorations:
+    '33026': 29685p01.dat
+10305:
+  decorations:
+    '11809': 10305p01.dat
+27956:
+  decorations:
+    '28301': 27956px1.dat
+87561:
+  decorations:
+    '14037': 87561p01.dat
+67644:
+  decorations:
+    '0,68995': 67644p01.dat
+    '0,69042': 67644p03.dat
+67650:
+  colors:
+    - # head
+    - # goggles
+      26: 67650p01.dat # black
+    - # ?
+  decorations:
+    '0,69061': 67650p01.dat
+    '0,68379': 67650p02.dat
+68986:
+  colors:
+    - # head
+    - # goggles
+      26: 67902p01.dat # black
+    - # ?
+  decorations:
+    '0,68986': 67902p01.dat
+69073:
+  colors:
+    - # head
+    - # goggles
+      26: 67649p01.dat # black
+    - # ?
+  decorations:
+    '0,69073': 67649p01.dat
+    '0,69101': 67649p02.dat
+    '0,69098': 67649p03.dat
+    '0,69065': 67649p04.dat
+61189:
+  decorations:
+    '63150': 61189ps2.dat
+    '63578': 61189ps0.dat
+    '14122': 61189ps1.dat
+30380:
+  decorations:
+    '0,303801': 30380p03.dat
+    '0,303802': 30380p02.dat
+    '0,303803': 30380p01.dat
+87568:
+  decorations:
+    '11995,0': 87568p04.dat
+    '0,11993': 87568p03.dat
+    '52733,0': 87568p02.dat
+    '0,52734': 87568p01.dat
+87566:
+  colors:
+    - # torso
+    - # decors (tips)
+      5: 87566p01.dat # tan
+      1: 87566p02.dat # white
+    - #
+87567:
+  colors:
+    - #
+    - #
+      5: 87567p01.dat # tan
+      1: 87567p02.dat # white
+    - #
+    - #
+  decorations:
+    '11992,0': 87567p01.dat
+    '52735,0': 87567p02.dat
+87569:
+  colors:
+    - # leg
+    - # foot
+      199: 87569p01.dat # dbg
+4744:
+  decorations:
+    '81780': 4744p02.dat
+    '81781': 4744p01.dat
+    '474401': 4744p0c.dat
+    '474402': 4744p0a.dat
+    '474403': 4744p0b.dat
+30370:
+  decorations:
+    '83786': 30370ps2.dat
+    '303703': 30370ps1.dat
+    '83784': 30370ps3.dat
+    '303704': 30370ps4.dat
+41835:
+  decorations:
+    '66420': 41835p01.dat
+10202:
+  decorations:
+    '66747': 10202p01.dat
+    '73174': 10202p00.dat yy
+90498:
+  decorations:
+    '66750': 90498p01.dat yy
+30375:
+  decorations:
+    '23349': 30375ps1.dat
+    '94401': 30375ps2.dat
+    '40214': 30375ps3.dat
+    '14305': 30375ps5.dat
+    '74459': 30375ps7.dat
+    '97060': 30375ps6.dat
+    '10696': 30375ps4.dat
+53118:
+  decorations:
+    '61668': 53118p01.dat
+15535:
+  decorations:
+    '38938': 15535p01.dat
+    '38940': 15535p02.dat
+    '21605': 15535p03.dat
+    '72189': 15535p05.dat
+    '72190': 15535p04.dat
+    '103626': 15535p06.dat
+30401:
+  decorations:
+    '304010': 30401p01.dat
+24634:
+  decorations:
+    '63671': 24634p01.dat
+37352:
+  decorations:
+    '91128': 37352p01.dat
+75544:
+  decorations:
+    '80129': 75544p01.dat
+93273:
+  decorations:
+    '79425': 93273pt0.dat yy
+    '78691': 93273pt1.dat yy
+3245:
+  decorations:
+    '39551': 3245cpze.dat
+    '102490': 3245cpzg.dat
+3297:
+  decorations:
+    '329701': 3297p14.dat
+    '329702': 3297p12.dat
+    '329703': 3297p90.dat
+3622:
+  decorations:
+    '32737,0': 3622px1.dat
+    '32736,0': 3622px2.dat
+    '32734,0': 3622px3.dat
+    '76885,0': 3622px4.dat
+    '33501,0': 3622pz0.dat
+    '362201,0': 3622p03.dat
+    '104205,0': 3622pz1.dat
+    '104210,0': 3622pz2.dat
+    '16859,0': 3622p07.dat
+22385:
+  decorations:
+    '24275': 22385p122.dat
+    '24330': 22385p403.dat
+    '24372': 22385p101.dat
+    '24390': 22385p202.dat
+    '24419': 22385p002.dat
+    '24421': 22385p108.dat
+    '24464': 22385p102.dat
+    '24485': 22385p006.dat
+    '24534': 22385p025.dat
+    '24559': 22385p103.dat
+    '24565': 22385p203.dat
+    '24575': 22385p105.dat
+    '24577': 22385p123.dat
+    '24583': 22385p204.dat
+    '24589': 22385p106.dat
+    '24594': 22385p205.dat
+    '24596': 22385p107.dat
+    '24610': 22385p005.dat
+    '24613': 22385p206.dat
+    '25818': 22385p210.dat
+    '25819': 22385p109.dat
+    '26001': 22385p007.dat
+    '29078': 22385p147.dat
+    '29089': 22385p154.dat
+    '29409': 22385p142.dat
+    '30958': 22385p161.dat
+    '33766': 22385p056.dat
+    '33770': 22385p152.dat
+    '33775': 22385p141.dat
+    '34387': 22385p057.dat
+    '42852': 22385px0.dat
+    '223864': 22385p135.dat
+    '223865': 22385p214.dat
+    '223872': 22385p109.dat
+    '223887': 22385p136.dat
+    '223888': 22385p143.dat
+    '223889': 22385p148.dat
+    '223890': 22385p137.dat
+    '223891': 22385p124.dat
+    '223892': 22385p145.dat
+    '223893': 22385p125.dat
+    '223894': 22385p127.dat
+    '223895': 22385p110.dat
+    '223896': 22385p120.dat
+    '223897': 22385p130.dat
+3009:
+  decorations:
+    '31904,0': 3009ptf.dat
+    '0,31904': 3009ptf.dat yy
+    '72198,0': 3009p50.dat
+    '0,72198': 3009p50.dat yy
+6256:
+  decorations:
+    '39346': 6256ph1.dat y350
+3010:
+  decorations:
+    '79289,0': 3010pyc.dat
+    '26395,0': 3010pb1.dat
+    '102470,0': 3010pyd.dat
+11153:
+  decorations:
+    '16796': 61678p01.dat
+    '1518': 61678p02.dat
+16497:
+  decorations:
+    '33657': 16497p01.dat
+    '19645': 16497p03.dat
+33464:
+  decorations:
+    '93736': 33464p01.dat
+20905:
+  decorations:
+    '23915': 20905ps0.dat
+    '35555': 20905ps1.dat
+24246:
+  decorations:
+    '69094': 24246p0c.dat
+    '88090': 24246p04.dat
+    '88091': 24246p03.dat
+    '103718': 24246p06.dat
+    '69459': 24246p08.dat
+    '103739': 24246p07.dat
+49098:
+  decorations:
+    '88092': 49098py1.dat
+    '49113': 49098py0.dat zzz
+88930:
+  decorations:
+    '85541,0': 88930p01.dat
+    '0,1147': 88930py0.dat
+    '0,69922': 88930p03.dat
+61068:
+  decorations:
+    '85541': 61068p01.dat
+80679:
+  decorations:
+    '98480': 80679p01.dat
+    '98481': 80679p02.dat
+    '67989': 80679p03.dat
+67017:
+  decorations:
+    '68891': 67017p01.dat
+9570:
+  decorations:
+    '89360': 88285p01.dat
+39742:
+  colors:
+    - # body
+    - # mohawk & collar
+      106: 39742p03.dat # orange
+54200:
+  decorations:
+    '78238': 54200pc1.dat
+    '77573': 54200p01.dat
+71682:
+  decorations:
+    '78693': 71682pt3.dat
+    '78694': 71682pt0.dat
+    '78701': 71682pt1.dat
+    '78702': 71682pt2.dat
+32316:
+  decorations:
+    '78695': 32316pt0.dat xx
+89679:
+  decorations:
+    '78697': 89679pt0.dat
+80268:
+  decorations:
+    '78699': 80268p01.dat
+80267:
+  decorations:
+    '78700': 80267p01.dat
+24119:
+  decorations:
+    '78704': 24119p00.dat
+9324:
+  decorations:
+    '932401': u9324p01.dat
+4515:
+  decorations:
+    '451505': 4515d03.dat
+49311:
+  decorations:
+    '78891,0': 49311ps0.dat
+    '108120,0': 49311ps1.dat
+27925:
+  decorations:
+    '100774': 27925ph0.dat
+36756:
+  decorations:
+    '38635': 36756p01.dat
+1874:
+  decorations:
+    '100669': 1874p01.dat
+4740: 
+  decorations:
+    '100915': 4740p07.dat
+30680:
+  decorations:
+    #custom
+    '306818': 3068bp0k.dat
+    '306819': 3068bp21.dat
+35700:
+  decorations:
+    '69870': 35700ps1.dat
+10350:
+  decorations:
+    '105091': 10350p01c01.dat
+    '105093': 10350p02c01.dat
+1411:
+  colors:
+    - # leaves
+    - # corn
+      24: 1411p01.dat # yellow
+72514:
+  colors:
+    - # base
+    - # decor
+      309: 72514p02.dat # metalized silver
+      310: 72514p01.dat # metalized gold
+      185: 72514p04.dat # metallic bright blue
+      146: 72514p03.dat # metallic sand violet
+38547:
+  colors:
+    - # base
+    - # border
+      111: 38547p01.dat # trans brown
+69729:
+  decorations:
+    '101321': 69729pt0.dat
+    '103630': 69729p01.dat
+6179:
+  decorations:
+    '80815': 6179p01.dat
+    '108331': 6179ps6.dat
+6636:
+  decorations:
+    '103628': 6636p0d.dat
+    '105187': 6636p0e.dat
+    '38273': 6636p0a.dat
+    '66927': 6636py1.dat
+    '67065': 6636py0.dat
+    '663601': 6636p10.dat
+    '99946': 6636p0c.dat 
+    '29882': 6636p0b.dat 
+    '78183': 6636p09.dat 
+    '78182': 6636p08.dat 
+    '24861': 6636p07.dat 
+    '70945': 6636p06.dat 
+    '87672': 6636p03.dat 
+    '87673': 6636p04.dat 
+    '73739': 6636p05.dat 
+    '96404': 6636p01.dat 
+    '96406': 6636p02.dat 
+    '69925': 6636p0f.dat 
+    '73559': 6636p0g.dat 
+    '69915': 6636p0h.dat
+32533:
+  decorations:
+    '325301': 32533p212.dat yy
+    '325302': 32533p225.dat yy
+    '325303': 32533p226.dat yy
+    '325304': 32533p234.dat yy
+    '325305': 32533p253.dat yy
+    '325306': 32533p265.dat yy
+    '325307': 32533p279.dat yy
+    '325308': 32533p287.dat yy
+    '325309': 32533p116.dat yy
+    '325310': 32533p117.dat yy
+    '325311': 32533p125.dat yy
+    '325312': 32533p132.dat yy
+    '325313': 32533p143.dat yy
+    '325314': 32533p159.dat yy
+    '325315': 32533p171.dat yy
+    '325316': 32533p175.dat yy
+    '325317': 32533p184.dat yy
+    '325318': 32533p314.dat yy
+    '325319': 32533p326.dat yy
+    '325320': 32533p334.dat yy
+    '325321': 32533p338.dat yy
+    '325322': 32533p339.dat yy
+    '325323': 32533p357.dat yy
+    '325324': 32533p361.dat yy
+    '325325': 32533p373.dat yy
+    '325326': 32533p382.dat yy
+    '325327': 32533p416.dat yy
+    '325328': 32533p429.dat yy
+    '325329': 32533p437.dat yy
+    '325330': 32533p442.dat yy
+    '325331': 32533p447.dat yy
+    '325332': 32533p468.dat yy
+    '325333': 32533p473.dat yy
+    '325334': 32533p485.dat yy
+    '325335': 32533p521.dat yy
+    '325336': 32533p536.dat yy
+    '325337': 32533p543.dat yy
+    '325338': 32533p548.dat yy
+    '325339': 32533p555.dat yy
+    '325340': 32533p565.dat yy
+    '325341': 32533p574.dat yy
+    '325342': 32533p589.dat yy
+    '325343': 32533p619.dat yy
+    '325344': 32533p631.dat yy
+    '325345': 32533p638.dat yy
+    '325346': 32533p646.dat yy
+    '325347': 32533p654.dat yy
+    '325348': 32533p663.dat yy
+    '325349': 32533p665.dat yy
+    '325350': 32533p677.dat yy
+    '325351': 32533p685.dat yy
+24629:
+  decorations:
+    '0,29101': 24629p01.dat
+    '0,29102': 24629p02.dat
+    '0,42229': 24629p03.dat
+    '0,42315': 24629p04.dat
+    '0,78218': 24629p01.dat
+    '0,78217': 24629p02.dat
+    '0,79701': 24629p05.dat
+100662:
+  decorations:
+    '100662': 100662p01.dat
+43723:
+  decorations:
+    '103813': 43723py0.dat
+43722:
+  decorations:
+    '103814': 43722py0.dat
+3710:
+  decorations:
+    '103806': 3710py0.dat
+    '69923': 3710p01.dat
+3460:
+  decorations:
+    '103807': 3460py0.dat
+69945:
+  decorations:
+    '69945': 69945p01.dat
+80513:
+  decorations:
+    '80513': 80513p01.dat
+42531:
+  decorations:
+    '102257': 42531p03.dat
+    '102258': 42531p04.dat
+    '76935': 42531p01.dat
+    '76936': 42531p02.dat
+2438:
+  decorations:
+    '102262': 2438p01.dat
+2442:
+  decorations:
+    '102263': 2442p01.dat
+71771:
+  decorations:
+    '103625': 71771p01.dat
+92950:
+  decorations:
+    '103627': 92950p01.dat
+38458:
+  decorations:
+    '38458': 38458p01.dat
+59349:
+  decorations:
+    '79241': 59349ph2.dat
+    '105164': 59349p03.dat
+48288:
+  decorations:
+    '482881': 48288p04.dat
+    '482882': 48288p03.dat
+    '482883': 48288p02.dat
+    '482884': 48288p01.dat
+68881:
+  decorations:
+    '68987': 68881p02.dat
+    '68989': 68881p01.dat
+30259:
+  decorations:
+    '892004': 30259ap01.dat
+35380:
+  decorations:
+    '104631': 98138py0.dat
+    '98461': 98138p2v.dat y315
+60189:
+  decorations:
+    '60189': 60189p01.dat
+60235:
+  decorations:
+    '60235': 60235p01.dat
+60237:
+  decorations:
+    '60237': 60237p01.dat
+65552:
+  decorations:
+    '65552': 65552p01.dat
+65551:
+  decorations:
+    '65551': 65551p01.dat
+75904:
+  decorations:
+    '104513': 75904p02.dat
+24782:
+  decorations:
+    '51018,0': 24782p01.dat
+106700:
+  decorations:
+    '106700': 106700p01c01.dat
+4742:
+  decorations:
+    '106772': 4742p01.dat
+4412:
+  decorations:
+    '105363': 4412p01.dat
+    '105364': 4412p02.dat
+32627:
+  decorations:
+    '77609': 32627p02.dat yy
+105162:
+  colors:
+    - # hub
+    - # tyre
+      26: 105162p01.dat # black
+  decorations:
+    '107728': 105162p02.dat
+5401:
+  decorations:
+    '107524': 5401p01.dat
+93606:
+  decorations:
+    '79422': 93606p04.dat
+    '79423': 93606p03.dat
+67906:
+  decorations:
+    '67906': 67906p01.dat
+69205:
+  decorations:
+    '73210': 69205p01.dat
+67902:
+  decorations:
+    '0,68986': 67902p01.dat
+35382:
+  decorations:
+    '68818': 3005p06.dat
+98376:
+  decorations:
+    '26221': 98376p01.dat
+87570:
+  colors:
+    - # head
+    - # eyes
+      106: 87570p01.dat # orange
+    - # teeth
+      1: 87570p01.dat # white
+  decorations:
+    #custom
+    '33570,0': 87570p02.dat
+    '68752,0': 87570.dat
+    '90756,0': 87570p01.dat
+60581:
+  decorations:
+    '10261015': 60581d01.dat
+17347:
+  colors:
+    - # hair
+    - # hairband
+      297: 17347p01.dat # gold
+      310: 17347p01.dat # gold
+13198:
+  colors:
+    - # hair
+    - # clips
+      297: 13198p01.dat # gold
+      310: 13198p01.dat # gold
+1622:
+  usecolor: 1
+  colors:
+    - # hat
+      28: 1622p01.dat # green    
+    - # hair
+    - # ears
+      24: 1622p01.dat # yellow
+101659:
+  usecolor: 1
+  colors:
+    - # head
+    - # face
+      1: 101659p01.dat # white
+82445:
+  usecolor: 1
+  colors:
+    - # mane
+      308: 82445p01.dat # dark brown
+      226: 82445p02.dat # bright light yellow
+    - # body
+3672:
+  colors:
+    - # scalp
+    - # bandana
+      154: 3672p02.dat # dark red
+      26: 3672p01.dat # black    
+  decorations:
+    '104351': 3672p01.dat

@@ -83,31 +83,10 @@ async function preloadLDrawMaterials(loader, partsPath) {
     });
   }
 
-  const arity = Number(loader.preloadMaterials.length || 0);
-
   try {
-    if (arity >= 4) {
-      await attempt((onLoad, onError) =>
-        loader.preloadMaterials(configUrl, onLoad, undefined, onError)
-      );
-    } else {
-      await attempt((onLoad, onError) =>
-        loader.preloadMaterials(onLoad, undefined, onError)
-      );
-    }
-    return;
-  } catch {}
-
-  try {
-    if (arity >= 4) {
-      await attempt((onLoad, onError) =>
-        loader.preloadMaterials(onLoad, undefined, onError)
-      );
-    } else {
-      await attempt((onLoad, onError) =>
-        loader.preloadMaterials(configUrl, onLoad, undefined, onError)
-      );
-    }
+    await attempt((onLoad, onError) =>
+      loader.preloadMaterials(configUrl, onLoad, undefined, onError)
+    );
     return;
   } catch {}
 
@@ -116,6 +95,13 @@ async function preloadLDrawMaterials(loader, partsPath) {
     if (ret && typeof ret.then === "function") {
       await ret;
     }
+    return;
+  } catch {}
+
+  try {
+    await attempt((onLoad, onError) =>
+      loader.preloadMaterials(onLoad, undefined, onError)
+    );
   } catch {}
 }
 

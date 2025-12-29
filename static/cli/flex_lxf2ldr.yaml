@@ -1,0 +1,347 @@
+---
+# Format:
+#
+# ""
+# <legoid>:
+#   type: <LSynth type>
+#   head: <h> <Transformation>
+#   body: <h>,<t> <Transformation>
+#   tail: <t> <Transformation>
+#   head+: <datfile> <Transformation>
+#   tail+: <datfile> <Transformation>
+# ""
+#
+# A transformation is 7 comma-separated floats (tx,ty,tz,ax,ay,az,angle) (no spaces)
+# For body, h and t are the number of bones to skip at each end.
+# For head (and tail), h (and t), is the number of bones to place as transformed.
+# E.g.
+# 64230:                               # Hose 8.5L
+#   type: HOSE_FLEXIBLE_8.5L           # 
+#   head: 1 0.72,0,0,0,0,1,-90         # replace skipped head bone
+#   tail: 0                            # don’t replace skipped tail bone
+#   body: 1,1 0,0,0,0,0,1,-90          # skip one head and one tail
+#   head+: 752.dat 0.72,0,0,0,0,1,-90  # add head cap on first bone
+#   tail+: 752.dat 0,0,0.72,1,0,0,90   # add tail cap on last bone
+
+64230:
+  type: HOSE_FLEXIBLE_8.5L
+  head: 1 0.72,0,0,0,0,1,-90
+  tail: 1 0,0,0.92,-0.577735027,0.577735027,-0.577735027,120
+  body: 1,1 0,0,0,0,0,1,-90
+  head+: 752.dat 0.72,0,0,0,0,1,-90
+  tail+: 752.dat 0,0,0.72,1,0,0,90
+27328:
+  type: HOSE_FLEXIBLE_10L
+  head: 1 0.8,0,0,0,0,1,-90
+  tail: 1 -0.8,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+57539:
+  type: HOSE_FLEXIBLE_19L
+  head: 1 0.8,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+14301:
+  type: HOSE_FLEXIBLE_11_5L
+  head: 1 0.78,0,0,0,0,1,-90
+  tail: 1 0,0,0.88,-0.577735027,0.577735027,-0.577735027,120
+  body: 1,1 0,0,0,0,0,1,-90
+92338:
+  type: MINIFIG_CHAIN_6L
+  body: 1,2 0.072,0,0,-0.577735027,-0.577735027,-0.577735027,120
+  head+: 30104k01.dat 0,0.064,0,0,1,0,-90
+  tail+: 30104k01.dat 0,0.064,0,0,1,0,90
+60169:
+  type: MINIFIG_CHAIN_16L
+  body: 1,2 0.1,0,0,-0.577735027,-0.577735027,-0.577735027,120
+  head+: 60169k01.dat 0,0.064,0,0,1,0,-90
+  tail+: 60169k01.dat 0,0.064,0,0,1,0,0
+63141:
+  type: STRING_WITH_GRIPS_21L
+  body: 0,5 0,0,0,0,0,1,-90
+  head+: 572a.dat
+  tail+: 572a.dat
+32580:
+  type: TECHNIC_AXLE_FLEXIBLE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,-0.577735027,0.577735027,-0.577735027,120
+  body: 1,1 0,0,0,0,0,1,-90
+32199:
+  type: TECHNIC_AXLE_FLEXIBLE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,-0.577735027,0.577735027,-0.577735027,120
+  body: 1,1 0,0,0,0,0,1,-90
+32200:
+  type: TECHNIC_AXLE_FLEXIBLE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,-0.577735027,0.577735027,-0.577735027,120
+  body: 1,1 0,0,0,0,0,1,-90
+58856:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+76279:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+55668:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,-0.577735027,0.577735027,-0.577735027,120
+  body: 1,1 0,0,0,0,0,1,-90
+60166:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+76302:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+76324:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+63037:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+60676:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+76255:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+85532:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+76270:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,-0.577735027,0.577735027,-0.577735027,120
+  body: 1,1 0,0,0,0,0,1,-90
+76275:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+61356:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+76257:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+55676:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+62530:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+76254:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+76277:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+57274:
+  type: TECHNIC_FLEX-SYSTEM_HOSE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+71984:
+  type: TECHNIC_RIBBED_HOSE
+  head: 1 0.08,0,0,0,0,1,-90
+  tail: 1 0.08,0,0,0,0,1,-90
+  body: 1,1 0.08,0,0,0,0,1,-90
+71944:
+  type: TECHNIC_RIBBED_HOSE
+  head: 1 0.08,0,0,0,0,1,-90
+  tail: 1 0.08,0,0,0,0,1,-90
+  body: 1,1 0.08,0,0,0,0,1,-90
+71985:
+  type: TECHNIC_RIBBED_HOSE
+  head: 1 0.08,0,0,0,0,1,-90
+  tail: 1 0.08,0,0,0,0,1,-90
+  body: 1,1 0.08,0,0,0,0,1,-90
+71917:
+  type: TECHNIC_RIBBED_HOSE
+  head: 1 0.08,0,0,0,0,1,-90
+  tail: 1 0.08,0,0,0,0,1,-90
+  body: 1,1 0.08,0,0,0,0,1,-90
+71986:
+  type: TECHNIC_RIBBED_HOSE
+  head: 1 0.08,0,0,0,0,1,-90
+  tail: 1 0.08,0,0,0,0,1,-90
+  body: 1,1 0.08,0,0,0,0,1,-90
+71923:
+  type: TECHNIC_RIBBED_HOSE
+  head: 1 0.08,0,0,0,0,1,-90
+  tail: 1 0.08,0,0,0,0,1,-90
+  body: 1,1 0.08,0,0,0,0,1,-90
+72039:
+  type: TECHNIC_RIBBED_HOSE
+  head: 1 0.08,0,0,0,0,1,-90
+  tail: 1 0,0,-0.16,-0.577735027,0.577735027,-0.577735027,120
+  body: 1,1 0.08,0,0,0,0,1,-90
+43675:
+  type: TECHNIC_RIBBED_HOSE
+  head: 1 0.08,0,0,0,0,1,-90
+  tail: 1 0.08,0,0,0,0,1,-90
+  body: 1,1 0.08,0,0,0,0,1,-90
+98567:
+  type: TECHNIC_TOOL_BELT_17M
+  head: 1 1.18,0,0,0,0,1,-90
+  tail: 1 -1.18,0,0,0,0,1,-90
+  body: 1,1 0,0,0,0,0,1,-90
+# LDD Custom parts
+32201:
+  type: TECHNIC_AXLE_FLEXIBLE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,-0.577735027,0.577735027,-0.577735027,120
+  body: 1,1 0,0,0,0,0,1,-90
+32202:
+  type: TECHNIC_AXLE_FLEXIBLE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,-0.577735027,0.577735027,-0.577735027,120
+  body: 1,1 0,0,0,0,0,1,-90
+32235:
+  type: TECHNIC_AXLE_FLEXIBLE
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,-0.577735027,0.577735027,-0.577735027,120
+  body: 1,1 0,0,0,0,0,1,-90
+342004:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342005:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342006:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342007:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342009:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342010:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342011:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342012:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342013:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342014:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342015:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342016:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342018:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342019:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342020:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0,0,0,0,0,1,-90
+  tail: 1 0,0,0,0,0,1,-90
+  body: 3,3 0,0,0,0,0,1,-90
+342023:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 0.25,0,0,0,0,1,-90
+  tail: 1 0.56,0,0,0,0,1,-90
+  body: 3,2 0.2,0,0,0,0,1,-90
+342033:
+  type: FLEX_CABLE_LDD_CP
+  head: 1 -0.06,0,0,0,0,1,-90
+  tail: 1 -0.28,0,0,0,0,1,-90
+  body: 3,4 0,0,0,0,0,1,-90
+14226:
+  type: BRAIDED_STRING_11L
+  body: 0,0 0,0,0,0,0,1,-90
+  head+: 572a.dat 0,0.08,0,0,0,1,0
+  tail+: 572a.dat 0,0.08,0,0,0,1,0
+14225:
+  type: BRAIDED_STRING_31L
+  body: 0,0 0,0,0,0,0,1,-90
+  head+: 572a.dat 0,0.08,0,0,0,1,0
+  tail+: 572a.dat 0,0.08,0,0,0,1,0
+63142:
+  type: BRAIDED_STRING_31L
+  body: 0,0 0,0,0,0,0,1,-90
+  head+: 572a.dat 0,0.08,0,0,0,1,0
+  tail+: 572a.dat 0,0.08,0,0,0,1,0
+14224:
+  type: BRAIDED_STRING_41L
+  body: 0,0 0,0,0,0,0,1,-90
+  head+: 572a.dat 0,0.08,0,0,0,1,0
+  tail+: 572a.dat 0,0.08,0,0,0,1,0
+63140:
+  type: BRAIDED_STRING_41L
+  body: 0,0 0,0,0,0,0,1,-90
+  head+: 572a.dat 0,0.08,0,0,0,1,0
+  tail+: 572a.dat 0,0.08,0,0,0,1,0
+30104:
+  type: MINIFIG_CHAIN_17L
+  body: 1,2 0.1,0,0,-0.577735027,-0.577735027,-0.577735027,120
+  head+: 30104k01.dat 0,0.064,0,0,1,0,-90
+  tail+: 30104k01.dat 0,0.064,0,0,1,0,0

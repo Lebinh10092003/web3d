@@ -1,3 +1,4 @@
+import logging
 import mimetypes
 import os
 import re
@@ -33,6 +34,7 @@ except Exception:
 
 
 STARS = [5, 4, 3, 2, 1]
+logger = logging.getLogger(__name__)
 
 
 def _build_meta_description(content):
@@ -435,6 +437,9 @@ def _ldraw_candidates(clean_path):
         expanded.append(candidate)
         if candidate.lower().endswith("-bl.dat"):
             expanded.append(candidate[:-7] + ".dat")
+        rewritten = _rewrite_ldraw_suffix(candidate)
+        if rewritten and rewritten != candidate:
+            expanded.append(rewritten)
         rewritten = _rewrite_bricklink_part_id(candidate)
         if rewritten and rewritten != candidate:
             expanded.append(rewritten)
@@ -456,6 +461,17 @@ def _rewrite_bricklink_part_id(candidate):
     if rewritten == name:
         return ""
     return path.with_name(rewritten).as_posix()
+
+
+def _rewrite_ldraw_suffix(candidate):
+    if not candidate or not candidate.lower().endswith(".dat"):
+        return ""
+    path = PurePosixPath(candidate)
+    name = path.name
+    match = re.fullmatch(r"(\d+)[a-z]\.dat", name, flags=re.IGNORECASE)
+    if not match:
+        return ""
+    return path.with_name(f"{match.group(1)}.dat").as_posix()
 
 
 def _is_numeric_part_dat(clean_path):
@@ -555,12 +571,35 @@ def content_lego_model(request, pk):
 
     try:
         cache_path = get_cached_ldraw_model_path(content_id=content.id, source_path=source_path)
-    except UnsupportedLegoModel:
+    except UnsupportedLegoModel as exc:
+        if settings.DEBUG:
+            return HttpResponse(
+                f"LDraw conversion failed: {exc}",
+                status=400,
+                content_type="text/plain; charset=utf-8",
+            )
+        logger.warning("LDraw conversion failed for content %s: %s", content.id, exc)
+        raise Http404
+    except Exception:
+        logger.exception("Unexpected LDraw conversion error for content %s", content.id)
+        if settings.DEBUG:
+            return HttpResponse(
+                "Unexpected LDraw conversion error. Check server logs.",
+                status=500,
+                content_type="text/plain; charset=utf-8",
+            )
         raise Http404
 
     try:
         file_handle = default_storage.open(cache_path, "rb")
     except Exception:
+        if settings.DEBUG:
+            return HttpResponse(
+                f"LDraw model not found: {cache_path}",
+                status=404,
+                content_type="text/plain; charset=utf-8",
+            )
+        logger.warning("LDraw model missing for content %s: %s", content.id, cache_path)
         raise Http404
 
     response = FileResponse(file_handle, content_type="text/plain; charset=utf-8")
