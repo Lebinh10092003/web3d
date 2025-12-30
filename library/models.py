@@ -326,7 +326,11 @@ class RecapHeroBanner(models.Model):
     title = models.CharField(max_length=200)
     body = models.TextField(blank=True)
     eyebrow = models.CharField(max_length=80, blank=True)
-    background_image = models.FileField(upload_to="banners/recaps/", blank=True)
+    background_image = models.FileField(
+        upload_to="banners/recaps/",
+        blank=True,
+        help_text=_("Recommended size: 1600x900px (16:9)."),
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -353,7 +357,10 @@ class LibrarySideBanner(models.Model):
         DOWNLOAD = "DOWNLOAD", _("Download")
 
     title = models.CharField(max_length=120, blank=True)
-    image = models.FileField(upload_to="banners/library/")
+    image = models.FileField(
+        upload_to="banners/library/",
+        help_text=_("Recommended size: 600x900px for side banners, 1200x800px for download banner."),
+    )
     link_url = models.URLField(blank=True)
     position = models.CharField(max_length=10, choices=Position.choices, default=Position.LEFT)
     sort_order = models.PositiveIntegerField(default=0)

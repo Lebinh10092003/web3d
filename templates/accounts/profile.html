@@ -30,6 +30,9 @@
       {{ form.github_url }}
       <label>{% trans "Avatar image" %}</label>
       {{ form.file_upload }}
+      {% if form.file_upload.help_text %}
+        <p class="form-help">{{ form.file_upload.help_text }}</p>
+      {% endif %}
       <button class="button" type="submit">{% trans "Save profile" %}</button>
     </form>
   </div>
