@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
@@ -19,7 +19,29 @@ def contact(request):
 
 
 def privacy(request):
-    return render(request, "pages/privacy.html")
+    return redirect(f"{reverse('policies')}?tab=privacy")
+
+def policies(request):
+    return render(request, "pages/policies.html")
+
+def terms(request):
+    return redirect(f"{reverse('policies')}?tab=terms")
+
+
+def payment_policy(request):
+    return redirect(f"{reverse('policies')}?tab=payment")
+
+
+def refund_policy(request):
+    return redirect(f"{reverse('policies')}?tab=refund")
+
+
+def delivery_policy(request):
+    return redirect(f"{reverse('policies')}?tab=delivery")
+
+
+def complaint_policy(request):
+    return redirect(f"{reverse('policies')}?tab=complaints")
 
 
 def _load_recaps():
@@ -154,7 +176,7 @@ def sitemap_xml(request):
         {"loc": f"{base_url}{reverse('library:home')}", "lastmod": now},
         {"loc": f"{base_url}{reverse('about')}", "lastmod": now},
         {"loc": f"{base_url}{reverse('contact')}", "lastmod": now},
-        {"loc": f"{base_url}{reverse('privacy')}", "lastmod": now},
+        {"loc": f"{base_url}{reverse('policies')}", "lastmod": now},
         {"loc": f"{base_url}{reverse('recaps')}", "lastmod": now},
     ]
 

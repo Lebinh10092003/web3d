@@ -216,12 +216,12 @@
             </svg>
             <span>{% trans "Contact" %}</span>
           </a>
-          <a class="footer-link" href="{% url 'privacy' %}">
+          <a class="footer-link" href="{% url 'policies' %}">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 3l8 4v5c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
               <path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <span>{% trans "Privacy" %}</span>
+            <span>{% if request.LANGUAGE_CODE == "vi" %}Điều khoản & Chính sách{% else %}Policies{% endif %}</span>
           </a>
         </div>
       </div>
@@ -232,7 +232,7 @@
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
             </svg>
-            <span>V+ STEAM LAB Library</span>
+            <span>V+ STEAM LAB</span>
           </a>
           <a class="footer-link" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -318,6 +318,7 @@
             {% endif %}
           </p>
         </div>
+        {% comment %}
         <div class="contact-modal-grid">
           <a class="contact-item" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -369,6 +370,8 @@
             </div>
           </a>
         </div>
+        {% endcomment %}
+        {% include "partials/_contact_links.html" %}
       </div>
     </div>
   </dialog>
@@ -388,10 +391,10 @@
               {% trans "Submit a PDF or 3D file to earn points after approval." %}
             </div>
           </a>
-          <a class="points-option" href="{% url 'contact' %}">
+          <a class="points-option" href="{% url 'gating:points' %}">
             <div class="points-option-title">{% trans "Buy points" %}</div>
             <div class="points-option-desc">
-              {% trans "Contact us to top up points for premium models." %}
+              {% trans "Top up instantly via ZaloPay." %}
             </div>
           </a>
         </div>

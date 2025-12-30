@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách giải quyết khiếu nại{% else %}Complaint Handling Policy{% endif %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách giải quyết khiếu nại | V+ STEAM LAB Library{% else %}Complaint Handling Policy | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block meta_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy trình tiếp nhận và giải quyết khiếu nại của khách hàng.{% else %}Complaint intake process and resolution timeline.{% endif %}{% endblock %}
+{% block og_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy trình tiếp nhận và giải quyết khiếu nại của khách hàng.{% else %}Complaint intake process and resolution timeline.{% endif %}{% endblock %}
+{% block twitter_title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách giải quyết khiếu nại | V+ STEAM LAB Library{% else %}Complaint Handling Policy | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block twitter_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy trình tiếp nhận và giải quyết khiếu nại của khách hàng.{% else %}Complaint intake process and resolution timeline.{% endif %}{% endblock %}
+
+{% block content %}
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+<section class="panel policy-page">
+  {% if request.LANGUAGE_CODE == "vi" %}
+    <h1>Chính sách giải quyết khiếu nại</h1>
+    <p>Chúng tôi cam kết tiếp nhận và xử lý khiếu nại minh bạch, nhanh chóng.</p>
+
+    <h2>1. Kênh tiếp nhận</h2>
+    <ul class="policy-list">
+      <li>Email: 09.levanbinh2003@gmail.com</li>
+      <li>Hotline: 0374202948</li>
+      <li>Fanpage: facebook.com/VPlusSteamLab</li>
+    </ul>
+
+    <h2>2. Thông tin cần cung cấp</h2>
+    <ul class="policy-list">
+      <li>Mã giao dịch/tên tài khoản.</li>
+      <li>Mô tả vấn đề và thời điểm phát sinh.</li>
+      <li>Hình ảnh chứng minh (nếu có).</li>
+    </ul>
+
+    <h2>3. Thời gian xử lý</h2>
+    <p>Chúng tôi phản hồi trong 24-48 giờ làm việc và đưa ra phương án giải quyết phù hợp.</p>
+  {% else %}
+    <h1>Complaint Handling Policy</h1>
+    <p>We commit to receiving and resolving complaints transparently and promptly.</p>
+
+    <h2>1. Contact channels</h2>
+    <ul class="policy-list">
+      <li>Email: 09.levanbinh2003@gmail.com</li>
+      <li>Hotline: 0374202948</li>
+      <li>Fanpage: facebook.com/VPlusSteamLab</li>
+    </ul>
+
+    <h2>2. Required information</h2>
+    <ul class="policy-list">
+      <li>Transaction ID or account name.</li>
+      <li>Issue details and time of occurrence.</li>
+      <li>Supporting evidence (if any).</li>
+    </ul>
+
+    <h2>3. Resolution timeline</h2>
+    <p>We respond within 24-48 business hours and provide the best resolution possible.</p>
+  {% endif %}
+</section>
+{% endblock %}

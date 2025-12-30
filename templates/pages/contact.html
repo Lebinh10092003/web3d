@@ -21,4 +21,15 @@
   <p>{% trans "Phone" %}: 0374202948</p>
   <p><a href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">facebook.com/VPlusSteamLab</a></p>
 </section>
+
+<section class="panel contact-panel">
+  {% if request.LANGUAGE_CODE == "vi" %}
+    <h2>Nhắn tin nhanh</h2>
+    <p>Chọn kênh liên hệ để nhận phản hồi nhanh nhất.</p>
+  {% else %}
+    <h2>Quick message</h2>
+    <p>Pick a channel for the fastest response.</p>
+  {% endif %}
+  {% include "partials/_contact_links.html" %}
+</section>
 {% endblock %}

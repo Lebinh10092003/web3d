@@ -5,6 +5,20 @@ from django.db.models import F
 from library.models import ContentItem
 
 
+class PointPackage(models.Model):
+    name = models.CharField(max_length=80)
+    points = models.PositiveIntegerField(unique=True)
+    price_vnd = models.PositiveIntegerField()
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order", "points"]
+
+    def __str__(self):
+        return f"{self.name} ({self.points} pts)"
+
+
 class PointLedger(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name="point_entries", on_delete=models.CASCADE
@@ -63,6 +77,42 @@ class PaymentTransaction(models.Model):
     currency = models.CharField(max_length=6, default="VND")
     provider = models.CharField(max_length=30, default="ZALOPAY")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    app_trans_id = models.CharField(max_length=64, unique=True)
+    zp_trans_id = models.CharField(max_length=64, blank=True)
+    app_time = models.BigIntegerField(default=0)
+    raw_callback = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.app_trans_id}:{self.status}"
+
+
+class PointTopupTransaction(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        PAID = "PAID", "Paid"
+        FAILED = "FAILED", "Failed"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name="point_topups", on_delete=models.CASCADE
+    )
+    package = models.ForeignKey(
+        PointPackage,
+        related_name="transactions",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    points = models.PositiveIntegerField()
+    amount = models.PositiveIntegerField()
+    currency = models.CharField(max_length=6, default="VND")
+    provider = models.CharField(max_length=30, default="ZALOPAY")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    points_awarded = models.BooleanField(default=False)
     app_trans_id = models.CharField(max_length=64, unique=True)
     zp_trans_id = models.CharField(max_length=64, blank=True)
     app_time = models.BigIntegerField(default=0)

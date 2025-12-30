@@ -480,6 +480,55 @@ function bindDownloadBanner() {
   }
 }
 
+function bindPolicyTabs() {
+  const root = document.querySelector("[data-policy-tabs]");
+  if (!root || root.dataset.policyBound === "true") {
+    return;
+  }
+  root.dataset.policyBound = "true";
+
+  const tabs = Array.from(root.querySelectorAll("[data-policy-tab]"));
+  const panels = Array.from(root.querySelectorAll("[data-policy-panel]"));
+  if (!tabs.length || !panels.length) {
+    return;
+  }
+
+  const setActive = (name, updateUrl) => {
+    let found = false;
+    tabs.forEach((tab) => {
+      const active = tab.dataset.policyTab === name;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", active ? "true" : "false");
+      tab.tabIndex = active ? 0 : -1;
+      if (active) {
+        found = true;
+      }
+    });
+    panels.forEach((panel) => {
+      const active = panel.dataset.policyPanel === name;
+      panel.classList.toggle("is-active", active);
+      panel.hidden = !active;
+    });
+    if (found && updateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", name);
+      window.history.replaceState({}, "", url);
+    }
+  };
+
+  const params = new URLSearchParams(window.location.search);
+  const initial = params.get("tab");
+  const valid = tabs.some((tab) => tab.dataset.policyTab === initial);
+  const defaultTab = tabs[0].dataset.policyTab;
+  setActive(valid ? initial : defaultTab, false);
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      setActive(tab.dataset.policyTab, true);
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   applyStagger(document);
   bindModalEvents();
@@ -489,6 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindLanguageSwitcher();
   bindRecapLibrary();
   bindDownloadBanner();
+  bindPolicyTabs();
   if (window.__djangoMessages) {
     showSweetAlerts(window.__djangoMessages);
   }
@@ -504,6 +554,7 @@ document.addEventListener("htmx:afterSwap", (event) => {
   bindRecapLibrary();
   bindDownloadBanner();
   bindPointsTriggers();
+  bindPolicyTabs();
 });
 
 document.addEventListener("htmx:beforeRequest", (event) => {
