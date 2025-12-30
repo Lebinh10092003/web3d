@@ -1001,21 +1001,36 @@ textarea:focus {
 }
 
 .library-layout {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) minmax(160px, 220px);
-  gap: 14px;
+  grid-template-columns: 1fr;
   align-items: start;
   margin-top: 12px;
 }
 
 .library-content {
   min-width: 0;
+  padding: 0;
 }
 
 .library-banner {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: fixed;
+  top: 96px;
+  width: 220px;
+  max-height: calc(100vh - 140px);
+  overflow: auto;
+  z-index: 5;
+}
+
+.library-banner--left {
+  left: 24px;
+}
+
+.library-banner--right {
+  right: 24px;
 }
 
 .library-banner-card {
@@ -1036,9 +1051,39 @@ textarea:focus {
   display: block;
 }
 
+@media (max-width: 1700px) {
+  .library-content {
+    padding: 0 240px;
+  }
+
+  .library-banner {
+    position: absolute;
+    top: 0;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .library-banner--left {
+    left: 0;
+  }
+
+  .library-banner--right {
+    right: 0;
+  }
+}
+
 @media (max-width: 1100px) {
   .library-layout {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .library-content {
+    padding: 0;
+  }
+
+  .library-banner {
+    position: static;
+    width: auto;
   }
 
   .library-banner {
