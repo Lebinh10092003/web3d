@@ -16,3 +16,7 @@ staticfiles/
 # Python cache
 __pycache__/
 *.pyc
+
+# Python cache
+__pycache__/
+*.py[cod]
