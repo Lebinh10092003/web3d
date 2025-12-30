@@ -11,3 +11,4 @@ staticfiles/
 
 .env
 .env_local
+.history
