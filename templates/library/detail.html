@@ -95,11 +95,11 @@
   <div class="download-banner-card" role="dialog" aria-modal="true" aria-labelledby="download-banner-title">
     <button class="download-banner-close" type="button" data-download-banner-close>&times;</button>
     <div class="download-banner-media">
-      <img src="{% static 'img/test.jpg' %}" alt="V+ STEAM LAB Library banner">
+      <img src="{% static 'img/test.jpg' %}" alt="{% if request.LANGUAGE_CODE == 'vi' %}Banner V+ STEAM LAB Library{% else %}V+ STEAM LAB Library banner{% endif %}">
     </div>
     <div class="download-banner-body">
       <span class="download-banner-eyebrow">V+ STEAM LAB Library</span>
-      <h3 id="download-banner-title">V+ STEAM LAB Library - STEAM + Robotics resources</h3>
+      <h3 id="download-banner-title">{% if request.LANGUAGE_CODE == 'vi' %}V+ STEAM LAB Library - Tài nguyên STEAM + Robotics{% else %}V+ STEAM LAB Library - STEAM + Robotics resources{% endif %}</h3>
       <p>{% trans "Thanks for downloading! Explore lessons, PDFs, and 3D builds created by teachers and students." %}</p>
       <p class="download-banner-timer">
         {% trans "Download available in" %} <span data-download-banner-countdown>5</span>s

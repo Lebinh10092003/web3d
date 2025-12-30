@@ -2,11 +2,11 @@
 {% load i18n %}
 
 {% block title %}{% trans "Contact" %} | V+ STEAM LAB Library{% endblock %}
-{% block meta_title %}Contact V+ STEAM LAB Library{% endblock %}
-{% block meta_description %}Contact V+ STEAM LAB Library for STEAM, robotics, and learning resource collaborations.{% endblock %}
-{% block og_description %}Contact V+ STEAM LAB Library for STEAM, robotics, and learning resource collaborations.{% endblock %}
-{% block twitter_title %}Contact V+ STEAM LAB Library{% endblock %}
-{% block twitter_description %}Contact V+ STEAM LAB Library for STEAM, robotics, and learning resource collaborations.{% endblock %}
+{% block meta_title %}{% if request.LANGUAGE_CODE == "vi" %}Liên hệ V+ STEAM LAB Library{% else %}Contact V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block meta_description %}{% if request.LANGUAGE_CODE == "vi" %}Liên hệ V+ STEAM LAB Library để trao đổi tài liệu, hợp tác chương trình và quảng bá dự án STEAM.{% else %}Contact V+ STEAM LAB Library for STEAM, robotics, and learning resource collaborations.{% endif %}{% endblock %}
+{% block og_description %}{% if request.LANGUAGE_CODE == "vi" %}Liên hệ V+ STEAM LAB Library để trao đổi tài liệu, hợp tác chương trình và quảng bá dự án STEAM.{% else %}Contact V+ STEAM LAB Library for STEAM, robotics, and learning resource collaborations.{% endif %}{% endblock %}
+{% block twitter_title %}{% if request.LANGUAGE_CODE == "vi" %}Liên hệ V+ STEAM LAB Library{% else %}Contact V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block twitter_description %}{% if request.LANGUAGE_CODE == "vi" %}Liên hệ V+ STEAM LAB Library để trao đổi tài liệu, hợp tác chương trình và quảng bá dự án STEAM.{% else %}Contact V+ STEAM LAB Library for STEAM, robotics, and learning resource collaborations.{% endif %}{% endblock %}
 
 {% block content %}
 {% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
