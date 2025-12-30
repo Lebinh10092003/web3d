@@ -14,7 +14,7 @@ urlpatterns = [
         views.protected_media,
         name="protected-media-path",
     ),
-    path("content/<int:pk>/", views.content_detail, name="content-detail"),
+    path("content/<slug:slug>/", views.content_detail, name="content-detail"),
     path("content/<int:pk>/model.ldr", views.content_lego_model, name="content-lego-model"),
     path("content/<int:pk>/preview/", views.content_preview_image, name="content-preview"),
     path("content/<int:pk>/download/", views.content_download, name="content-download"),

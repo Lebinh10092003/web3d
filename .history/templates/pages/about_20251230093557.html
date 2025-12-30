@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "About" %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}{% if request.LANGUAGE_CODE == "vi" %}V+ STEAM LAB Library | V for tech, V for future{% else %}V+ STEAM LAB Library | V for tech, V for future{% endif %}{% endblock %}
+{% block meta_description %}{% if request.LANGUAGE_CODE == "vi" %}V+ STEAM LAB Library do thầy Lê Văn Bình xây dựng, giáo viên STEAM/robotics đam mê hướng dẫn học sinh thi robot. Mục tiêu là kết nối cộng đồng và chia sẻ tài nguyền.{% else %}Founded by Le Van Binh, a STEAM robotics teacher passionate about coaching students for robot competitions. The goal is to connect the community and share resources.{% endif %}{% endblock %}
+{% block og_description %}{% if request.LANGUAGE_CODE == "vi" %}V+ STEAM LAB Library do thầy Lê Văn Bình xây dựng, giáo viên STEAM/robotics đam mê hướng dẫn học sinh thi robot. Mục tiêu là kết nối cộng đồng và chia sẻ tài nguyền.{% else %}Founded by Le Van Binh, a STEAM robotics teacher passionate about coaching students for robot competitions. The goal is to connect the community and share resources.{% endif %}{% endblock %}
+{% block og_image %}{{ SITE_URL }}{% static 'img/test.jpg' %}{% endblock %}
+{% block twitter_title %}{% if request.LANGUAGE_CODE == "vi" %}V+ STEAM LAB Library | V for tech, V for future{% else %}V+ STEAM LAB Library | V for tech, V for future{% endif %}{% endblock %}
+{% block twitter_description %}{% if request.LANGUAGE_CODE == "vi" %}V+ STEAM LAB Library do thầy Lê Văn Bình xây dựng, giáo viên STEAM/robotics đam mê hướng dẫn học sinh thi robot. Mục tiêu là kết nối cộng đồng và chia sẻ tài nguyền.{% else %}Founded by Le Van Binh, a STEAM robotics teacher passionate about coaching students for robot competitions. The goal is to connect the community and share resources.{% endif %}{% endblock %}
+
+{% block content %}
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+
+<section class="brand-hero">
+  <div class="brand-hero-content">
+    <div class="hero-badge">V+ STEAM LAB Library</div>
+    <h1>{% if request.LANGUAGE_CODE == "vi" %}V for tech, V for future{% else %}V for tech, V for future{% endif %}</h1>
+    {% if request.LANGUAGE_CODE == "vi" %}
+      <p>V+ STEAM LAB Library là nơi thầy Lê Văn Bình, giáo viên STEAM/robotics, chia sẻ tài nguyền và kinh nghiệm luyện thi robot. Trang web hướng tới kết nối giáo viên, học sinh và phụ huynh; cung cấp bài học, PDF và mô hình 3D phục vụ các cuộc thi.</p>
+    {% else %}
+      <p>V+ STEAM LAB Library is where Le Van Binh, a STEAM robotics teacher, shares resources and coaching experience for robot competitions. The site connects teachers, students, and parents with lessons, PDFs, and 3D models for competitions.</p>
+    {% endif %}
+    <div class="brand-hero-actions">
+      <a class="button" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">Facebook</a>
+      <a class="button button-ghost" href="{% url 'library:home' %}">{% trans "Library" %}</a>
+      <a class="button button-ghost" href="{% url 'contributions:submit' %}">{% trans "Submit" %}</a>
+    </div>
+  </div>
+  <div class="brand-hero-media">
+    <img src="{% static 'img/logoV+.png' %}" alt="{% if request.LANGUAGE_CODE == "vi" %}Logo chữ V{% else %}V logo{% endif %}">
+  </div>
+</section>
+
+<section class="brand-grid">
+  <div class="brand-card">
+    {% if request.LANGUAGE_CODE == "vi" %}
+      <h2>Chương trình / Hoạt động chính</h2>
+      <ul class="brand-list">
+        <li>Khóa học STEAM & Robotics nền tảng (LEGO, Spike, IoT).</li>
+        <li>Huấn luyện đội tuyển WRO, FLL, Enjoy AI, VEX.</li>
+        <li>Workshop AI, lập trình và tư duy thuật toán.</li>
+        <li>Thiết kế 3D, mô hình hóa và prototyping.</li>
+        <li>Đào tạo giáo viên & cộng đồng chia sẻ tài nguyên.</li>
+      </ul>
+    {% else %}
+      <h2>Core programs & activities</h2>
+      <ul class="brand-list">
+        <li>STEAM & Robotics foundations (LEGO, Spike, IoT).</li>
+        <li>Competition coaching for WRO, FLL, Enjoy AI, VEX.</li>
+        <li>AI, coding, and algorithmic thinking workshops.</li>
+        <li>3D design, modeling, and prototyping.</li>
+        <li>Teacher training & community resource sharing.</li>
+      </ul>
+    {% endif %}
+  </div>
+  <div class="brand-card">
+    {% if request.LANGUAGE_CODE == "vi" %}
+      <h2>Thành tựu nổi bật</h2>
+      <ul class="brand-list brand-list--highlight">
+        <li>2 chức vô địch Enjoy AI thế giới.</li>
+        <li>Xây dựng thư viện tài liệu STEAM + 3D dễ tiếp cận cho giáo viên.</li>
+        <li>Kết nối cộng đồng học sinh, phụ huynh và giáo viên qua dự án thực hành.</li>
+      </ul>
+    {% else %}
+      <h2>Highlights & achievements</h2>
+      <ul class="brand-list brand-list--highlight">
+        <li>2-time Enjoy AI world championship.</li>
+        <li>Built an accessible STEAM + 3D resource library for teachers.</li>
+        <li>Connected students, parents, and teachers through hands-on projects.</li>
+      </ul>
+    {% endif %}
+  </div>
+  <div class="brand-card">
+    {% if request.LANGUAGE_CODE == "vi" %}
+      <h2>Logo & màu thương hiệu</h2>
+      <p class="brand-note">Logo chính là logo thương hiệu hiện trên website.</p>
+    {% else %}
+      <h2>Logo & brand colors</h2>
+      <p class="brand-note">The website logo is the official brand logo.</p>
+    {% endif %}
+    <div class="brand-assets">
+      <div class="brand-logo-card">
+        <img src="{% static 'img/logoV+.png' %}" alt="V+ STEAM LAB Library logo">
+      </div>
+      <div class="brand-swatches">
+        <div class="brand-swatch">
+          <span class="brand-swatch-color brand-swatch-color--accent"></span>
+          <div>
+            {% if request.LANGUAGE_CODE == "vi" %}<div class="brand-swatch-label">Màu nhấn</div>{% else %}<div class="brand-swatch-label">Accent</div>{% endif %}
+            <div class="brand-swatch-value">#45E06B</div>
+          </div>
+        </div>
+        <div class="brand-swatch">
+          <span class="brand-swatch-color brand-swatch-color--secondary"></span>
+          <div>
+            {% if request.LANGUAGE_CODE == "vi" %}<div class="brand-swatch-label">Màu phụ</div>{% else %}<div class="brand-swatch-label">Secondary</div>{% endif %}
+            <div class="brand-swatch-value">#39D2C2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="brand-founder">
+  <div class="bio-card">
+    <img src="{% static 'img/avatar.jpg' %}" alt="V+ STEAM LAB Library founder" class="bio-avatar">
+    <div class="bio-content">
+      {% if request.LANGUAGE_CODE == "vi" %}
+        <h2>Thông tin cá nhân</h2>
+        <p>Tôi là Lê Văn Bình, giáo viên STEAM/robotics đam mê hướng dẫn học sinh tham gia các cuộc thi robot. Tôi xây dựng V+ STEAM LAB Library và cộng đồng V+ STEAM LAB để chia sẻ tài nguyền, hỗ trợ đội thi và lan tỏa tinh thần học tập sáng tạo.</p>
+      {% else %}
+        <h2>Founder bio</h2>
+        <p>I am Le Van Binh, a STEAM robotics teacher passionate about coaching students for robot competitions. I built V+ STEAM LAB Library and the V+ STEAM LAB community to share resources, support teams, and inspire creative learning.</p>
+      {% endif %}
+      <div class="bio-actions">
+        <a class="button button-ghost" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noreferrer">
+          {% if request.LANGUAGE_CODE == "vi" %}Facebook cá nhân{% else %}Personal Facebook{% endif %}
+        </a>
+        <a class="button button-ghost" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">
+          V+ STEAM LAB Library
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block structured_data %}
+{{ block.super }}
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "V+ STEAM LAB Library",
+    "url": "{{ SITE_URL }}",
+    "logo": "{{ SITE_URL }}{% static 'img/logoV+.png' %}",
+    "sameAs": ["https://www.facebook.com/VPlusSteamLab"]
+  }
+</script>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Lê Văn Bình",
+    "url": "{{ SITE_URL }}",
+    "sameAs": ["https://www.facebook.com/lebinh.24082003/"]
+  }
+</script>
+{% endblock %}

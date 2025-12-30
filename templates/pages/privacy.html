@@ -2,11 +2,11 @@
 {% load i18n %}
 
 {% block title %}{% trans "Privacy Policy" %} | V+ STEAM LAB Library{% endblock %}
-{% block meta_title %}Privacy Policy | V+ STEAM LAB Library{% endblock %}
-{% block meta_description %}Review how V+ STEAM LAB Library collects and uses data for accounts, points, and content access.{% endblock %}
-{% block og_description %}Review how V+ STEAM LAB Library collects and uses data for accounts, points, and content access.{% endblock %}
-{% block twitter_title %}Privacy Policy | V+ STEAM LAB Library{% endblock %}
-{% block twitter_description %}Review how V+ STEAM LAB Library collects and uses data for accounts, points, and content access.{% endblock %}
+{% block meta_title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách bảo mật | V+ STEAM LAB Library{% else %}Privacy Policy | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block meta_description %}{% if request.LANGUAGE_CODE == "vi" %}Tìm hiểu cách V+ STEAM LAB Library thu thập và sử dụng dữ liệu cho tài khoản, điểm và quyền truy cập nội dung.{% else %}Review how V+ STEAM LAB Library collects and uses data for accounts, points, and content access.{% endif %}{% endblock %}
+{% block og_description %}{% if request.LANGUAGE_CODE == "vi" %}Tìm hiểu cách V+ STEAM LAB Library thu thập và sử dụng dữ liệu cho tài khoản, điểm và quyền truy cập nội dung.{% else %}Review how V+ STEAM LAB Library collects and uses data for accounts, points, and content access.{% endif %}{% endblock %}
+{% block twitter_title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách bảo mật | V+ STEAM LAB Library{% else %}Privacy Policy | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block twitter_description %}{% if request.LANGUAGE_CODE == "vi" %}Tìm hiểu cách V+ STEAM LAB Library thu thập và sử dụng dữ liệu cho tài khoản, điểm và quyền truy cập nội dung.{% else %}Review how V+ STEAM LAB Library collects and uses data for accounts, points, and content access.{% endif %}{% endblock %}
 
 {% block content %}
 {% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}

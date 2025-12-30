@@ -7,12 +7,21 @@ from django.utils.translation import gettext_lazy as _
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 try:
-    from dotenv import load_dotenv
+    from dotenv import load_dotenv, dotenv_values
 except Exception:
     load_dotenv = None
+    dotenv_values = None
 
 if load_dotenv:
-    load_dotenv(BASE_DIR / ".env", override=True)
+    env_path = BASE_DIR / ".env"
+    env_local_path = BASE_DIR / ".env_local"
+    debug_value = os.environ.get("DJANGO_DEBUG")
+    if debug_value is None and dotenv_values and env_local_path.exists():
+        debug_value = dotenv_values(env_local_path).get("DJANGO_DEBUG")
+    if debug_value == "1" and env_local_path.exists():
+        load_dotenv(env_local_path, override=True)
+    else:
+        load_dotenv(env_path, override=True)
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")

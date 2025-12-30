@@ -3,21 +3,41 @@
 
 {% block title %}V+ STEAM LAB Library{% endblock %}
 {% block meta_title %}V+ STEAM LAB Library{% endblock %}
-{% block meta_description %}V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.{% endblock %}
-{% block og_description %}V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.{% endblock %}
+{% block meta_description %}
+  {% if request.LANGUAGE_CODE == "vi" %}
+    V+ STEAM LAB Library là thư viện tài nguyên học tập. V for tech, V for future. Chia sẻ PDF, mô hình LEGO 3D và bài học STEAM.
+  {% else %}
+    V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
+  {% endif %}
+{% endblock %}
+{% block og_description %}
+  {% if request.LANGUAGE_CODE == "vi" %}
+    V+ STEAM LAB Library là thư viện tài nguyên học tập. V for tech, V for future. Chia sẻ PDF, mô hình LEGO 3D và bài học STEAM.
+  {% else %}
+    V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
+  {% endif %}
+{% endblock %}
 {% block twitter_title %}V+ STEAM LAB Library{% endblock %}
-{% block twitter_description %}V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.{% endblock %}
+{% block twitter_description %}
+  {% if request.LANGUAGE_CODE == "vi" %}
+    V+ STEAM LAB Library là thư viện tài nguyên học tập. V for tech, V for future. Chia sẻ PDF, mô hình LEGO 3D và bài học STEAM.
+  {% else %}
+    V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
+  {% endif %}
+{% endblock %}
 
 {% block content %}
 <section class="hero hero--brand">
   <div class="hero-content">
     <div class="hero-badge">V+ STEAM LAB Library</div>
-    <h1>V for tech, V for future</h1>
-    {% if request.LANGUAGE_CODE == "vi" %}
-      <p>V+ STEAM LAB Library là website chứa tài liệu và trao đổi tài nguyên STEAM, robotics cho giáo viên, học sinh và cộng đồng. Khám phá PDF, mô hình LEGO 3D và giáo án thực hành từ các mùa giải thi đấu.</p>
-    {% else %}
-      <p>V+ STEAM LAB Library is a resource library for teachers, students, and the community. Exchange PDFs, 3D LEGO builds, and hands-on lesson plans from competition seasons.</p>
-    {% endif %}
+    <h1>{% if request.LANGUAGE_CODE == "vi" %}V for tech, V for future{% else %}V for tech, V for future{% endif %}</h1>
+    <p>
+      {% if request.LANGUAGE_CODE == "vi" %}
+        V+ STEAM LAB Library là website chia sẻ tài liệu và trao đổi tài nguyên STEAM, robotics cho giáo viên, học sinh và cộng đồng. Khám phá PDF, mô hình LEGO 3D và giáo án thực hành từ các mùa giải thi đấu.
+      {% else %}
+        V+ STEAM LAB Library is a resource library for teachers, students, and the community. Exchange PDFs, 3D LEGO builds, and hands-on lesson plans from competition seasons.
+      {% endif %}
+    </p>
     <div class="hero-actions">
       <a class="button" href="{% url 'about' %}">{% trans "Learn more" %}</a>
       <a class="button button-ghost" href="{% url 'contributions:submit' %}">{% trans "Submit" %}</a>
@@ -25,7 +45,7 @@
     </div>
   </div>
   <div class="hero-media">
-    <img src="{% static 'img/test.jpg' %}" alt="V+ STEAM LAB Library hero">
+    <img src="{% static 'img/logoV+.png' %}" alt="{% if request.LANGUAGE_CODE == "vi" %}Logo chữ V{% else %}V logo{% endif %}">
   </div>
 </section>
 

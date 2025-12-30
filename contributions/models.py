@@ -53,6 +53,11 @@ class ContributionSubmission(models.Model):
         default=10,
         help_text=_("Points required to unlock and download this content."),
     )
+    award_points = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text=_("Override points awarded to the uploader on approval."),
+    )
     price_vnd = models.PositiveIntegerField(
         default=0,
         help_text=_("Price in VND for paid content. Set 0 for free/points."),
@@ -237,7 +242,10 @@ class ContributionSubmission(models.Model):
         if should_award:
             from gating.models import PointLedger
 
-            points = int(getattr(settings, "CONTRIBUTION_APPROVAL_POINTS", 10))
+            if self.award_points is None:
+                points = int(getattr(settings, "CONTRIBUTION_APPROVAL_POINTS", 10))
+            else:
+                points = int(self.award_points or 0)
             if points:
                 PointLedger.record(self.user, points, f"Contribution approved #{self.id}")
             type(self).objects.filter(pk=self.pk).update(points_awarded=True)

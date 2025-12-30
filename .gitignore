@@ -10,3 +10,5 @@ media/
 staticfiles/
 
 .env
+.env_local
+.history
