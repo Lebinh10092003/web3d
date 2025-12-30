@@ -12,3 +12,7 @@ staticfiles/
 .env
 .env_local
 .history
+
+# Python cache
+__pycache__/
+*.pyc
