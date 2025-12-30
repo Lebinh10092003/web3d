@@ -15,6 +15,9 @@ class UserAdmin(BaseUserAdmin):
                     "role",
                     "bio",
                     "avatar_path",
+                    "website_url",
+                    "facebook_url",
+                    "github_url",
                     "points_balance",
                 )
             },

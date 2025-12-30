@@ -85,8 +85,44 @@
   </form>
 </section>
 
-<section id="content-grid">
-  {% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_HOME class_name="ad-slot-wide" %}
-  {% include "library/_content_grid.html" %}
+<section class="library-layout">
+  <aside class="library-banner library-banner--left" aria-label="Left banner">
+    {% if left_banners %}
+      {% for banner in left_banners %}
+        {% if banner.link_url %}
+          <a class="library-banner-card" href="{{ banner.link_url }}" target="_blank" rel="noreferrer">
+            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Library banner' }}" loading="lazy">
+          </a>
+        {% else %}
+          <div class="library-banner-card">
+            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Library banner' }}" loading="lazy">
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </aside>
+
+  <div class="library-content">
+    <section id="content-grid">
+      {% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_HOME class_name="ad-slot-wide" %}
+      {% include "library/_content_grid.html" %}
+    </section>
+  </div>
+
+  <aside class="library-banner library-banner--right" aria-label="Right banner">
+    {% if right_banners %}
+      {% for banner in right_banners %}
+        {% if banner.link_url %}
+          <a class="library-banner-card" href="{{ banner.link_url }}" target="_blank" rel="noreferrer">
+            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Library banner' }}" loading="lazy">
+          </a>
+        {% else %}
+          <div class="library-banner-card">
+            <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Library banner' }}" loading="lazy">
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </aside>
 </section>
 {% endblock %}

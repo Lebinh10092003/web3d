@@ -23,6 +23,7 @@
     <div class="detail-meta">
       <span id="detail-rating-count">{% blocktrans with count=rating_count %}{{ count }} ratings{% endblocktrans %}</span>
       <span id="detail-favorites-count">{% blocktrans with count=favorites_count %}{{ count }} saves{% endblocktrans %}</span>
+      {% include "partials/_owner_links.html" with owner=content.owner show_label=True show_links=True %}
       {% if content.download_cost_points == 0 %}
         <span class="points-badge points-free">{% trans "Free download" %}</span>
       {% else %}
@@ -95,7 +96,15 @@
   <div class="download-banner-card" role="dialog" aria-modal="true" aria-labelledby="download-banner-title">
     <button class="download-banner-close" type="button" data-download-banner-close>&times;</button>
     <div class="download-banner-media">
-      <img src="{% static 'img/test.jpg' %}" alt="{% if request.LANGUAGE_CODE == 'vi' %}Banner V+ STEAM LAB Library{% else %}V+ STEAM LAB Library banner{% endif %}">
+      {% if download_banner and download_banner.link_url %}
+        <a href="{{ download_banner.link_url }}" target="_blank" rel="noreferrer">
+          <img src="{{ download_banner.image.url }}" alt="{{ download_banner.title|default:'Library banner' }}">
+        </a>
+      {% elif download_banner %}
+        <img src="{{ download_banner.image.url }}" alt="{{ download_banner.title|default:'Library banner' }}">
+      {% else %}
+        <img src="{% static 'img/test.jpg' %}" alt="{% if request.LANGUAGE_CODE == 'vi' %}Banner V+ STEAM LAB Library{% else %}V+ STEAM LAB Library banner{% endif %}">
+      {% endif %}
     </div>
     <div class="download-banner-body">
       <span class="download-banner-eyebrow">V+ STEAM LAB Library</span>
@@ -106,7 +115,11 @@
       </p>
       <div class="download-banner-actions">
         <button class="button" type="button" data-download-banner-continue disabled>{% trans "Continue download" %}</button>
-        <a class="button button-ghost" href="{% url 'about' %}">{% trans "Learn more" %}</a>
+        {% if download_banner and download_banner.link_url %}
+          <a class="button button-ghost" href="{{ download_banner.link_url }}" target="_blank" rel="noreferrer">{% trans "Learn more" %}</a>
+        {% else %}
+          <a class="button button-ghost" href="{% url 'about' %}">{% trans "Learn more" %}</a>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -155,7 +168,7 @@
     "url": "{{ canonical_url|default:request.build_absolute_uri }}",
     "creator": {
       "@type": "Person",
-      "name": "{{ content.owner|escapejs }}"
+      "name": "{% if content.owner %}{{ content.owner|escapejs }}{% else %}V+ STEAM LAB Library{% endif %}"
     }
   }
 </script>

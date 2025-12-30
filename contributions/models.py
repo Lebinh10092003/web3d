@@ -30,7 +30,11 @@ class ContributionSubmission(models.Model):
         REJECTED = "REJECTED", "Rejected"
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, related_name="submissions", on_delete=models.CASCADE
+        settings.AUTH_USER_MODEL,
+        related_name="submissions",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -240,14 +244,15 @@ class ContributionSubmission(models.Model):
         super().save(*args, **kwargs)
 
         if should_award:
-            from gating.models import PointLedger
+            if self.user_id:
+                from gating.models import PointLedger
 
-            if self.award_points is None:
-                points = int(getattr(settings, "CONTRIBUTION_APPROVAL_POINTS", 10))
-            else:
-                points = int(self.award_points or 0)
-            if points:
-                PointLedger.record(self.user, points, f"Contribution approved #{self.id}")
+                if self.award_points is None:
+                    points = int(getattr(settings, "CONTRIBUTION_APPROVAL_POINTS", 10))
+                else:
+                    points = int(self.award_points or 0)
+                if points:
+                    PointLedger.record(self.user, points, f"Contribution approved #{self.id}")
             type(self).objects.filter(pk=self.pk).update(points_awarded=True)
             self.points_awarded = True
 

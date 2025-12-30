@@ -4,6 +4,8 @@ from urllib.parse import parse_qs, urlparse, urlunparse
 from django.conf import settings
 
 from django.db import models
+from django.db.models.signals import post_delete, pre_save
+from django.dispatch import receiver
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
@@ -41,7 +43,11 @@ class ContentItem(models.Model):
         REJECTED = "REJECTED", _("Rejected")
 
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, related_name="contents", on_delete=models.CASCADE
+        settings.AUTH_USER_MODEL,
+        related_name="contents",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
@@ -338,3 +344,80 @@ class RecapHeroBanner(models.Model):
         super().save(*args, **kwargs)
         if self.is_active:
             RecapHeroBanner.objects.exclude(pk=self.pk).update(is_active=False)
+
+
+class LibrarySideBanner(models.Model):
+    class Position(models.TextChoices):
+        LEFT = "LEFT", _("Left")
+        RIGHT = "RIGHT", _("Right")
+        DOWNLOAD = "DOWNLOAD", _("Download")
+
+    title = models.CharField(max_length=120, blank=True)
+    image = models.FileField(upload_to="banners/library/")
+    link_url = models.URLField(blank=True)
+    position = models.CharField(max_length=10, choices=Position.choices, default=Position.LEFT)
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["position", "sort_order", "-updated_at"]
+
+    def __str__(self):
+        label = self.title or "Library banner"
+        return f"{label} ({self.position})"
+
+
+def _delete_file_field_file(instance, field_name, using=None):
+    field = getattr(instance, field_name, None)
+    if not field or not getattr(field, "name", ""):
+        return
+    file_name = field.name
+    model = type(instance)
+    qs = model.objects.using(using) if using else model.objects
+    if qs.filter(**{field_name: file_name}).exclude(pk=instance.pk).exists():
+        return
+    storage = field.storage
+    try:
+        if storage.exists(file_name):
+            storage.delete(file_name)
+    except Exception:
+        return
+
+
+def _delete_replaced_file(sender, instance, field_name, using=None):
+    if not instance.pk:
+        return
+    try:
+        qs = sender.objects.using(using) if using else sender.objects
+        old = qs.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        return
+    old_field = getattr(old, field_name, None)
+    new_field = getattr(instance, field_name, None)
+    old_name = getattr(old_field, "name", "")
+    new_name = getattr(new_field, "name", "")
+    if not old_name or old_name == new_name:
+        return
+    _delete_file_field_file(old, field_name, using=using)
+
+
+@receiver(post_delete, sender=RecapHeroBanner)
+def _delete_recap_hero_banner_file(sender, instance, using, **kwargs):
+    _delete_file_field_file(instance, "background_image", using=using)
+
+
+@receiver(pre_save, sender=RecapHeroBanner)
+def _delete_recap_hero_banner_replaced_file(sender, instance, using, **kwargs):
+    _delete_replaced_file(sender, instance, "background_image", using=using)
+
+
+@receiver(post_delete, sender=LibrarySideBanner)
+def _delete_library_side_banner_file(sender, instance, using, **kwargs):
+    _delete_file_field_file(instance, "image", using=using)
+
+
+@receiver(pre_save, sender=LibrarySideBanner)
+def _delete_library_side_banner_replaced_file(sender, instance, using, **kwargs):
+    _delete_replaced_file(sender, instance, "image", using=using)

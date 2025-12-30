@@ -32,7 +32,7 @@ from .lego_ldraw import (
     find_cached_ldraw_model_path,
     get_cached_ldraw_model_path,
 )
-from .models import Category, ContentFile, ContentItem
+from .models import Category, ContentFile, ContentItem, LibrarySideBanner
 from .tasks import enqueue_ldraw_prebuild
 
 try:
@@ -261,6 +261,12 @@ def home(request):
     _annotate_preview(page_obj)
 
     categories = Category.objects.filter(is_active=True)
+    left_banners = LibrarySideBanner.objects.filter(
+        is_active=True, position=LibrarySideBanner.Position.LEFT
+    ).order_by("sort_order", "id")
+    right_banners = LibrarySideBanner.objects.filter(
+        is_active=True, position=LibrarySideBanner.Position.RIGHT
+    ).order_by("sort_order", "id")
 
     params = {}
     if query:
@@ -286,6 +292,8 @@ def home(request):
         "filter_query": filter_query,
         "page_range": page_range,
         "canonical_url": request.build_absolute_uri(request.path),
+        "left_banners": left_banners,
+        "right_banners": right_banners,
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -372,6 +380,13 @@ def content_detail(request, slug):
         .select_related("user")
         .prefetch_related("replies__user")
     )
+    download_banner = (
+        LibrarySideBanner.objects.filter(
+            is_active=True, position=LibrarySideBanner.Position.DOWNLOAD
+        )
+        .order_by("sort_order", "id")
+        .first()
+    )
 
     context = {
         "content": content,
@@ -403,6 +418,7 @@ def content_detail(request, slug):
         "editing_comment_id": None,
         "stars": STARS,
         "canonical_url": request.build_absolute_uri(request.path),
+        "download_banner": download_banner,
     }
     return render(request, "library/detail.html", context)
 

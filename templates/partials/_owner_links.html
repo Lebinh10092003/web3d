@@ -1,0 +1,28 @@
+{% load i18n %}
+<div class="owner-links{% if compact %} owner-links--compact{% endif %}">
+  {% if show_label %}
+    <span class="owner-label">{% if request.LANGUAGE_CODE == 'vi' %}Người đăng:{% else %}Posted by:{% endif %}</span>
+  {% endif %}
+  <span class="owner-name">{% if owner %}{{ owner }}{% else %}V+STEAM LAB{% endif %}</span>
+  {% if owner and show_links %}
+    {% if owner.website_url or owner.facebook_url or owner.github_url %}
+      <span class="owner-social">
+        {% if owner.website_url %}
+          <a class="owner-link owner-link--web" href="{{ owner.website_url }}" target="_blank" rel="noreferrer">
+            {% if compact %}Web{% else %}Website{% endif %}
+          </a>
+        {% endif %}
+        {% if owner.facebook_url %}
+          <a class="owner-link owner-link--facebook" href="{{ owner.facebook_url }}" target="_blank" rel="noreferrer">
+            {% if compact %}FB{% else %}Facebook{% endif %}
+          </a>
+        {% endif %}
+        {% if owner.github_url %}
+          <a class="owner-link owner-link--github" href="{{ owner.github_url }}" target="_blank" rel="noreferrer">
+            {% if compact %}GH{% else %}GitHub{% endif %}
+          </a>
+        {% endif %}
+      </span>
+    {% endif %}
+  {% endif %}
+</div>

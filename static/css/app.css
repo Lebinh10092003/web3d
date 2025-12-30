@@ -193,7 +193,7 @@ img {
 .site-main {
   padding: 18px 5vw 36px;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -990,8 +990,53 @@ textarea:focus {
 
 .content-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
+}
+
+.library-layout {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) minmax(160px, 220px);
+  gap: 14px;
+  align-items: start;
+  margin-top: 12px;
+}
+
+.library-content {
+  min-width: 0;
+}
+
+.library-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.library-banner-card {
+  display: block;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 28px rgba(31, 53, 63, 0.12);
+}
+
+.library-banner-card img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 1100px) {
+  .library-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .library-banner {
+    display: none;
+  }
 }
 
 .content-card {
@@ -1086,6 +1131,62 @@ textarea:focus {
   color: var(--muted);
 }
 
+.card-owner {
+  margin-top: 2px;
+}
+
+.owner-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.owner-links--compact {
+  font-size: 11px;
+}
+
+.owner-label {
+  color: var(--muted);
+}
+
+.owner-name {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.owner-social {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.owner-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.owner-links--compact .owner-link {
+  font-size: 10px;
+}
+
+.owner-social a + a::before {
+  content: "•";
+  margin-right: 6px;
+  color: var(--muted);
+}
+
 .points-badge {
   display: inline-flex;
   align-items: center;
@@ -1125,6 +1226,8 @@ textarea:focus {
 
 .detail-meta {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
   font-size: 13px;
   color: var(--muted);

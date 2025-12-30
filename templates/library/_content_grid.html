@@ -16,6 +16,9 @@
         </div>
         <h3><a href="{% url 'library:content-detail' item.slug %}">{{ item.title }}</a></h3>
         <p>{{ item.description|default:""|truncatechars:140 }}</p>
+        <div class="card-owner">
+          {% include "partials/_owner_links.html" with owner=item.owner show_label=False show_links=False compact=True %}
+        </div>
         <div class="card-meta">
           <span>{% trans "Rating" %}: {{ item.rating_avg|default_if_none:"-" }}</span>
           <span>{% blocktrans with count=item.favorites_count %}{{ count }} saves{% endblocktrans %}</span>

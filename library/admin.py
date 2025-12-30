@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import Category, ContentFile, ContentItem, RecapHeroBanner, RecapVideo
+from .models import (
+    Category,
+    ContentFile,
+    ContentItem,
+    LibrarySideBanner,
+    RecapHeroBanner,
+    RecapVideo,
+)
 
 
 @admin.register(Category)
@@ -49,3 +56,10 @@ class RecapHeroBannerAdmin(admin.ModelAdmin):
     list_display = ("title", "is_active", "updated_at")
     list_filter = ("is_active", "updated_at")
     search_fields = ("title", "body", "eyebrow")
+
+
+@admin.register(LibrarySideBanner)
+class LibrarySideBannerAdmin(admin.ModelAdmin):
+    list_display = ("title", "position", "is_active", "sort_order", "updated_at")
+    list_filter = ("position", "is_active")
+    search_fields = ("title", "link_url")
