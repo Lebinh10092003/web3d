@@ -52,6 +52,7 @@ class ContentItem(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     description = models.TextField(blank=True)
+    external_links = models.URLField(blank=True, max_length=500)
     content_type = models.CharField(max_length=20, choices=ContentType.choices)
     categories = models.ManyToManyField(Category, blank=True, related_name="items")
     download_cost_points = models.PositiveIntegerField(default=0)
@@ -90,6 +91,37 @@ class ContentItem(models.Model):
         if not self.slug:
             self.slug = self._build_unique_slug()
         super().save(*args, **kwargs)
+
+    def _clean_external_link(self):
+        link = (self.external_links or "").strip()
+        if not link:
+            return ""
+        if (link.startswith('"') and link.endswith('"')) or (
+            link.startswith("'") and link.endswith("'")
+        ):
+            link = link[1:-1].strip()
+        return link
+
+    @property
+    def external_link_url(self):
+        link = self._clean_external_link()
+        if not link:
+            return ""
+        parsed = urlparse(link)
+        if not parsed.scheme:
+            return f"https://{link}"
+        return link
+
+    @property
+    def external_link_label(self):
+        link = self.external_link_url
+        if not link:
+            return ""
+        parsed = urlparse(link)
+        host = (parsed.netloc or "").strip()
+        if host.startswith("www."):
+            host = host[4:]
+        return host or link
 
 
 class ContentFile(models.Model):

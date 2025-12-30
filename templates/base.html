@@ -228,13 +228,13 @@
       <div class="footer-group">
         <div class="footer-heading">{% trans "Social" %}</div>
         <div class="footer-list">
-          <a class="footer-link" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">
+          <a class="footer-link" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
             </svg>
             <span>V+ STEAM LAB</span>
           </a>
-          <a class="footer-link" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noreferrer">
+          <a class="footer-link" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
             </svg>
@@ -244,7 +244,7 @@
               <span>Personal Facebook</span>
             {% endif %}
           </a>
-          <a class="footer-link" href="https://www.tiktok.com/@lebinh240803" target="_blank" rel="noreferrer">
+          <a class="footer-link" href="https://www.tiktok.com/@lebinh240803" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3a6 6 0 0 0 4 2v4a9.6 9.6 0 0 1-4-1v8a6 6 0 1 1-6-6h1v4h-1a2 2 0 1 0 2 2V3h4z" fill="currentColor"/>
             </svg>
@@ -320,7 +320,7 @@
         </div>
         {% comment %}
         <div class="contact-modal-grid">
-          <a class="contact-item" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">
+          <a class="contact-item" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
             </svg>
@@ -329,7 +329,7 @@
               <div class="contact-value">/VPlusSteamLab</div>
             </div>
           </a>
-          <a class="contact-item" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noreferrer">
+          <a class="contact-item" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
             </svg>
@@ -342,7 +342,7 @@
               <div class="contact-value">/lebinh.24082003</div>
             </div>
           </a>
-          <a class="contact-item" href="https://www.tiktok.com/@lebinh240803" target="_blank" rel="noreferrer">
+          <a class="contact-item" href="https://www.tiktok.com/@lebinh240803" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3a6 6 0 0 0 4 2v4a9.6 9.6 0 0 1-4-1v8a6 6 0 1 1-6-6h1v4h-1a2 2 0 1 0 2 2V3h4z" fill="currentColor"/>
             </svg>
@@ -351,7 +351,7 @@
               <div class="contact-value">@lebinh240803</div>
             </div>
           </a>
-          <a class="contact-item" href="https://zalo.me/0374202948" target="_blank" rel="noreferrer">
+          <a class="contact-item" href="https://zalo.me/0374202948" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M21 12a8 8 0 0 1-8 8H5l2-3a8 8 0 1 1 14-5z" fill="currentColor"/>
             </svg>
@@ -398,6 +398,35 @@
             </div>
           </a>
         </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog
+    id="owner-modal"
+    class="auth-modal owner-modal"
+    data-owner-name-empty="{% if request.LANGUAGE_CODE == 'vi' %}Người dùng{% else %}User{% endif %}"
+    data-owner-role-empty="{% if request.LANGUAGE_CODE == 'vi' %}Thành viên cộng đồng{% else %}Community member{% endif %}"
+    data-owner-bio-empty="{% if request.LANGUAGE_CODE == 'vi' %}Chưa có giới thiệu.{% else %}No bio yet.{% endif %}"
+    data-owner-links-empty="{% if request.LANGUAGE_CODE == 'vi' %}Chưa có liên kết.{% else %}No links yet.{% endif %}"
+  >
+    <div class="auth-modal-content owner-modal-content">
+      <button class="modal-close" type="button" data-modal-close>&times;</button>
+      <div class="owner-modal-body">
+        <div class="owner-modal-header">
+          <div class="owner-modal-avatar" aria-hidden="true">
+            <img id="owner-modal-avatar-img" alt="">
+            <span id="owner-modal-avatar-initial" class="owner-modal-initial"></span>
+          </div>
+          <div>
+            <h2 id="owner-modal-name"></h2>
+            <p id="owner-modal-username" class="owner-modal-username"></p>
+            <p id="owner-modal-role" class="owner-modal-role"></p>
+          </div>
+        </div>
+        <p id="owner-modal-bio" class="owner-modal-bio"></p>
+        <div id="owner-modal-links" class="owner-modal-links"></div>
+        <p id="owner-modal-links-empty" class="owner-modal-empty"></p>
       </div>
     </div>
   </dialog>

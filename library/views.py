@@ -259,6 +259,23 @@ def home(request):
     paginator = Paginator(items, 8)
     page_obj = paginator.get_page(request.GET.get("page") or 1)
     _annotate_preview(page_obj)
+    user = request.user
+    is_privileged = bool(
+        user.is_authenticated and (user.is_staff or user.is_superuser)
+    )
+    unlocked_ids = set()
+    if user.is_authenticated and not is_privileged:
+        unlocked_ids = set(
+            Unlock.objects.filter(content__in=page_obj.object_list, user=user).values_list(
+                "content_id", flat=True
+            )
+        )
+    for item in page_obj:
+        is_unlocked = item.download_cost_points == 0
+        if user.is_authenticated:
+            if is_privileged or item.owner_id == user.id or item.id in unlocked_ids:
+                is_unlocked = True
+        item.lock_preview = item.download_cost_points > 0 and not is_unlocked
 
     categories = Category.objects.filter(is_active=True)
     left_banners = LibrarySideBanner.objects.filter(

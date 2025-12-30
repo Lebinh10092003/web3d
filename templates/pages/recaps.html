@@ -59,7 +59,7 @@
           data-recap-watch
           href="{% if initial_recap %}{{ initial_recap.video_watch_url }}{% endif %}"
           target="_blank"
-          rel="noopener"
+          rel="noopener noreferrer"
         >
           {% if initial_recap and initial_recap.video_provider == "TIKTOK" %}
             {% trans "Watch on TikTok" %}

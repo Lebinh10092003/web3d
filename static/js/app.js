@@ -33,6 +33,10 @@ function getPointsModal() {
   return document.getElementById("points-modal");
 }
 
+function getOwnerModal() {
+  return document.getElementById("owner-modal");
+}
+
 function openContactModal() {
   const modal = getContactModal();
   if (modal && !modal.open) {
@@ -44,6 +48,20 @@ function openPointsModal() {
   const modal = getPointsModal();
   if (modal && !modal.open) {
     modal.showModal();
+  }
+}
+
+function openOwnerModal() {
+  const modal = getOwnerModal();
+  if (modal && !modal.open) {
+    modal.showModal();
+  }
+}
+
+function closeOwnerModal() {
+  const modal = getOwnerModal();
+  if (modal && modal.open) {
+    modal.close();
   }
 }
 
@@ -109,6 +127,7 @@ function bindModalEvents() {
   bindBackdropClose(getAuthModal());
   bindBackdropClose(getContactModal());
   bindBackdropClose(getPointsModal());
+  bindBackdropClose(getOwnerModal());
 }
 
 function bindContactTriggers() {
@@ -141,6 +160,182 @@ function bindPointsTriggers() {
       }
       event.preventDefault();
       openPointsModal();
+    });
+  });
+}
+
+function normalizeUrl(value) {
+  const url = String(value || "").trim();
+  if (!url) {
+    return "";
+  }
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+  return `https://${url}`;
+}
+
+function getLinkLabel(url) {
+  let hostname = "";
+  try {
+    hostname = new URL(url).hostname.toLowerCase();
+  } catch (error) {
+    hostname = url.toLowerCase();
+  }
+  if (hostname.includes("facebook.com") || hostname.includes("fb.com")) {
+    return "Facebook";
+  }
+  if (hostname.includes("github.com")) {
+    return "GitHub";
+  }
+  if (hostname.includes("tiktok.com")) {
+    return "TikTok";
+  }
+  if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) {
+    return "YouTube";
+  }
+  if (hostname.includes("instagram.com")) {
+    return "Instagram";
+  }
+  if (hostname.includes("twitter.com") || hostname.includes("x.com")) {
+    return "Twitter";
+  }
+  if (hostname.includes("linkedin.com")) {
+    return "LinkedIn";
+  }
+  if (hostname.includes("behance.net")) {
+    return "Behance";
+  }
+  if (hostname.includes("dribbble.com")) {
+    return "Dribbble";
+  }
+  return "Website";
+}
+
+let ownerModalTimer = null;
+
+function cancelOwnerModalOpen() {
+  if (ownerModalTimer) {
+    window.clearTimeout(ownerModalTimer);
+    ownerModalTimer = null;
+  }
+}
+
+function scheduleOwnerModalOpen(callback) {
+  cancelOwnerModalOpen();
+  ownerModalTimer = window.setTimeout(() => {
+    ownerModalTimer = null;
+    callback();
+  }, 150);
+}
+
+function bindOwnerTriggers() {
+  const modal = getOwnerModal();
+  if (!modal) {
+    return;
+  }
+  const nameEl = modal.querySelector("#owner-modal-name");
+  const usernameEl = modal.querySelector("#owner-modal-username");
+  const roleEl = modal.querySelector("#owner-modal-role");
+  const bioEl = modal.querySelector("#owner-modal-bio");
+  const avatarImg = modal.querySelector("#owner-modal-avatar-img");
+  const avatarInitial = modal.querySelector("#owner-modal-avatar-initial");
+  const linksWrap = modal.querySelector("#owner-modal-links");
+  const linksEmpty = modal.querySelector("#owner-modal-links-empty");
+  const triggers = document.querySelectorAll("[data-owner-modal-open]");
+  if (!triggers.length) {
+    return;
+  }
+  triggers.forEach((trigger) => {
+    if (trigger.dataset.ownerBound === "true") {
+      return;
+    }
+    trigger.dataset.ownerBound = "true";
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      const dataset = trigger.dataset;
+      const payload = {
+        name: dataset.ownerName || "",
+        username: dataset.ownerUsername || "",
+        avatar: dataset.ownerAvatar || "",
+        role: dataset.ownerRole || "",
+        bio: dataset.ownerBio || "",
+        urls: [
+          dataset.ownerWebsite,
+          dataset.ownerFacebook,
+          dataset.ownerGithub
+        ]
+      };
+      scheduleOwnerModalOpen(() => {
+        const name = payload.name;
+        const username = payload.username;
+        const avatar = payload.avatar;
+        const role = payload.role;
+        const bio = payload.bio;
+      const urls = [
+        payload.urls[0],
+        payload.urls[1],
+        payload.urls[2]
+      ]
+        .map(normalizeUrl)
+        .filter(Boolean);
+      const uniqueUrls = Array.from(new Set(urls));
+      const fallbackName = modal.dataset.ownerNameEmpty || "User";
+      const fallbackRole = modal.dataset.ownerRoleEmpty || "Community member";
+      const fallbackBio = modal.dataset.ownerBioEmpty || "No bio yet.";
+      const fallbackLinks = modal.dataset.ownerLinksEmpty || "No links yet.";
+
+      if (nameEl) {
+        nameEl.textContent = name || username || fallbackName;
+      }
+      if (usernameEl) {
+        const showUsername = username && username !== name;
+        usernameEl.textContent = showUsername ? `@${username}` : "";
+        usernameEl.hidden = !showUsername;
+      }
+      if (roleEl) {
+        roleEl.textContent = role || fallbackRole;
+        roleEl.hidden = false;
+      }
+      if (bioEl) {
+        bioEl.textContent = bio || fallbackBio;
+        bioEl.hidden = false;
+      }
+      if (avatarImg && avatarInitial) {
+        if (avatar) {
+          avatarImg.src = avatar;
+          avatarImg.hidden = false;
+          avatarInitial.hidden = true;
+        } else {
+          const initialSource = name || username || fallbackName;
+          avatarInitial.textContent = initialSource.trim().charAt(0).toUpperCase();
+          avatarImg.removeAttribute("src");
+          avatarImg.hidden = true;
+          avatarInitial.hidden = false;
+        }
+      }
+      if (linksWrap) {
+        linksWrap.innerHTML = "";
+        if (uniqueUrls.length) {
+          uniqueUrls.forEach((url) => {
+            const label = getLinkLabel(url);
+            const linkEl = document.createElement("a");
+            linkEl.className = "owner-modal-link";
+            linkEl.href = url;
+            linkEl.target = "_blank";
+            linkEl.rel = "noopener noreferrer";
+            linkEl.textContent = label;
+            linkEl.title = url;
+            linksWrap.appendChild(linkEl);
+          });
+        }
+        if (linksEmpty) {
+          linksEmpty.textContent = uniqueUrls.length ? "" : fallbackLinks;
+          linksEmpty.hidden = uniqueUrls.length > 0;
+        }
+      }
+        openOwnerModal();
+      });
     });
   });
 }
@@ -539,6 +734,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindRecapLibrary();
   bindDownloadBanner();
   bindPolicyTabs();
+  bindOwnerTriggers();
   if (window.__djangoMessages) {
     showSweetAlerts(window.__djangoMessages);
   }
@@ -555,6 +751,7 @@ document.addEventListener("htmx:afterSwap", (event) => {
   bindDownloadBanner();
   bindPointsTriggers();
   bindPolicyTabs();
+  bindOwnerTriggers();
 });
 
 document.addEventListener("htmx:beforeRequest", (event) => {
@@ -562,11 +759,16 @@ document.addEventListener("htmx:beforeRequest", (event) => {
   if (target && target.id === "auth-modal-body") {
     openAuthModal();
   }
+  cancelOwnerModalOpen();
+  closeOwnerModal();
 });
 
 document.addEventListener("click", (event) => {
   const closeButton = event.target.closest("[data-modal-close]");
   if (!closeButton) {
+    if (!event.target.closest("[data-owner-modal-open]")) {
+      cancelOwnerModalOpen();
+    }
     return;
   }
   const dialog = closeButton.closest("dialog");
@@ -576,4 +778,15 @@ document.addEventListener("click", (event) => {
   }
   closeAuthModal();
   closeContactModal();
+  closeOwnerModal();
+});
+
+window.addEventListener("popstate", () => {
+  cancelOwnerModalOpen();
+  closeOwnerModal();
+});
+
+window.addEventListener("beforeunload", () => {
+  cancelOwnerModalOpen();
+  closeOwnerModal();
 });

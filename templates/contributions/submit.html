@@ -66,6 +66,13 @@
               <label>{% trans "Description" %}</label>
               {{ form.description }}
             </div>
+            <div class="submit-field submit-span">
+              <label>{% trans "External link (optional)" %}</label>
+              {{ form.external_links }}
+              <p class="field-hint">
+                {% trans "Paste one URL (website, Facebook, YouTube, etc.)." %}
+              </p>
+            </div>
           </div>
         </div>
 

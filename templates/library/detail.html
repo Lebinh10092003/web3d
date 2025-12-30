@@ -21,9 +21,28 @@
     <h1>{{ content.title }}</h1>
     <p>{{ content.description }}</p>
     <div class="detail-meta">
-      <span id="detail-rating-count">{% blocktrans with count=rating_count %}{{ count }} ratings{% endblocktrans %}</span>
-      <span id="detail-favorites-count">{% blocktrans with count=favorites_count %}{{ count }} saves{% endblocktrans %}</span>
-      {% include "partials/_owner_links.html" with owner=content.owner show_label=True show_links=True %}
+      <span class="detail-meta-item">
+        <svg class="detail-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3l2.6 5.3 5.9.9-4.3 4.2 1 6-5.2-2.8-5.2 2.8 1-6-4.3-4.2 5.9-.9z" fill="currentColor"/>
+        </svg>
+        <span id="detail-rating-count">{% blocktrans with count=rating_count %}{{ count }} ratings{% endblocktrans %}</span>
+      </span>
+      <span class="detail-meta-item">
+        <svg class="detail-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z" fill="currentColor"/>
+        </svg>
+        <span id="detail-favorites-count">{% blocktrans with count=favorites_count %}{{ count }} saves{% endblocktrans %}</span>
+      </span>
+      {% include "partials/_owner_links.html" with owner=content.owner show_label=True show_links=True show_name=True %}
+      {% if content.external_link_url %}
+        <div class="owner-links content-links">
+          <span class="owner-social">
+            <a class="owner-link" href="{{ content.external_link_url }}" target="_blank" rel="noopener noreferrer">
+              {{ content.external_link_label|default:_("Website") }}
+            </a>
+          </span>
+        </div>
+      {% endif %}
       {% if content.download_cost_points == 0 %}
         <span class="points-badge points-free">{% trans "Free download" %}</span>
       {% else %}
@@ -97,7 +116,7 @@
     <button class="download-banner-close" type="button" data-download-banner-close>&times;</button>
     <div class="download-banner-media">
       {% if download_banner and download_banner.link_url %}
-        <a href="{{ download_banner.link_url }}" target="_blank" rel="noreferrer">
+        <a href="{{ download_banner.link_url }}" target="_blank" rel="noopener noreferrer">
           <img src="{{ download_banner.image.url }}" alt="{{ download_banner.title|default:'Library banner' }}">
         </a>
       {% elif download_banner %}
@@ -116,7 +135,7 @@
       <div class="download-banner-actions">
         <button class="button" type="button" data-download-banner-continue disabled>{% trans "Continue download" %}</button>
         {% if download_banner and download_banner.link_url %}
-          <a class="button button-ghost" href="{{ download_banner.link_url }}" target="_blank" rel="noreferrer">{% trans "Learn more" %}</a>
+          <a class="button button-ghost" href="{{ download_banner.link_url }}" target="_blank" rel="noopener noreferrer">{% trans "Learn more" %}</a>
         {% else %}
           <a class="button button-ghost" href="{% url 'about' %}">{% trans "Learn more" %}</a>
         {% endif %}

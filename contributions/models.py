@@ -38,6 +38,7 @@ class ContributionSubmission(models.Model):
     )
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+    external_links = models.URLField(blank=True, max_length=500)
     content_type = models.CharField(max_length=20)
     category = models.ForeignKey(
         Category,
@@ -155,6 +156,9 @@ class ContributionSubmission(models.Model):
             if content.download_cost_points != effective_points:
                 content.download_cost_points = effective_points
                 update_fields.append("download_cost_points")
+            if content.external_links != self.external_links:
+                content.external_links = self.external_links
+                update_fields.append("external_links")
             if getattr(content, "price_vnd", 0):
                 content.price_vnd = 0
                 update_fields.append("price_vnd")
@@ -175,6 +179,7 @@ class ContributionSubmission(models.Model):
             owner=self.user,
             title=self.title,
             description=self.description,
+            external_links=self.external_links,
             content_type=self._resolve_content_type(),
             download_cost_points=effective_points,
             price_vnd=0,

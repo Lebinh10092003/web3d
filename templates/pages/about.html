@@ -47,7 +47,7 @@
     {% endif %}
 
     <div class="brand-hero-actions">
-      <a class="button" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">
+      <a class="button" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noopener noreferrer">
         {% if request.LANGUAGE_CODE == "vi" %}Theo dõi Facebook{% else %}Facebook{% endif %}
       </a>
       <a class="button button-ghost" href="{% url 'library:home' %}">
@@ -196,10 +196,10 @@
       {% endif %}
 
       <div class="bio-actions">
-        <a class="button button-ghost" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noreferrer">
+        <a class="button button-ghost" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noopener noreferrer">
           {% if request.LANGUAGE_CODE == "vi" %}Facebook cá nhân{% else %}Personal Facebook{% endif %}
         </a>
-        <a class="button button-ghost" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">
+        <a class="button button-ghost" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noopener noreferrer">
           {% if request.LANGUAGE_CODE == "vi" %}Fanpage V+ STEAM LAB{% else %}V+ STEAM LAB Page{% endif %}
         </a>
       </div>

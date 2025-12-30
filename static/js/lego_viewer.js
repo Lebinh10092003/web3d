@@ -5,6 +5,7 @@ globalThis.__legoViewerLoaded = true;
 
 let threeDepsPromise = null;
 let threeDepsBase = null;
+const legoStates = new WeakMap();
 
 function buildModuleUrls(baseUrl) {
   const base = (baseUrl || THREE_CDN).replace(/\/+$/, "");
@@ -48,33 +49,44 @@ function sleep(ms) {
   });
 }
 
-async function waitForModelReady(url, status, attempts = 8) {
+async function waitForModelReady(url, status, messages, signal, attempts = 8) {
   for (let i = 0; i < attempts; i += 1) {
+    if (signal && signal.aborted) {
+      return false;
+    }
     try {
-      const response = await fetch(url, { method: "HEAD", cache: "no-store" });
+      const response = await fetch(url, {
+        method: "HEAD",
+        cache: "no-store",
+        signal
+      });
       if (response.status === 200) {
         return true;
       }
       if (response.status === 202) {
-        setStatus(
-          status,
-          "Đang chuẩn bị mô hình 3D. Vui lòng đợi trong giây lát...",
-          "loading"
-        );
+        setStatus(status, messages.preparingModel, "loading");
         await sleep(1200 + i * 500);
         continue;
       }
       if (response.status === 403) {
-        setStatus(status, "Bạn cần mở khóa để xem mô hình 3D.", "error");
+        setStatus(status, messages.unlockRequired, "error");
+        return false;
+      }
+      if (response.status !== 200) {
+        setStatus(status, messages.loadFailed, "error");
         return false;
       }
     } catch (error) {
+      if (error && error.name === "AbortError") {
+        return false;
+      }
       await sleep(1200);
     }
     break;
   }
   return true;
 }
+
 
 function setStatus(node, message, level = "") {
   if (!node) {
@@ -84,6 +96,53 @@ function setStatus(node, message, level = "") {
   textNode.textContent = message;
   node.dataset.level = level;
   node.dataset.visible = message ? "true" : "false";
+}
+
+function getMessage(root, key, fallback) {
+  if (!root || !root.dataset) {
+    return fallback;
+  }
+  return root.dataset[key] || fallback;
+}
+
+function cancelViewer(root, reason) {
+  if (!root) {
+    return;
+  }
+  root.dataset.legoCancel = "true";
+  root.dataset.legoBound = "";
+  root.dataset.legoStarted = "";
+  root.dataset.legoAutoload = "false";
+  const startWrap = root.querySelector("[data-lego-start-wrap]");
+  if (startWrap) {
+    startWrap.hidden = false;
+  }
+  const state = legoStates.get(root);
+  const statusNode = state?.statusNode || root.querySelector("[data-lego-status]");
+  if (state && !state.canceled) {
+    state.canceled = true;
+    if (state.abortController) {
+      try {
+        state.abortController.abort();
+      } catch {}
+    }
+    if (state.cleanup) {
+      state.cleanup();
+    }
+  }
+  if (statusNode) {
+    setStatus(
+      statusNode,
+      reason || root.dataset.msgCanceled || "Canceled 3D loading.",
+      "error"
+    );
+  }
+}
+
+function cancelAllViewers(reason) {
+  document.querySelectorAll("[data-lego-viewer]").forEach((root) => {
+    cancelViewer(root, reason);
+  });
 }
 
 async function preloadLDrawMaterials(loader, partsPath) {
@@ -219,23 +278,72 @@ async function initViewer(root) {
   const zoomEnabled = root.dataset.zoomEnabled !== "false";
   const threeBase = root.dataset.threeBase;
   const fitOffset = zoomEnabled ? 1.25 : 2.85;
-
-  if (!canvas || !modelUrl) {
-    setStatus(status, "Missing 3D model source.", "error");
+  const messages = {
+    loadingViewer: getMessage(root, "msgLoadingViewer", "Loading 3D viewer..."),
+    loadingColors: getMessage(root, "msgLoadingColors", "Loading LEGO colors..."),
+    loadingModel: getMessage(root, "msgLoadingModel", "Loading 3D model..."),
+    loadingModelProgress: getMessage(
+      root,
+      "msgLoadingModelProgress",
+      "Loading 3D model... {percent}%"
+    ),
+    missingModel: getMessage(root, "msgMissingModel", "Missing 3D model source."),
+    preparingModel: getMessage(
+      root,
+      "msgPreparingModel",
+      "Preparing 3D model. Please wait a moment..."
+    ),
+    unlockRequired: getMessage(
+      root,
+      "msgUnlockRequired",
+      "Unlock required to view this 3D model."
+    ),
+    loadFailed: getMessage(root, "msgLoadFailed", "Could not load 3D model."),
+    threeFailed: getMessage(
+      root,
+      "msgThreeFailed",
+      "Could not load Three.js (module)."
+    )
+  };
+  const autoload = root.dataset.legoAutoload === "true";
+  const started = root.dataset.legoStarted === "true";
+  if (!autoload && !started) {
     return;
   }
 
+  if (!canvas || !modelUrl) {
+    setStatus(status, messages.missingModel, "error");
+    return;
+  }
+  if (root.dataset.legoCancel === "true") {
+    setStatus(status, root.dataset.msgCanceled || "Canceled 3D loading.", "error");
+    return;
+  }
+
+  const abortController = new AbortController();
+  const state = {
+    canceled: false,
+    abortController,
+    cleanup: null,
+    statusNode: status,
+    cleaned: false
+  };
+  legoStates.set(root, state);
+
   try {
     root.dataset.legoBound = "true";
-    setStatus(status, "Loading 3D viewer...", "loading");
+    setStatus(status, messages.loadingViewer, "loading");
 
     const { THREE, OrbitControls, LDrawLoader } = await loadThreeDeps(threeBase);
+    if (state.canceled) {
+      return;
+    }
 
     if (!canvas.style.height) {
       canvas.style.height = `${CANVAS_DEFAULT_HEIGHT}px`;
     }
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    let renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -260,24 +368,56 @@ async function initViewer(root) {
       window.addEventListener("resize", onResize);
     }
 
+    const cleanup = () => {
+      if (state.cleaned) {
+        return;
+      }
+      state.cleaned = true;
+      resizeObserver?.disconnect?.();
+      window.removeEventListener("resize", onResize);
+      if (renderer) {
+        renderer.dispose();
+        renderer = null;
+      }
+    };
+    state.cleanup = cleanup;
+
     let modelGroup = null;
     let initialCamera = null;
 
     const loader = new LDrawLoader();
     loader.setPartsLibraryPath(partsPath);
 
-    setStatus(status, "Loading LEGO colors...", "loading");
+    setStatus(status, messages.loadingColors, "loading");
     await preloadLDrawMaterials(loader, partsPath);
-
-    const ready = await waitForModelReady(modelUrl, status);
-    if (!ready) {
+    if (state.canceled) {
+      cleanup();
       return;
     }
-    setStatus(status, "Loading 3D model...", "loading");
+
+    const ready = await waitForModelReady(
+      modelUrl,
+      status,
+      messages,
+      abortController.signal
+    );
+    if (!ready) {
+      cleanup();
+      return;
+    }
+    if (state.canceled) {
+      cleanup();
+      return;
+    }
+    setStatus(status, messages.loadingModel, "loading");
 
     loader.load(
       modelUrl,
       (group) => {
+        if (state.canceled) {
+          cleanup();
+          return;
+        }
         modelGroup = group;
 
         const baseTransform = {
@@ -325,6 +465,9 @@ async function initViewer(root) {
         }
       },
       (event) => {
+        if (state.canceled) {
+          return;
+        }
         if (!event || !event.total) {
           return;
         }
@@ -332,14 +475,15 @@ async function initViewer(root) {
           100,
           Math.round((event.loaded / event.total) * 100)
         );
-        setStatus(status, `Loading 3D model... ${percent}%`, "loading");
+        const template = messages.loadingModelProgress;
+        setStatus(status, template.replace("{percent}", String(percent)), "loading");
       },
       () => {
-        setStatus(
-          status,
-          "Không tải được 3D model. Nếu file là .lxf (LEGO Digital Designer), cần chuyển đổi sang LDraw (.ldr/.mpd) bằng lxf2ldr/ldd2ldraw hoặc upload .io/.ldr/.mpd.",
-          "error"
-        );
+        if (state.canceled) {
+          cleanup();
+          return;
+        }
+        setStatus(status, messages.loadFailed, "error");
       }
     );
 
@@ -364,13 +508,14 @@ async function initViewer(root) {
     }
 
     function animate() {
-      if (!root.isConnected) {
-        resizeObserver?.disconnect?.();
-        window.removeEventListener("resize", onResize);
-        renderer.dispose();
+      if (state.canceled || !root.isConnected) {
+        cleanup();
         return;
       }
       requestAnimationFrame(animate);
+      if (document.hidden) {
+        return;
+      }
       controls.update();
       renderer.render(scene, camera);
     }
@@ -380,17 +525,56 @@ async function initViewer(root) {
     console.error("LEGO viewer failed to initialize", error);
     setStatus(
       status,
-      "Không tải được thư viện Three.js (module). Kiểm tra mạng/CDN (cdn.jsdelivr.net) hoặc mở Console để xem lỗi.",
+      messages.threeFailed,
       "error"
     );
   }
 }
 
-function initAll() {
+function startViewer(root) {
+  if (!root) {
+    return;
+  }
+  root.dataset.legoAutoload = "true";
+  root.dataset.legoStarted = "true";
+  root.dataset.legoCancel = "";
+  const startWrap = root.querySelector("[data-lego-start-wrap]");
+  if (startWrap) {
+    startWrap.hidden = true;
+  }
+  initViewer(root);
+}
+
+function bindStartButtons() {
   document.querySelectorAll("[data-lego-viewer]").forEach((root) => {
-    initViewer(root);
+    const startWrap = root.querySelector("[data-lego-start-wrap]");
+    if (startWrap) {
+      const autoload = root.dataset.legoAutoload === "true";
+      const started = root.dataset.legoStarted === "true";
+      startWrap.hidden = autoload || started;
+    }
+    const startButton = root.querySelector("[data-lego-start]");
+    if (!startButton || startButton.dataset.bound === "true") {
+      return;
+    }
+    startButton.dataset.bound = "true";
+    startButton.addEventListener("click", () => startViewer(root));
   });
 }
+
+function initAll() {
+  bindStartButtons();
+  document.querySelectorAll("[data-lego-viewer]").forEach((root) => {
+    if (
+      root.dataset.legoAutoload === "true" ||
+      root.dataset.legoStarted === "true"
+    ) {
+      initViewer(root);
+    }
+  });
+}
+
+globalThis.startLegoViewer = startViewer;
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initAll, { once: true });
@@ -399,4 +583,37 @@ if (document.readyState === "loading") {
 }
 
 document.body?.addEventListener?.("htmx:afterSwap", initAll);
+
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!target) {
+    return;
+  }
+  if (target.closest("[data-lego-viewer]")) {
+    return;
+  }
+  if (target.closest("[data-owner-modal-open]")) {
+    return;
+  }
+  if (target.closest("[data-back-button]")) {
+    cancelAllViewers();
+    return;
+  }
+  const link = target.closest("a[href]");
+  if (!link) {
+    return;
+  }
+  const href = link.getAttribute("href") || "";
+  if (href.startsWith("#") || href.startsWith("javascript:")) {
+    return;
+  }
+  cancelAllViewers();
+});
+
+document.body?.addEventListener?.("htmx:beforeRequest", () => {
+  cancelAllViewers();
+});
+
+window.addEventListener("pagehide", () => cancelAllViewers());
+window.addEventListener("beforeunload", () => cancelAllViewers());
 

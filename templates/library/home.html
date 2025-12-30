@@ -41,7 +41,7 @@
     <div class="hero-actions">
       <a class="button" href="{% url 'about' %}">{% trans "Learn more" %}</a>
       <a class="button button-ghost" href="{% url 'contributions:submit' %}">{% trans "Submit" %}</a>
-      <a class="button button-ghost" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">Facebook</a>
+      <a class="button button-ghost" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noopener noreferrer">Facebook</a>
     </div>
   </div>
   <div class="hero-media">
@@ -90,7 +90,7 @@
     {% if left_banners %}
       {% for banner in left_banners %}
         {% if banner.link_url %}
-          <a class="library-banner-card" href="{{ banner.link_url }}" target="_blank" rel="noreferrer">
+          <a class="library-banner-card" href="{{ banner.link_url }}" target="_blank" rel="noopener noreferrer">
             <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Library banner' }}" loading="lazy">
           </a>
         {% else %}
@@ -113,7 +113,7 @@
     {% if right_banners %}
       {% for banner in right_banners %}
         {% if banner.link_url %}
-          <a class="library-banner-card" href="{{ banner.link_url }}" target="_blank" rel="noreferrer">
+          <a class="library-banner-card" href="{{ banner.link_url }}" target="_blank" rel="noopener noreferrer">
             <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Library banner' }}" loading="lazy">
           </a>
         {% else %}

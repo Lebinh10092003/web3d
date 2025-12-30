@@ -1105,9 +1105,28 @@ textarea:focus {
 }
 
 .card-media {
-    height: 160px;
-    overflow: hidden;
-  }
+      height: 160px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .card-media--locked img,
+    .card-media--locked .preview-image {
+      filter: blur(6px);
+      opacity: 0.5;
+    }
+
+    .card-media--locked::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("../img/logoV+.png");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 110px auto;
+      opacity: 0.35;
+      pointer-events: none;
+    }
   
 .card-media img {
     width: 100%;
@@ -1205,8 +1224,26 @@ textarea:focus {
 }
 
 .owner-name {
-  font-weight: 600;
-  color: var(--ink);
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+
+.owner-name-button {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.owner-name-button:hover {
+  text-decoration: underline;
+}
+
+.owner-name-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .owner-social {
@@ -1283,6 +1320,17 @@ textarea:focus {
   gap: 12px;
   font-size: 13px;
   color: var(--muted);
+}
+
+.detail-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-meta-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .detail-grid {
@@ -1380,6 +1428,31 @@ textarea:focus {
     position: relative;
     border-radius: 12px;
     overflow: hidden;
+  }
+
+  .lego-viewer-start {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    text-align: center;
+    background: rgba(15, 20, 24, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 1;
+  }
+
+  .lego-viewer-start[hidden] {
+    display: none;
+  }
+
+  .lego-viewer-start-note {
+    margin: 0;
+    color: #f2f4f7;
+    font-size: 12px;
   }
 
   .lego-viewer-canvas {
@@ -1496,6 +1569,95 @@ textarea:focus {
   height: 32px;
   cursor: pointer;
   font-size: 18px;
+}
+
+.owner-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.owner-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.owner-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.owner-modal-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(69, 224, 107, 0.16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.owner-modal-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.owner-modal-initial {
+  font-weight: 700;
+  color: var(--accent-strong);
+  font-size: 20px;
+}
+
+.owner-modal-username {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.owner-modal-role {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.owner-modal-bio {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.owner-modal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.owner-modal-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.owner-modal-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(30, 40, 50, 0.08);
+  color: var(--ink);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.owner-modal-link:hover {
+  background: rgba(30, 40, 50, 0.16);
 }
 
 .modal-panel {
