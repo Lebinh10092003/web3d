@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -42,6 +43,15 @@ def delivery_policy(request):
 
 def complaint_policy(request):
     return redirect(f"{reverse('policies')}?tab=complaints")
+
+
+def courses(request):
+    playlists = getattr(settings, "COURSE_PLAYLISTS", [])
+    context = {
+        "course_playlists": playlists,
+        "canonical_url": request.build_absolute_uri(request.path),
+    }
+    return render(request, "pages/courses.html", context)
 
 
 def _load_recaps():
@@ -176,7 +186,12 @@ def sitemap_xml(request):
         {"loc": f"{base_url}{reverse('library:home')}", "lastmod": now},
         {"loc": f"{base_url}{reverse('about')}", "lastmod": now},
         {"loc": f"{base_url}{reverse('contact')}", "lastmod": now},
+<<<<<<< HEAD
         {"loc": f"{base_url}{reverse('policies')}", "lastmod": now},
+=======
+        {"loc": f"{base_url}{reverse('privacy')}", "lastmod": now},
+        {"loc": f"{base_url}{reverse('courses')}", "lastmod": now},
+>>>>>>> binh
         {"loc": f"{base_url}{reverse('recaps')}", "lastmod": now},
     ]
 

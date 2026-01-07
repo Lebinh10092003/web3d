@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Courses" %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}{% trans "Courses" %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_description %}{% trans "Watch curated course playlists and learn step by step." %}{% endblock %}
+{% block og_description %}{% trans "Watch curated course playlists and learn step by step." %}{% endblock %}
+{% block twitter_description %}{% trans "Watch curated course playlists and learn step by step." %}{% endblock %}
+
+{% block content %}
+<section class="course-hero">
+  <p class="course-eyebrow">{% trans "Courses" %}</p>
+  <h1>{% trans "Course playlists" %}</h1>
+  <p class="course-subtitle">{% trans "Watch curated YouTube playlists and follow each lesson in order." %}</p>
+</section>
+
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+
+{% if course_playlists %}
+  <section class="course-grid">
+    {% for course in course_playlists %}
+      <article class="course-card">
+        <div class="course-embed">
+          <iframe
+            src="https://www.youtube.com/embed/videoseries?list={{ course.playlist_id }}"
+            title="{{ course.title }}"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            loading="lazy"
+          ></iframe>
+        </div>
+        <div class="course-body">
+          <h3>{{ course.title }}</h3>
+          {% if course.description %}
+            <p>{{ course.description }}</p>
+          {% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </section>
+{% else %}
+  <div class="empty-state">{% trans "No courses yet." %}</div>
+{% endif %}
+{% endblock %}
