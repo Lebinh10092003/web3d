@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "My library" %} | V+ STEAM LAB Library{% endblock %}
+
+{% block content %}
+<section class="profile-grid">
+  <div class="panel profile-panel">
+    <h1>{% trans "My library" %}</h1>
+    <p class="profile-section-note">{% trans "Saved items and your recent lessons." %}</p>
+
+    <div class="profile-section">
+      <div class="profile-section-header">
+        <h3>{% trans "Saved courses" %}</h3>
+        <span class="profile-section-note">{% trans "Courses you bookmarked" %}</span>
+      </div>
+      {% if favorite_courses %}
+        <div class="course-grid">
+          {% for course in favorite_courses %}
+            <article class="course-card is-favorite">
+              <div class="course-body">
+                <h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3>
+                {% if course.description %}
+                  <p>{{ course.description }}</p>
+                {% endif %}
+                <div class="course-progress">
+                  <div class="course-progress-meta">
+                    {% blocktrans with completed=course.progress.completed total=course.progress.total %}
+                      {{ completed }}/{{ total }} lessons completed
+                    {% endblocktrans %}
+                  </div>
+                  <div class="course-progress-bar">
+                    <span style="width: {{ course.progress.percent }}%"></span>
+                  </div>
+                </div>
+                <a class="button button-ghost course-link" href="{{ course.get_absolute_url }}">{% trans "Continue" %}</a>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="profile-empty">{% trans "No saved courses yet." %}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="panel profile-panel">
+    <div class="profile-section">
+      <div class="profile-section-header">
+        <h3>{% trans "Continue watching" %}</h3>
+        <span class="profile-section-note">{% trans "Recently watched lessons" %}</span>
+      </div>
+      {% if recent_lessons %}
+        <ul class="course-lesson-history">
+          {% for progress in recent_lessons %}
+            <li>
+              <a href="{{ progress.lesson.course.get_absolute_url }}?v={{ progress.lesson.video_id }}">
+                {{ progress.lesson.title }}
+              </a>
+              <span class="course-lesson-meta">{{ progress.lesson.course.title }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="profile-empty">{% trans "No lessons watched yet." %}</p>
+      {% endif %}
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-header">
+        <h3>{% trans "Saved resources" %}</h3>
+        <span class="profile-section-note">{% trans "Content you favorited" %}</span>
+      </div>
+      {% if favorite_contents %}
+        <div class="profile-content-grid">
+          {% for item in favorite_contents %}
+            {% include "accounts/_profile_content_card.html" with item=item stagger=forloop.counter0 %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="profile-empty">{% trans "No saved resources yet." %}</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

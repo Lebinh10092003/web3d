@@ -58,6 +58,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "web3d.middleware.HtmxMessageMiddleware",
 ]
 
 ROOT_URLCONF = "web3d.urls"
@@ -139,6 +140,8 @@ X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
 LEGO_THREE_BASE_URL = os.environ.get(
     "LEGO_THREE_BASE_URL", "https://cdn.jsdelivr.net/npm/three@0.160.0"
 )
+
+YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
 
 USE_BACKGROUND_JOBS = os.environ.get("USE_BACKGROUND_JOBS", "1") == "1"
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")

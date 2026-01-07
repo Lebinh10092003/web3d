@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from django.contrib.auth.decorators import login_required
+from django.db.models import Prefetch
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -7,7 +9,16 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 
-from library.models import ContentItem, Course, RecapHeroBanner, RecapVideo, _normalize_youtube_id
+from library.models import (
+    ContentItem,
+    Course,
+    CourseFavorite,
+    CourseLesson,
+    CourseLessonProgress,
+    RecapHeroBanner,
+    RecapVideo,
+    _normalize_youtube_id,
+)
 
 
 def about(request):
@@ -45,11 +56,19 @@ def complaint_policy(request):
 
 
 def courses(request):
-    courses_qs = (
-        Course.objects.filter(is_published=True)
-        .prefetch_related("lessons")
-        .order_by("sort_order", "title")
+    courses_qs = Course.objects.filter(is_published=True).order_by(
+        "sort_order", "title"
     )
+    courses_qs = courses_qs.prefetch_related(
+        Prefetch("lessons", queryset=CourseLesson.objects.order_by("sort_order", "id"))
+    )
+    favorite_ids = set()
+    if request.user.is_authenticated:
+        favorite_ids = set(
+            CourseFavorite.objects.filter(user=request.user, course__in=courses_qs)
+            .values_list("course_id", flat=True)
+            .distinct()
+        )
     courses = []
     for course in courses_qs:
         lessons = list(course.lessons.all())
@@ -63,6 +82,7 @@ def courses(request):
                 "course": course,
                 "lessons": lessons,
                 "preview_embed_url": course.get_video_embed_url(preview_video_id),
+                "is_favorite": course.id in favorite_ids,
             }
         )
     context = {
@@ -74,7 +94,11 @@ def courses(request):
 
 def course_detail(request, slug):
     course = get_object_or_404(
-        Course.objects.prefetch_related("lessons"), slug=slug, is_published=True
+        Course.objects.prefetch_related(
+            Prefetch("lessons", queryset=CourseLesson.objects.order_by("sort_order", "id"))
+        ),
+        slug=slug,
+        is_published=True,
     )
     lessons = list(course.lessons.all())
     selected = _normalize_youtube_id(request.GET.get("v"))
@@ -86,14 +110,77 @@ def course_detail(request, slug):
         or course.featured_video_id
         or next((vid for vid in lesson_video_ids if vid), "")
     )
+    progress_map = {}
+    if request.user.is_authenticated:
+        progress_qs = CourseLessonProgress.objects.filter(
+            user=request.user, lesson__in=lessons
+        ).select_related("lesson")
+        progress_map = {progress.lesson_id: progress for progress in progress_qs}
+        if active_video_id:
+            active_lesson = next(
+                (lesson for lesson in lessons if lesson.video_id == active_video_id),
+                None,
+            )
+            if active_lesson:
+                progress, _ = CourseLessonProgress.objects.get_or_create(
+                    user=request.user, lesson=active_lesson
+                )
+                progress.last_watched_at = timezone.now()
+                progress.save(update_fields=["last_watched_at", "updated_at"])
+
+    lesson_rows = []
+    for lesson in lessons:
+        progress = progress_map.get(lesson.id)
+        lesson_rows.append(
+            {
+                "lesson": lesson,
+                "is_completed": bool(progress and progress.is_completed),
+                "is_active": bool(
+                    lesson.video_id and lesson.video_id == active_video_id
+                ),
+            }
+        )
+    is_favorite = False
+    if request.user.is_authenticated:
+        is_favorite = CourseFavorite.objects.filter(
+            user=request.user, course=course
+        ).exists()
     context = {
         "course": course,
-        "lessons": lessons,
+        "lesson_rows": lesson_rows,
         "active_video_id": active_video_id,
         "active_embed_url": course.get_video_embed_url(active_video_id),
+        "is_favorite": is_favorite,
         "canonical_url": request.build_absolute_uri(request.path),
     }
     return render(request, "pages/course_detail.html", context)
+
+
+@login_required
+def course_lesson_toggle(request, slug, lesson_id):
+    course = get_object_or_404(Course, slug=slug, is_published=True)
+    lesson = get_object_or_404(CourseLesson, pk=lesson_id, course=course)
+    progress, _ = CourseLessonProgress.objects.get_or_create(
+        user=request.user, lesson=lesson
+    )
+    progress.is_completed = not progress.is_completed
+    if not progress.last_watched_at:
+        progress.last_watched_at = timezone.now()
+    progress.save(update_fields=["is_completed", "last_watched_at", "updated_at"])
+    next_url = request.POST.get("next") or course.get_absolute_url()
+    return redirect(next_url)
+
+
+@login_required
+def course_favorite_toggle(request, slug):
+    course = get_object_or_404(Course, slug=slug, is_published=True)
+    favorite = CourseFavorite.objects.filter(user=request.user, course=course).first()
+    if favorite:
+        favorite.delete()
+    else:
+        CourseFavorite.objects.create(user=request.user, course=course)
+    next_url = request.POST.get("next") or course.get_absolute_url()
+    return redirect(next_url)
 
 
 def _load_recaps():

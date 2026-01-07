@@ -1183,3 +1183,64 @@ msgstr "Thư viện tổng kết"
 
 #~ msgid "Vsteam Lab banner"
 #~ msgstr "Banner Vsteam Lab"
+
+# New profile/library translations
+msgid "Profile sections"
+msgstr "Các mục hồ sơ"
+
+msgid "My library"
+msgstr "Thư viện của tôi"
+
+msgid "Continue"
+msgstr "Tiếp tục"
+
+msgid "Continue watching"
+msgstr "Tiếp tục xem"
+
+msgid "Courses you bookmarked"
+msgstr "Khóa học đã lưu"
+
+msgid "Saved courses"
+msgstr "Khóa học đã lưu"
+
+msgid "Recently watched lessons"
+msgstr "Bài học xem gần đây"
+
+msgid "No lessons watched yet."
+msgstr "Chưa xem bài học nào."
+
+msgid "No saved courses yet."
+msgstr "Chưa lưu khóa học nào."
+
+msgid "Saved items and your recent lessons."
+msgstr "Nội dung đã lưu và bài học gần đây."
+
+msgid "Saved resources"
+msgstr "Tài nguyên đã lưu"
+
+msgid "No saved resources yet."
+msgstr "Chưa lưu tài nguyên nào."
+
+msgid "Content you favorited"
+msgstr "Nội dung đã yêu thích"
+
+msgid "Website"
+msgstr "Trang web"
+
+msgid "Facebook"
+msgstr "Facebook"
+
+msgid "GitHub"
+msgstr "GitHub"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "Courses"
+msgstr "Khóa học"
+
+msgid "Top up instantly via ZaloPay."
+msgstr "Nạp điểm ngay qua ZaloPay."
+
+msgid "and this website is a place to connect, share, and exchange ideas about STEAM, robotics, and learning resources."
+msgstr "và website này là nơi kết nối, chia sẻ và trao đổi ý tưởng về STEAM, robotics và tài nguyên học tập."

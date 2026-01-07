@@ -4,121 +4,60 @@
 {% block title %}{% trans "Profile" %} | V+ STEAM LAB Library{% endblock %}
 
 {% block content %}
-<section class="profile-grid">
-  <div class="panel profile-panel">
-    <h1>{% trans "Your profile" %}</h1>
-    <div class="profile-avatar">
-      <img
-        src="{% if request.user.avatar_path %}{{ request.user.avatar_path }}{% else %}{% static 'img/test.jpg' %}{% endif %}"
-        alt="{% trans 'Avatar' %}"
-      >
+<section class="profile-layout">
+  <aside class="panel profile-panel profile-menu">
+    <div class="profile-menu-user">
+      <div class="profile-avatar profile-avatar--small">
+        <img
+          src="{% if request.user.avatar_path %}{{ request.user.avatar_path }}{% else %}{% static 'img/test.jpg' %}{% endif %}"
+          alt="{% trans 'Avatar' %}"
+        >
+      </div>
+      <div class="profile-menu-meta">
+        <div class="profile-menu-name">{{ request.user.display_name|default:request.user.username }}</div>
+        <div class="profile-menu-points">
+          {% blocktrans with points=request.user.points_balance %}{{ points }} points{% endblocktrans %}
+        </div>
+      </div>
     </div>
-    <form method="post" class="form" enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ form.non_field_errors }}
-      <label>{% trans "Display name" %}</label>
-      {{ form.display_name }}
-      <label>{% trans "Role" %}</label>
-      {{ form.role }}
-      <label>{% trans "Bio" %}</label>
-      {{ form.bio }}
-      <label>{% trans "Website" %}</label>
-      {{ form.website_url }}
-      <label>{% trans "Facebook" %}</label>
-      {{ form.facebook_url }}
-      <label>{% trans "GitHub" %}</label>
-      {{ form.github_url }}
-      <label>{% trans "Avatar image" %}</label>
-      {{ form.file_upload }}
-      {% if form.file_upload.help_text %}
-        <p class="form-help">{{ form.file_upload.help_text }}</p>
-      {% endif %}
-      <button class="button" type="submit">{% trans "Save profile" %}</button>
-    </form>
-  </div>
+    <nav class="profile-menu-list" aria-label="{% trans 'Profile sections' %}">
+      <a
+        class="profile-menu-link{% if section == 'personal' %} is-active{% endif %}"
+        href="{% url 'accounts:profile' %}?section=personal"
+        hx-get="{% url 'accounts:profile-section' 'personal' %}"
+        hx-target="#profile-content"
+        hx-swap="innerHTML"
+        hx-push-url="{% url 'accounts:profile' %}?section=personal"
+      >{% trans "Your profile" %}</a>
+      <a
+        class="profile-menu-link{% if section == 'public' %} is-active{% endif %}"
+        href="{% url 'accounts:profile' %}?section=public"
+        hx-get="{% url 'accounts:profile-section' 'public' %}"
+        hx-target="#profile-content"
+        hx-swap="innerHTML"
+        hx-push-url="{% url 'accounts:profile' %}?section=public"
+      >{% trans "Your published items" %}</a>
+      <a
+        class="profile-menu-link{% if section == 'favorites' %} is-active{% endif %}"
+        href="{% url 'accounts:profile' %}?section=favorites"
+        hx-get="{% url 'accounts:profile-section' 'favorites' %}"
+        hx-target="#profile-content"
+        hx-swap="innerHTML"
+        hx-push-url="{% url 'accounts:profile' %}?section=favorites"
+      >{% trans "Favorite models" %}</a>
+      <a
+        class="profile-menu-link{% if section == 'courses' %} is-active{% endif %}"
+        href="{% url 'accounts:profile' %}?section=courses"
+        hx-get="{% url 'accounts:profile-section' 'courses' %}"
+        hx-target="#profile-content"
+        hx-swap="innerHTML"
+        hx-push-url="{% url 'accounts:profile' %}?section=courses"
+      >{% trans "My library" %}</a>
+    </nav>
+  </aside>
 
-  <div class="panel profile-panel">
-    <div class="profile-section">
-      <h2>{% trans "Points" %}</h2>
-      <div class="metric">{% blocktrans with points=request.user.points_balance %}{{ points }} points{% endblocktrans %}</div>
-      <button class="button button-ghost" type="button" data-points-modal-open>
-        {% trans "Get more points" %}
-      </button>
-    </div>
-    <div class="profile-section">
-      <div class="profile-section-header">
-        <h3>{% trans "Unlocked content" %}</h3>
-        <span class="profile-section-note">{% trans "Your recent unlocks" %}</span>
-      </div>
-      {% if unlocks %}
-        <div class="profile-content-grid">
-          {% for unlock in unlocks %}
-            {% include "accounts/_profile_content_card.html" with item=unlock.content stagger=forloop.counter0 %}
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="profile-empty">{% trans "No unlocks yet." %}</p>
-      {% endif %}
-    </div>
-    <div class="profile-section">
-      <div class="profile-section-header">
-        <h3>{% trans "Favorite models" %}</h3>
-        <span class="profile-section-note">{% trans "Saved for later" %}</span>
-      </div>
-      {% if favorites %}
-        <div class="profile-content-grid">
-          {% for favorite in favorites %}
-            {% include "accounts/_profile_content_card.html" with item=favorite.content stagger=forloop.counter0 %}
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="profile-empty">{% trans "No favorites yet." %}</p>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="panel profile-panel">
-    <div class="profile-section">
-      <h2>{% trans "Your submissions" %}</h2>
-      <ul class="profile-submission-list">
-        {% for submission in submissions %}
-          <li class="profile-submission-item">
-            <div class="profile-submission-main">
-              {% if submission.published_content %}
-                <a href="{% url 'library:content-detail' submission.published_content.slug %}">{{ submission.title }}</a>
-                <span class="tag tag-muted">{{ submission.get_status_display }}</span>
-                <span class="points-badge points-free">{% trans "Unlocked" %}</span>
-              {% else %}
-                <span>{{ submission.title }}</span>
-                <span class="tag tag-muted">{{ submission.get_status_display }}</span>
-              {% endif %}
-            </div>
-            {% if submission.published_content %}
-              <a class="button button-ghost button-xs" href="{% url 'library:content-detail' submission.published_content.slug %}">
-                {% trans "View details" %}
-              </a>
-            {% endif %}
-          </li>
-        {% empty %}
-          <li class="profile-empty">{% trans "No submissions yet." %}</li>
-        {% endfor %}
-      </ul>
-    </div>
-    <div class="profile-section">
-      <div class="profile-section-header">
-        <h3>{% trans "Your published items" %}</h3>
-        <span class="profile-section-note">{% trans "Public items in the library" %}</span>
-      </div>
-      {% if own_content %}
-        <div class="profile-content-grid">
-          {% for item in own_content %}
-            {% include "accounts/_profile_content_card.html" with item=item stagger=forloop.counter0 %}
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="profile-empty">{% trans "No items yet." %}</p>
-      {% endif %}
-    </div>
+  <div class="profile-main" id="profile-content">
+    {% include "accounts/profile_modal.html" %}
   </div>
 </section>
 

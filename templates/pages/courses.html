@@ -20,7 +20,7 @@
   <section class="course-grid">
     {% for item in course_playlists %}
       {% with course=item.course lessons=item.lessons %}
-      <article class="course-card">
+      <article class="course-card{% if item.is_favorite %} is-favorite{% endif %}">
         <div class="course-embed">
           {% if item.preview_embed_url %}
           <iframe
@@ -36,6 +36,9 @@
         </div>
         <div class="course-body">
           <h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3>
+          {% if item.is_favorite %}
+            <span class="course-favorite-badge">{% trans "Saved" %}</span>
+          {% endif %}
           {% if course.description %}
             <p>{{ course.description }}</p>
           {% endif %}

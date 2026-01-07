@@ -29,6 +29,16 @@ urlpatterns = [
     path("complaint-policy/", views.complaint_policy, name="complaint-policy"),
     path("courses/", views.courses, name="courses"),
     path("courses/<slug:slug>/", views.course_detail, name="course-detail"),
+    path(
+        "courses/<slug:slug>/lesson/<int:lesson_id>/toggle/",
+        views.course_lesson_toggle,
+        name="course-lesson-toggle",
+    ),
+    path(
+        "courses/<slug:slug>/favorite/",
+        views.course_favorite_toggle,
+        name="course-favorite-toggle",
+    ),
     path("recaps/", views.recaps, name="recaps"),
     path("accounts/", include("accounts.urls")),
     path("interactions/", include("interactions.urls")),

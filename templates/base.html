@@ -59,6 +59,15 @@
         </svg>
         <span>{% trans "Library" %}</span>
       </a>
+      {% if request.user.is_authenticated %}
+        <a class="nav-link{% if view_name == 'accounts:my-library' %} is-active{% endif %}" href="{% url 'accounts:my-library' %}">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 5h16v14H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M8 9h8M8 13h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>{% trans "My library" %}</span>
+        </a>
+      {% endif %}
       <a class="nav-link{% if view_name == 'contributions:submit' %} is-active{% endif %}" href="{% url 'contributions:submit' %}">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -87,31 +96,59 @@
         <span>{% trans "About" %}</span>
       </a>
       {% if request.user.is_authenticated %}
-        <a class="user-chip nav-link" href="{% url 'accounts:profile' %}">
-          <span class="user-avatar">
-            {% if request.user.avatar_path %}
-              <img src="{{ request.user.avatar_path }}" alt="Avatar">
-            {% else %}
-              <img src="{% static 'img/test.jpg' %}" alt="Avatar">
-            {% endif %}
-          </span>
-          <span class="user-info">
-            <span class="user-name">{{ request.user.display_name|default:request.user.username }}</span>
-            <span class="user-points">
-              {% blocktrans with points=request.user.points_balance %}{{ points }} pts{% endblocktrans %}
+        <div class="user-menu" data-user-menu>
+          <button class="user-chip user-menu-toggle" type="button" aria-haspopup="menu" aria-expanded="false" data-user-menu-toggle>
+            <span class="user-avatar">
+              {% if request.user.avatar_path %}
+                <img src="{{ request.user.avatar_path }}" alt="Avatar">
+              {% else %}
+                <img src="{% static 'img/test.jpg' %}" alt="Avatar">
+              {% endif %}
             </span>
-          </span>
-        </a>
-        <form action="{% url 'accounts:logout' %}" method="post" class="nav-form">
-          {% csrf_token %}
-          <button class="nav-link" type="submit">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M16 17l5-5-5-5M21 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M13 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <span class="user-info">
+              <span class="user-name">{{ request.user.display_name|default:request.user.username }}</span>
+              <span class="user-points">
+                {% blocktrans with points=request.user.points_balance %}{{ points }} pts{% endblocktrans %}
+              </span>
+            </span>
+            <svg class="icon user-menu-caret" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span>{% trans "Logout" %}</span>
           </button>
-        </form>
+          <div class="user-menu-dropdown" role="menu" data-user-menu-dropdown>
+            <a
+              class="user-menu-link"
+              role="menuitem"
+              href="{% url 'accounts:profile' %}?section=personal"
+            >{% trans "Your profile" %}</a>
+            <a
+              class="user-menu-link"
+              role="menuitem"
+              href="{% url 'accounts:profile' %}?section=public"
+            >{% trans "Your published items" %}</a>
+            <a
+              class="user-menu-link"
+              role="menuitem"
+              href="{% url 'accounts:profile' %}?section=favorites"
+            >{% trans "Favorite models" %}</a>
+            <a
+              class="user-menu-link"
+              role="menuitem"
+              href="{% url 'accounts:profile' %}?section=courses"
+            >{% trans "My library" %}</a>
+            <div class="user-menu-divider" aria-hidden="true"></div>
+            <form action="{% url 'accounts:logout' %}" method="post" class="user-menu-form">
+              {% csrf_token %}
+              <button class="user-menu-link" type="submit" role="menuitem">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M16 17l5-5-5-5M21 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M13 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>{% trans "Logout" %}</span>
+              </button>
+            </form>
+          </div>
+        </div>
       {% else %}
         <a class="nav-link"
           href="{% url 'accounts:login' %}"

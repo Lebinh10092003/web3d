@@ -14,6 +14,19 @@
   {% if course.description %}
     <p class="course-subtitle">{{ course.description }}</p>
   {% endif %}
+  {% if request.user.is_authenticated %}
+    <form method="post" class="course-favorite-form" action="{% url 'course-favorite-toggle' course.slug %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button class="button button-ghost" type="submit">
+        {% if is_favorite %}{% trans "Saved" %}{% else %}{% trans "Save course" %}{% endif %}
+      </button>
+    </form>
+  {% else %}
+    <a class="button button-ghost" href="{% url 'accounts:login' %}">
+      {% trans "Login to save" %}
+    </a>
+  {% endif %}
 </section>
 
 <section class="course-detail-layout">
@@ -39,15 +52,26 @@
   </div>
   <aside class="course-detail-list">
     <div class="course-lessons-title">{% trans "Lessons" %}</div>
-    {% if lessons %}
+    {% if lesson_rows %}
       <ul class="course-lesson-list">
-        {% for lesson in lessons %}
-          <li class="{% if lesson.video_id and lesson.video_id == active_video_id %}is-active{% endif %}">
-            {% if lesson.video_id %}
-              <a href="{{ course.get_absolute_url }}?v={{ lesson.video_id }}">{{ lesson.title }}</a>
-            {% else %}
-              <span>{{ lesson.title }}</span>
-            {% endif %}
+        {% for row in lesson_rows %}
+          <li class="{% if row.is_active %}is-active{% endif %}{% if row.is_completed %} is-completed{% endif %}">
+            <div class="course-lesson-row">
+              {% if request.user.is_authenticated %}
+                <form method="post" class="course-lesson-toggle" action="{% url 'course-lesson-toggle' course.slug row.lesson.id %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button type="submit" aria-pressed="{% if row.is_completed %}true{% else %}false{% endif %}">
+                    {% if row.is_completed %}✓{% else %}○{% endif %}
+                  </button>
+                </form>
+              {% endif %}
+              {% if row.lesson.video_id %}
+                <a href="{{ course.get_absolute_url }}?v={{ row.lesson.video_id }}">{{ row.lesson.title }}</a>
+              {% else %}
+                <span>{{ row.lesson.title }}</span>
+              {% endif %}
+            </div>
           </li>
         {% endfor %}
       </ul>

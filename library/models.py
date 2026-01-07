@@ -524,6 +524,42 @@ class CourseLesson(models.Model):
         super().save(*args, **kwargs)
 
 
+class CourseFavorite(models.Model):
+    course = models.ForeignKey(Course, related_name="favorites", on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="course_favorites",
+        on_delete=models.CASCADE,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("course", "user")
+
+    def __str__(self):
+        return f"Course favorite {self.course_id}"
+
+
+class CourseLessonProgress(models.Model):
+    lesson = models.ForeignKey(
+        CourseLesson, related_name="progresses", on_delete=models.CASCADE
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="course_lesson_progress",
+        on_delete=models.CASCADE,
+    )
+    is_completed = models.BooleanField(default=False)
+    last_watched_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("lesson", "user")
+
+    def __str__(self):
+        return f"Course progress {self.lesson_id}"
+
+
 class RecapHeroBanner(models.Model):
     title = models.CharField(max_length=200)
     body = models.TextField(blank=True)
