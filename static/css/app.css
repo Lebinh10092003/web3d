@@ -123,6 +123,7 @@ img {
   padding: 8px 12px;
   border-radius: 999px;
   transition: all 0.2s ease;
+  border: 1px solid transparent;
 }
 
 .site-nav button {
@@ -137,6 +138,13 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.nav-link.is-active {
+  background: rgba(69, 224, 107, 0.18);
+  border: 1px solid rgba(69, 224, 107, 0.4);
+  color: #0f2b1d;
+  font-weight: 600;
 }
 
 .icon {
