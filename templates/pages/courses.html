@@ -18,24 +18,47 @@
 
 {% if course_playlists %}
   <section class="course-grid">
-    {% for course in course_playlists %}
+    {% for item in course_playlists %}
+      {% with course=item.course lessons=item.lessons %}
       <article class="course-card">
         <div class="course-embed">
+          {% if item.preview_embed_url %}
           <iframe
-            src="https://www.youtube.com/embed/videoseries?list={{ course.playlist_id }}"
-            title="{{ course.title }}"
+            src="{{ item.preview_embed_url }}"
+            title="{{ course.title|default:'Course playlist' }}"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen
             loading="lazy"
           ></iframe>
+          {% else %}
+            <div class="preview-placeholder large">{% trans "No videos yet." %}</div>
+          {% endif %}
         </div>
         <div class="course-body">
-          <h3>{{ course.title }}</h3>
+          <h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3>
           {% if course.description %}
             <p>{{ course.description }}</p>
           {% endif %}
+          {% if lessons %}
+            <div class="course-lessons">
+              <div class="course-lessons-title">{% trans "Lessons" %}</div>
+              <ul>
+                {% for lesson in lessons|slice:":6" %}
+                  <li>
+                    {% if lesson.video_id %}
+                      <a href="{{ course.get_absolute_url }}?v={{ lesson.video_id }}">{{ lesson.title }}</a>
+                    {% else %}
+                      {{ lesson.title }}
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+          <a class="button button-ghost course-link" href="{{ course.get_absolute_url }}">{% trans "View course" %}</a>
         </div>
       </article>
+      {% endwith %}
     {% endfor %}
   </section>
 {% else %}

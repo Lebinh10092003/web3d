@@ -6,8 +6,68 @@ from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
+from django.urls import reverse
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+
+
+def _extract_iframe_src(value):
+    if "<iframe" not in value:
+        return ""
+    match = re.search(r'src=["\']([^"\']+)', value)
+    return match.group(1).strip() if match else ""
+
+
+def _normalize_youtube_id(value):
+    value = (value or "").strip()
+    if not value:
+        return ""
+    iframe_src = _extract_iframe_src(value)
+    if iframe_src:
+        value = iframe_src
+    if "youtu" not in value:
+        return value
+    try:
+        parsed = urlparse(value)
+    except Exception:
+        return value
+    host = parsed.hostname or ""
+    if host in ("youtu.be", "www.youtu.be"):
+        path = parsed.path.lstrip("/")
+        return path.split("/")[0] if path else value
+    if host in (
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtube-nocookie.com",
+        "www.youtube-nocookie.com",
+    ):
+        if parsed.path.startswith("/watch"):
+            query = parse_qs(parsed.query)
+            return query.get("v", [value])[0] or value
+        if parsed.path.startswith("/embed/") or parsed.path.startswith("/shorts/"):
+            parts = parsed.path.split("/")
+            if len(parts) > 2:
+                return parts[2]
+    return value
+
+
+def _normalize_playlist_id(value):
+    value = (value or "").strip()
+    if not value:
+        return ""
+    iframe_src = _extract_iframe_src(value)
+    if iframe_src:
+        value = iframe_src
+    if "list=" not in value and "youtube" not in value and "youtu.be" not in value:
+        return value
+    try:
+        parsed = urlparse(value)
+    except Exception:
+        return value
+    query = parse_qs(parsed.query or "")
+    playlist_id = query.get("list", [""])[0]
+    return playlist_id or value
 
 
 class Category(models.Model):
@@ -352,6 +412,116 @@ class RecapVideo(models.Model):
                 if len(parts) > 2:
                     return parts[2]
         return ""
+
+
+class Course(models.Model):
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(
+        max_length=220,
+        unique=True,
+        blank=True,
+        help_text="Leave blank to auto-generate from the title.",
+    )
+    description = models.TextField(blank=True)
+    playlist_id = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Paste a YouTube playlist ID or URL; it will be normalized.",
+    )
+    featured_video_id = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Paste a YouTube video ID, URL, or iframe; it will be normalized.",
+    )
+    is_published = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["sort_order", "title"]
+
+    def __str__(self):
+        return self.title
+
+    def _build_unique_slug(self):
+        base = slugify(self.title)[:200] or "course"
+        slug = base
+        counter = 2
+        qs = type(self).objects.exclude(pk=self.pk)
+        while qs.filter(slug=slug).exists():
+            suffix = f"-{counter}"
+            trimmed = base[: max(1, 200 - len(suffix))]
+            slug = f"{trimmed}{suffix}"
+            counter += 1
+        return slug
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self._build_unique_slug()
+        if self.playlist_id:
+            self.playlist_id = _normalize_playlist_id(self.playlist_id)
+        if self.featured_video_id:
+            self.featured_video_id = _normalize_youtube_id(self.featured_video_id)
+        super().save(*args, **kwargs)
+
+    @property
+    def playlist_embed_url(self):
+        playlist_id = (self.playlist_id or "").strip()
+        return (
+            f"https://www.youtube-nocookie.com/embed/videoseries?list={playlist_id}"
+            if playlist_id
+            else ""
+        )
+
+    @property
+    def playlist_url(self):
+        playlist_id = (self.playlist_id or "").strip()
+        return (
+            f"https://www.youtube.com/playlist?list={playlist_id}"
+            if playlist_id
+            else ""
+        )
+
+    def get_video_embed_url(self, video_id):
+        video_id = (video_id or "").strip()
+        playlist_id = (self.playlist_id or "").strip()
+        if not video_id:
+            return self.playlist_embed_url
+        base = "https://www.youtube-nocookie.com/embed"
+        if playlist_id:
+            return f"{base}/{video_id}?list={playlist_id}"
+        return f"{base}/{video_id}"
+
+    @property
+    def featured_embed_url(self):
+        return self.get_video_embed_url(self.featured_video_id)
+
+    def get_absolute_url(self):
+        return reverse("course-detail", kwargs={"slug": self.slug})
+
+
+class CourseLesson(models.Model):
+    course = models.ForeignKey(Course, related_name="lessons", on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    video_id = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Paste a YouTube video ID, URL, or iframe; it will be normalized.",
+    )
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return f"{self.course_id}: {self.title}"
+
+    def save(self, *args, **kwargs):
+        if self.video_id:
+            self.video_id = _normalize_youtube_id(self.video_id)
+        super().save(*args, **kwargs)
 
 
 class RecapHeroBanner(models.Model):

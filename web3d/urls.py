@@ -21,16 +21,14 @@ urlpatterns = [
     path("about/", views.about, name="about"),
     path("contact/", views.contact, name="contact"),
     path("privacy/", views.privacy, name="privacy"),
-<<<<<<< HEAD
     path("policies/", views.policies, name="policies"),
     path("terms/", views.terms, name="terms"),
     path("payment-policy/", views.payment_policy, name="payment-policy"),
     path("refund-policy/", views.refund_policy, name="refund-policy"),
     path("delivery-policy/", views.delivery_policy, name="delivery-policy"),
     path("complaint-policy/", views.complaint_policy, name="complaint-policy"),
-=======
     path("courses/", views.courses, name="courses"),
->>>>>>> binh
+    path("courses/<slug:slug>/", views.course_detail, name="course-detail"),
     path("recaps/", views.recaps, name="recaps"),
     path("accounts/", include("accounts.urls")),
     path("interactions/", include("interactions.urls")),

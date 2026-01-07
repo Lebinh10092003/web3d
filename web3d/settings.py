@@ -1,5 +1,4 @@
 from pathlib import Path
-import json
 import os
 
 from django.utils.translation import gettext_lazy as _
@@ -32,36 +31,6 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").sp
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 SITE_NAME = os.environ.get("SITE_NAME", "V+ STEAM LAB Library")
 SITE_URL = os.environ.get("SITE_URL", "")
-
-
-def _load_course_playlists():
-    raw = (os.environ.get("COURSE_PLAYLISTS") or "").strip()
-    if not raw:
-        return []
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        return []
-    playlists = []
-    for item in data if isinstance(data, list) else []:
-        if not isinstance(item, dict):
-            continue
-        playlist_id = str(item.get("playlist_id") or "").strip()
-        if not playlist_id:
-            continue
-        title = str(item.get("title") or "").strip() or playlist_id
-        description = str(item.get("description") or "").strip()
-        playlists.append(
-            {
-                "title": title,
-                "playlist_id": playlist_id,
-                "description": description,
-            }
-        )
-    return playlists
-
-
-COURSE_PLAYLISTS = _load_course_playlists()
 
 
 INSTALLED_APPS = [

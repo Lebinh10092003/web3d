@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ course.title }} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}{{ course.title }} | V+ STEAM LAB Library{% endblock %}
+{% block meta_description %}{{ course.description|default:_("Watch the lessons in this course playlist.") }}{% endblock %}
+{% block og_description %}{{ course.description|default:_("Watch the lessons in this course playlist.") }}{% endblock %}
+{% block twitter_description %}{{ course.description|default:_("Watch the lessons in this course playlist.") }}{% endblock %}
+
+{% block content %}
+<section class="course-detail-hero">
+  <p class="course-eyebrow">{% trans "Course" %}</p>
+  <h1>{{ course.title }}</h1>
+  {% if course.description %}
+    <p class="course-subtitle">{{ course.description }}</p>
+  {% endif %}
+</section>
+
+<section class="course-detail-layout">
+  <div class="course-detail-player">
+    <div class="course-embed course-embed--detail">
+      {% if active_embed_url %}
+        <iframe
+          src="{{ active_embed_url }}"
+          title="{{ course.title }}"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          loading="lazy"
+        ></iframe>
+      {% else %}
+        <div class="preview-placeholder large">{% trans "No videos yet." %}</div>
+      {% endif %}
+    </div>
+    {% if course.playlist_url %}
+      <a class="button button-ghost course-link" href="{{ course.playlist_url }}" target="_blank" rel="noopener">
+        {% trans "Open playlist on YouTube" %}
+      </a>
+    {% endif %}
+  </div>
+  <aside class="course-detail-list">
+    <div class="course-lessons-title">{% trans "Lessons" %}</div>
+    {% if lessons %}
+      <ul class="course-lesson-list">
+        {% for lesson in lessons %}
+          <li class="{% if lesson.video_id and lesson.video_id == active_video_id %}is-active{% endif %}">
+            {% if lesson.video_id %}
+              <a href="{{ course.get_absolute_url }}?v={{ lesson.video_id }}">{{ lesson.title }}</a>
+            {% else %}
+              <span>{{ lesson.title }}</span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-state">{% trans "No lessons yet." %}</p>
+    {% endif %}
+  </aside>
+</section>
+{% endblock %}

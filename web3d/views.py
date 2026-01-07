@@ -1,14 +1,13 @@
 from collections import defaultdict
 
-from django.conf import settings
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 
-from library.models import ContentItem, RecapHeroBanner, RecapVideo
+from library.models import ContentItem, Course, RecapHeroBanner, RecapVideo, _normalize_youtube_id
 
 
 def about(request):
@@ -46,12 +45,55 @@ def complaint_policy(request):
 
 
 def courses(request):
-    playlists = getattr(settings, "COURSE_PLAYLISTS", [])
+    courses_qs = (
+        Course.objects.filter(is_published=True)
+        .prefetch_related("lessons")
+        .order_by("sort_order", "title")
+    )
+    courses = []
+    for course in courses_qs:
+        lessons = list(course.lessons.all())
+        preview_video_id = course.featured_video_id
+        if not preview_video_id:
+            preview_video_id = next(
+                (lesson.video_id for lesson in lessons if lesson.video_id), ""
+            )
+        courses.append(
+            {
+                "course": course,
+                "lessons": lessons,
+                "preview_embed_url": course.get_video_embed_url(preview_video_id),
+            }
+        )
     context = {
-        "course_playlists": playlists,
+        "course_playlists": courses,
         "canonical_url": request.build_absolute_uri(request.path),
     }
     return render(request, "pages/courses.html", context)
+
+
+def course_detail(request, slug):
+    course = get_object_or_404(
+        Course.objects.prefetch_related("lessons"), slug=slug, is_published=True
+    )
+    lessons = list(course.lessons.all())
+    selected = _normalize_youtube_id(request.GET.get("v"))
+    lesson_video_ids = [lesson.video_id for lesson in lessons if lesson.video_id]
+    if selected and selected not in lesson_video_ids:
+        selected = ""
+    active_video_id = (
+        selected
+        or course.featured_video_id
+        or next((vid for vid in lesson_video_ids if vid), "")
+    )
+    context = {
+        "course": course,
+        "lessons": lessons,
+        "active_video_id": active_video_id,
+        "active_embed_url": course.get_video_embed_url(active_video_id),
+        "canonical_url": request.build_absolute_uri(request.path),
+    }
+    return render(request, "pages/course_detail.html", context)
 
 
 def _load_recaps():
@@ -186,12 +228,8 @@ def sitemap_xml(request):
         {"loc": f"{base_url}{reverse('library:home')}", "lastmod": now},
         {"loc": f"{base_url}{reverse('about')}", "lastmod": now},
         {"loc": f"{base_url}{reverse('contact')}", "lastmod": now},
-<<<<<<< HEAD
         {"loc": f"{base_url}{reverse('policies')}", "lastmod": now},
-=======
-        {"loc": f"{base_url}{reverse('privacy')}", "lastmod": now},
         {"loc": f"{base_url}{reverse('courses')}", "lastmod": now},
->>>>>>> binh
         {"loc": f"{base_url}{reverse('recaps')}", "lastmod": now},
     ]
 
@@ -203,6 +241,15 @@ def sitemap_xml(request):
             {
                 "loc": f"{base_url}{reverse('library:content-detail', args=[item.id])}",
                 "lastmod": item.updated_at,
+            }
+        )
+
+    courses = Course.objects.filter(is_published=True).only("slug", "updated_at")
+    for course in courses:
+        urls.append(
+            {
+                "loc": f"{base_url}{reverse('course-detail', args=[course.slug])}",
+                "lastmod": course.updated_at,
             }
         )
 
