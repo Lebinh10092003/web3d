@@ -171,6 +171,50 @@ function bindLanguageSwitcher() {
   });
 }
 
+function bindNavToggle() {
+  const header = document.querySelector("[data-site-header]");
+  const toggle = document.querySelector("[data-nav-toggle]");
+  const nav = document.querySelector("[data-nav-panel]");
+  if (!header || !toggle || !nav) {
+    return;
+  }
+  if (toggle.dataset.bound === "true") {
+    return;
+  }
+  toggle.dataset.bound = "true";
+  header.dataset.navReady = "true";
+
+  const setOpen = (open) => {
+    header.classList.toggle("is-nav-open", open);
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+
+  toggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    const isOpen = header.classList.contains("is-nav-open");
+    setOpen(!isOpen);
+  });
+
+  nav.addEventListener("click", (event) => {
+    const link = event.target.closest(".nav-link");
+    if (link) {
+      setOpen(false);
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!header.contains(event.target)) {
+      setOpen(false);
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 700) {
+      setOpen(false);
+    }
+  });
+}
+
 function bindRecapLibrary() {
   const root = document.querySelector("[data-recap-library]");
   if (!root || root.dataset.recapBound === "true") {
@@ -487,6 +531,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindPointsTriggers();
   bindBackButtons();
   bindLanguageSwitcher();
+  bindNavToggle();
   bindRecapLibrary();
   bindDownloadBanner();
   if (window.__djangoMessages) {
@@ -504,6 +549,7 @@ document.addEventListener("htmx:afterSwap", (event) => {
   bindRecapLibrary();
   bindDownloadBanner();
   bindPointsTriggers();
+  bindNavToggle();
 });
 
 document.addEventListener("htmx:beforeRequest", (event) => {
