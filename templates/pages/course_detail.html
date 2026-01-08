@@ -45,7 +45,7 @@
       {% endif %}
     </div>
     {% if course.playlist_url %}
-      <a class="button button-ghost course-link" href="{{ course.playlist_url }}" target="_blank" rel="noopener">
+      <a class="button button-ghost course-link" href="{{ course.playlist_url }}" target="_blank" rel="noopener noreferrer">
         {% trans "Open playlist on YouTube" %}
       </a>
     {% endif %}
@@ -61,8 +61,12 @@
                 <form method="post" class="course-lesson-toggle" action="{% url 'course-lesson-toggle' course.slug row.lesson.id %}">
                   {% csrf_token %}
                   <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                  <button type="submit" aria-pressed="{% if row.is_completed %}true{% else %}false{% endif %}">
-                    {% if row.is_completed %}✓{% else %}○{% endif %}
+                  <button
+                    type="submit"
+                    aria-pressed="{% if row.is_completed %}true{% else %}false{% endif %}"
+                    aria-label="{% if row.is_completed %}{% trans 'Mark as incomplete' %}{% else %}{% trans 'Mark as complete' %}{% endif %}"
+                  >
+                    <span aria-hidden="true">{% if row.is_completed %}✓{% else %}○{% endif %}</span>
                   </button>
                 </form>
               {% endif %}

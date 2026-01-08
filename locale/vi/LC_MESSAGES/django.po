@@ -1030,9 +1030,6 @@ msgstr "Thư viện tổng kết"
 #~ msgid "PDF + 3D learning vault for robotics classrooms."
 #~ msgstr "Kho tài nguyên PDF + 3D cho lớp học robotics."
 
-#~ msgid "Facebook"
-#~ msgstr "Facebook"
-
 #~ msgid "Created by: Le Binh"
 #~ msgstr "Tạo bởi: Lê Bình"
 
@@ -1239,8 +1236,56 @@ msgstr "Menu"
 msgid "Courses"
 msgstr "Khóa học"
 
+msgid "Course"
+msgstr "Khóa học"
+
+msgid "Course playlists"
+msgstr "Playlist khóa học"
+
+msgid "Course playlist"
+msgstr "Playlist khóa học"
+
+msgid "Watch curated course playlists and learn step by step."
+msgstr "Xem các playlist khóa học được tuyển chọn và học từng bước."
+
+msgid "Watch curated YouTube playlists and follow each lesson in order."
+msgstr "Xem các playlist YouTube được tuyển chọn và theo dõi từng bài học theo thứ tự."
+
+msgid "Watch the lessons in this course playlist."
+msgstr "Xem các bài học trong playlist khóa học này."
+
+msgid "View course"
+msgstr "Xem khóa học"
+
+msgid "Lessons"
+msgstr "Bài học"
+
+msgid "No courses yet."
+msgstr "Chưa có khóa học."
+
+msgid "No lessons yet."
+msgstr "Chưa có bài học."
+
+msgid "No videos yet."
+msgstr "Chưa có video."
+
+msgid "Save course"
+msgstr "Lưu khóa học"
+
+msgid "Login to save"
+msgstr "Đăng nhập để lưu"
+
+msgid "Saved"
+msgstr "Đã lưu"
+
+msgid "Open playlist on YouTube"
+msgstr "Mở playlist trên YouTube"
+
+msgid "Mark as complete"
+msgstr "Đánh dấu đã hoàn thành"
+
+msgid "Mark as incomplete"
+msgstr "Bỏ đánh dấu hoàn thành"
+
 msgid "Top up instantly via ZaloPay."
 msgstr "Nạp điểm ngay qua ZaloPay."
-
-msgid "and this website is a place to connect, share, and exchange ideas about STEAM, robotics, and learning resources."
-msgstr "và website này là nơi kết nối, chia sẻ và trao đổi ý tưởng về STEAM, robotics và tài nguyên học tập."

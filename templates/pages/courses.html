@@ -8,6 +8,7 @@
 {% block twitter_description %}{% trans "Watch curated course playlists and learn step by step." %}{% endblock %}
 
 {% block content %}
+{% trans "Course playlist" as course_playlist_label %}
 <section class="course-hero">
   <p class="course-eyebrow">{% trans "Courses" %}</p>
   <h1>{% trans "Course playlists" %}</h1>
@@ -25,7 +26,7 @@
           {% if item.preview_embed_url %}
           <iframe
             src="{{ item.preview_embed_url }}"
-            title="{{ course.title|default:'Course playlist' }}"
+            title="{{ course.title|default:course_playlist_label }}"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen
             loading="lazy"
@@ -58,7 +59,7 @@
               </ul>
             </div>
           {% endif %}
-          <a class="button button-ghost course-link" href="{{ course.get_absolute_url }}">{% trans "View course" %}</a>
+          <a class="button button-ghost course-link" href="{% url 'course-detail' course.slug %}">{% trans "View course" %}</a>
         </div>
       </article>
       {% endwith %}
