@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách giao hàng nội dung số{% else %}Digital Delivery Policy{% endif %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách giao hàng nội dung số | V+ STEAM LAB Library{% else %}Digital Delivery Policy | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block meta_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy trình cung cấp nội dung số và thời gian xử lý.{% else %}Digital content delivery flow and processing time.{% endif %}{% endblock %}
+{% block og_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy trình cung cấp nội dung số và thời gian xử lý.{% else %}Digital content delivery flow and processing time.{% endif %}{% endblock %}
+{% block twitter_title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách giao hàng nội dung số | V+ STEAM LAB Library{% else %}Digital Delivery Policy | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block twitter_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy trình cung cấp nội dung số và thời gian xử lý.{% else %}Digital content delivery flow and processing time.{% endif %}{% endblock %}
+
+{% block content %}
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+<section class="panel policy-page">
+  {% if request.LANGUAGE_CODE == "vi" %}
+    <h1>Chính sách giao hàng nội dung số</h1>
+    <p>Nội dung được cung cấp dưới dạng tài nguyên số (PDF, tệp 3D, bài học).</p>
+
+    <h2>1. Cách cung cấp</h2>
+    <ul class="policy-list">
+      <li>Sau khi mở khóa bằng điểm, nút tải về sẽ hiển thị ngay.</li>
+      <li>Với nội dung trả phí, hệ thống sẽ mở khóa sau khi thanh toán thành công.</li>
+    </ul>
+
+    <h2>2. Thời gian xử lý</h2>
+    <ul class="policy-list">
+      <li>Thông thường xử lý ngay lập tức.</li>
+      <li>Nếu hệ thống bị trễ, vui lòng chờ tối đa 24 giờ và liên hệ hỗ trợ.</li>
+    </ul>
+
+    <h2>3. Hỗ trợ kỹ thuật</h2>
+    <p>Nếu gặp lỗi tải về hoặc truy cập, vui lòng liên hệ và cung cấp thông tin giao dịch.</p>
+  {% else %}
+    <h1>Digital Delivery Policy</h1>
+    <p>Content is delivered digitally (PDFs, 3D files, lesson materials).</p>
+
+    <h2>1. Delivery method</h2>
+    <ul class="policy-list">
+      <li>After unlocking with points, the download button becomes available.</li>
+      <li>Paid content is unlocked after successful payment.</li>
+    </ul>
+
+    <h2>2. Processing time</h2>
+    <ul class="policy-list">
+      <li>Usually instant.</li>
+      <li>If delayed, allow up to 24 hours and contact support.</li>
+    </ul>
+
+    <h2>3. Technical support</h2>
+    <p>If you cannot download or access content, contact us with transaction details.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách hoàn tiền{% else %}Refund Policy{% endif %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách hoàn tiền | V+ STEAM LAB Library{% else %}Refund Policy | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block meta_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy định hoàn tiền, điều kiện áp dụng, và thời gian xử lý.{% else %}Refund eligibility, conditions, and processing timelines.{% endif %}{% endblock %}
+{% block og_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy định hoàn tiền, điều kiện áp dụng, và thời gian xử lý.{% else %}Refund eligibility, conditions, and processing timelines.{% endif %}{% endblock %}
+{% block twitter_title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách hoàn tiền | V+ STEAM LAB Library{% else %}Refund Policy | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block twitter_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy định hoàn tiền, điều kiện áp dụng, và thời gian xử lý.{% else %}Refund eligibility, conditions, and processing timelines.{% endif %}{% endblock %}
+
+{% block content %}
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+<section class="panel policy-page">
+  {% if request.LANGUAGE_CODE == "vi" %}
+    <h1>Chính sách hoàn tiền</h1>
+    <p>Do đặc thù nội dung số và điểm quy đổi, chúng tôi áp dụng các điều kiện hoàn tiền sau.</p>
+
+    <h2>1. Trường hợp được hoàn tiền</h2>
+    <ul class="policy-list">
+      <li>Giao dịch lỗi, thanh toán trùng, hoặc trừ tiền nhưng không cộng điểm.</li>
+      <li>Gói điểm chưa sử dụng và yêu cầu hoàn tiền trong vòng 24 giờ.</li>
+    </ul>
+
+    <h2>2. Trường hợp không hoàn tiền</h2>
+    <ul class="policy-list">
+      <li>Điểm đã được sử dụng để mở khóa nội dung.</li>
+      <li>Nội dung số đã được tải về hoặc truy cập thành công.</li>
+    </ul>
+
+    <h2>3. Thời gian xử lý</h2>
+    <p>Chúng tôi phản hồi trong 24-48 giờ làm việc. Hoàn tiền (nếu có) dự kiến 7-15 ngày làm việc tùy phương thức thanh toán.</p>
+
+    <h2>4. Cách gửi yêu cầu</h2>
+    <p>Vui lòng liên hệ và cung cấp mã giao dịch, thời gian, và hình ảnh chứng minh.</p>
+  {% else %}
+    <h1>Refund Policy</h1>
+    <p>Due to the nature of digital content and points, refunds are limited to the cases below.</p>
+
+    <h2>1. Eligible cases</h2>
+    <ul class="policy-list">
+      <li>Payment errors, duplicate charges, or points not credited.</li>
+      <li>Unused point packages requested within 24 hours.</li>
+    </ul>
+
+    <h2>2. Non-refundable cases</h2>
+    <ul class="policy-list">
+      <li>Points already spent to unlock content.</li>
+      <li>Digital content already downloaded or accessed successfully.</li>
+    </ul>
+
+    <h2>3. Processing time</h2>
+    <p>We respond within 24-48 business hours. Refunds (if approved) take 7-15 business days.</p>
+
+    <h2>4. How to request</h2>
+    <p>Contact us with your transaction ID, time, and supporting evidence.</p>
+  {% endif %}
+</section>
+{% endblock %}

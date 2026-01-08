@@ -1,0 +1,67 @@
+{% load i18n %}
+{% if show_name %}
+  <div class="owner-links{% if compact %} owner-links--compact{% endif %}">
+    {% if owner %}
+      <button
+        class="owner-name owner-name-button"
+        type="button"
+        data-owner-modal-open
+        data-owner-name="{{ owner.display_name|default:owner.username|escape }}"
+        data-owner-username="{{ owner.username|default:''|escape }}"
+        data-owner-role="{{ owner.get_role_display|default:''|escape }}"
+        data-owner-bio="{{ owner.bio|default:''|escape }}"
+        data-owner-avatar="{{ owner.avatar_path|default:''|escape }}"
+        data-owner-website="{{ owner.website_url|default:''|escape }}"
+        data-owner-facebook="{{ owner.facebook_url|default:''|escape }}"
+        data-owner-github="{{ owner.github_url|default:''|escape }}"
+        aria-haspopup="dialog"
+        aria-controls="owner-modal"
+      >{{ owner }}</button>
+    {% else %}
+      <span class="owner-name">V+STEAM LAB</span>
+    {% endif %}
+    {% if owner and show_links %}
+      {% if owner.website_url or owner.facebook_url or owner.github_url %}
+        <span class="owner-social">
+          {% if owner.website_url %}
+            <a class="owner-link owner-link--web" href="{{ owner.website_url }}" target="_blank" rel="noopener noreferrer">
+              {% if compact %}Web{% else %}Website{% endif %}
+            </a>
+          {% endif %}
+          {% if owner.facebook_url %}
+            <a class="owner-link owner-link--facebook" href="{{ owner.facebook_url }}" target="_blank" rel="noopener noreferrer">
+              {% if compact %}FB{% else %}Facebook{% endif %}
+            </a>
+          {% endif %}
+          {% if owner.github_url %}
+            <a class="owner-link owner-link--github" href="{{ owner.github_url }}" target="_blank" rel="noopener noreferrer">
+              {% if compact %}GH{% else %}GitHub{% endif %}
+            </a>
+          {% endif %}
+        </span>
+      {% endif %}
+    {% endif %}
+  </div>
+{% elif owner and show_links %}
+  {% if owner.website_url or owner.facebook_url or owner.github_url %}
+    <div class="owner-links{% if compact %} owner-links--compact{% endif %}">
+      <span class="owner-social">
+        {% if owner.website_url %}
+          <a class="owner-link owner-link--web" href="{{ owner.website_url }}" target="_blank" rel="noopener noreferrer">
+            {% if compact %}Web{% else %}Website{% endif %}
+          </a>
+        {% endif %}
+        {% if owner.facebook_url %}
+          <a class="owner-link owner-link--facebook" href="{{ owner.facebook_url }}" target="_blank" rel="noopener noreferrer">
+            {% if compact %}FB{% else %}Facebook{% endif %}
+          </a>
+        {% endif %}
+        {% if owner.github_url %}
+          <a class="owner-link owner-link--github" href="{{ owner.github_url }}" target="_blank" rel="noopener noreferrer">
+            {% if compact %}GH{% else %}GitHub{% endif %}
+          </a>
+        {% endif %}
+      </span>
+    </div>
+  {% endif %}
+{% endif %}

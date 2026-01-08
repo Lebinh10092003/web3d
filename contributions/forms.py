@@ -1,8 +1,10 @@
 import os
 import zipfile
+from urllib.parse import urlparse
 
 from django import forms
 from django.conf import settings
+from django.core.validators import URLValidator
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
@@ -48,6 +50,11 @@ class ContributionSubmissionForm(forms.ModelForm):
         max_length=120,
         widget=forms.TextInput(attrs={"placeholder": _("New category")}),
     )
+    external_links = forms.CharField(
+        required=False,
+        widget=forms.URLInput(attrs={"placeholder": _("https://example.com")}),
+        help_text=_("Paste one URL (optional)."),
+    )
 
     class Meta:
         model = ContributionSubmission
@@ -55,6 +62,7 @@ class ContributionSubmissionForm(forms.ModelForm):
             "title",
             "description",
             "competition",
+            "external_links",
         )
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
@@ -122,6 +130,20 @@ class ContributionSubmissionForm(forms.ModelForm):
         if ext and ext not in allowed_ext:
             raise forms.ValidationError(_("Allowed formats: jpg, jpeg, png, webp, gif."))
         return upload
+
+    def clean_external_links(self):
+        raw = (self.cleaned_data.get("external_links") or "").strip()
+        if not raw:
+            return ""
+        validator = URLValidator()
+        url = self._normalize_external_link(raw)
+        try:
+            validator(url)
+        except forms.ValidationError as exc:
+            raise forms.ValidationError(
+                _("Invalid URL: %(url)s") % {"url": url}
+            ) from exc
+        return url
 
     def _validate_upload_size(self, upload, max_mb, label):
         if not upload:
@@ -211,6 +233,16 @@ class ContributionSubmissionForm(forms.ModelForm):
             raise forms.ValidationError(
                 _("PDF must mention competitions like WRO, FLL, Enjoy AI, or VEX.")
             )
+
+    @staticmethod
+    def _normalize_external_link(url):
+        url = (url or "").strip()
+        if not url:
+            return ""
+        parsed = urlparse(url)
+        if not parsed.scheme:
+            return f"https://{url}"
+        return url
 
     def _resolve_category(self):
         category = self.cleaned_data.get("category")

@@ -6,6 +6,7 @@ from django.contrib.auth.views import LoginView
 from django.core.files.storage import default_storage
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
+from django.db.models import Count
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -13,7 +14,13 @@ from django.utils.translation import gettext as _
 from contributions.models import ContributionSubmission
 from gating.models import Unlock
 from interactions.models import Favorite
-from library.models import ContentFile, ContentItem
+from library.models import (
+    ContentFile,
+    ContentItem,
+    CourseFavorite,
+    CourseLesson,
+    CourseLessonProgress,
+)
 
 from .forms import ProfileForm, UserRegistrationForm
 
@@ -57,6 +64,111 @@ def _attach_previews(contents):
             content.preview_url = ""
 
 
+def _build_profile_lists(user):
+    unlocks = (
+        Unlock.objects.filter(user=user)
+        .select_related("content")
+        .order_by("-created_at")[:5]
+    )
+    submissions = list(
+        ContributionSubmission.objects.filter(user=user)
+        .order_by("-created_at")[:5]
+    )
+    submission_paths = [s.file_path for s in submissions if s.file_path]
+    content_by_path = {}
+    if submission_paths:
+        sources = (
+            ContentFile.objects.filter(
+                storage_path__in=submission_paths,
+                kind=ContentFile.FileKind.SOURCE,
+            )
+            .select_related("content")
+            .only("storage_path", "content_id", "content")
+        )
+        for source in sources:
+            content_by_path[source.storage_path] = source.content
+    for submission in submissions:
+        submission.published_content = content_by_path.get(submission.file_path)
+    own_content = ContentItem.objects.filter(owner=user).order_by("-created_at")[:5]
+    favorites = (
+        Favorite.objects.filter(user=user)
+        .select_related("content")
+        .order_by("-created_at")[:5]
+    )
+    content_pool = {}
+    for unlock in unlocks:
+        content_pool[unlock.content_id] = unlock.content
+    for favorite in favorites:
+        content_pool[favorite.content_id] = favorite.content
+    for item in own_content:
+        content_pool[item.id] = item
+    for submission in submissions:
+        if submission.published_content:
+            content_pool[submission.published_content.id] = submission.published_content
+    _attach_previews(list(content_pool.values()))
+
+    return {
+        "unlocks": unlocks,
+        "submissions": submissions,
+        "own_content": own_content,
+        "favorites": favorites,
+    }
+
+
+def _build_course_overview(user):
+    course_favorites = (
+        CourseFavorite.objects.filter(user=user, course__is_published=True)
+        .select_related("course")
+        .order_by("-created_at")
+    )
+    favorite_courses = [favorite.course for favorite in course_favorites]
+    recent_lessons_qs = (
+        CourseLessonProgress.objects.filter(
+            user=user, last_watched_at__isnull=False
+        )
+        .select_related("lesson__course")
+        .order_by("-last_watched_at")
+    )
+    recent_lessons = list(recent_lessons_qs[:8])
+
+    course_ids = {
+        progress.lesson.course_id for progress in recent_lessons if progress.lesson_id
+    }
+    course_ids.update(course.id for course in favorite_courses if course)
+    course_stats = {}
+    if course_ids:
+        totals = (
+            CourseLesson.objects.filter(course_id__in=course_ids)
+            .values("course_id")
+            .annotate(total=Count("id"))
+        )
+        completed = (
+            CourseLessonProgress.objects.filter(
+                user=user,
+                lesson__course_id__in=course_ids,
+                is_completed=True,
+            )
+            .values("lesson__course_id")
+            .annotate(total=Count("id"))
+        )
+        total_map = {row["course_id"]: row["total"] for row in totals}
+        completed_map = {row["lesson__course_id"]: row["total"] for row in completed}
+        for course_id in course_ids:
+            total = total_map.get(course_id, 0)
+            done = completed_map.get(course_id, 0)
+            percent = int((done / total) * 100) if total else 0
+            course_stats[course_id] = {
+                "total": total,
+                "completed": done,
+                "percent": percent,
+            }
+
+    for course in favorite_courses:
+        course.progress = course_stats.get(course.id, {"total": 0, "completed": 0, "percent": 0})
+
+    return favorite_courses, recent_lessons, course_stats
+
+
 def register(request):
     if request.method == "POST":
         form = UserRegistrationForm(request.POST)
@@ -77,6 +189,11 @@ def register(request):
 
 @login_required
 def profile(request):
+    valid_sections = {"personal", "public", "favorites", "courses"}
+    section = request.GET.get("section", "personal")
+    if section not in valid_sections:
+        section = "personal"
+
     if request.method == "POST":
         form = ProfileForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
@@ -87,69 +204,161 @@ def profile(request):
                     upload.seek(0)
                     user.avatar_path = _upload_avatar(upload, user.id)
                 except Exception as exc:
-                    messages.error(
-                        request, _("Avatar upload failed: %(error)s") % {"error": exc}
+                    form.add_error(
+                        None,
+                        _("Avatar upload failed: %(error)s") % {"error": exc},
                     )
-                    return render(request, "accounts/profile.html", {"form": form})
+                    context = _build_profile_lists(request.user)
+                    favorite_courses, recent_lessons, course_stats = _build_course_overview(request.user)
+                    context.update(
+                        {
+                            "form": form,
+                            "section": section,
+                            "favorite_courses": favorite_courses,
+                            "recent_lessons": recent_lessons,
+                            "course_stats": course_stats,
+                        }
+                    )
+                    return render(request, "accounts/profile.html", context)
             user.save()
             messages.success(request, _("Profile updated."))
-            return redirect("accounts:profile")
+            return redirect(f"{reverse('accounts:profile')}?section=personal")
     else:
         form = ProfileForm(instance=request.user)
 
-    unlocks = (
-        Unlock.objects.filter(user=request.user)
-        .select_related("content")
-        .order_by("-created_at")[:5]
+    context = _build_profile_lists(request.user)
+    favorite_courses, recent_lessons, course_stats = _build_course_overview(request.user)
+    context.update(
+        {
+            "form": form,
+            "section": section,
+            "favorite_courses": favorite_courses,
+            "recent_lessons": recent_lessons,
+            "course_stats": course_stats,
+        }
     )
-    submissions = list(
-        ContributionSubmission.objects.filter(user=request.user)
-        .order_by("-created_at")[:5]
+    return render(request, "accounts/profile.html", context)
+
+
+@login_required
+def profile_section(request, section):
+    valid_sections = {"personal", "public", "favorites", "courses"}
+    if section not in valid_sections:
+        section = "personal"
+
+    form = None
+    is_htmx = request.headers.get("HX-Request") == "true"
+    if section == "personal":
+        if request.method == "POST":
+            form = ProfileForm(request.POST, request.FILES, instance=request.user)
+            if form.is_valid():
+                user = form.save(commit=False)
+                upload = form.cleaned_data.get("file_upload")
+                if upload:
+                    try:
+                        upload.seek(0)
+                        user.avatar_path = _upload_avatar(upload, user.id)
+                    except Exception as exc:
+                        form.add_error(
+                            None,
+                            _("Avatar upload failed: %(error)s") % {"error": exc},
+                        )
+                        context = _build_profile_lists(request.user)
+                        context.update({"form": form, "section": section})
+                        return render(request, "accounts/profile_modal.html", context)
+                user.save()
+                messages.success(request, _("Profile updated."))
+                form = ProfileForm(instance=request.user)
+        else:
+            form = ProfileForm(instance=request.user)
+    elif request.method == "POST" and not is_htmx:
+        return redirect(f"{reverse('accounts:profile')}?section={section}")
+
+    if not is_htmx:
+        return redirect(f"{reverse('accounts:profile')}?section={section}")
+
+    favorite_courses, recent_lessons, course_stats = _build_course_overview(request.user)
+    context = _build_profile_lists(request.user)
+    context.update(
+        {
+            "section": section,
+            "form": form,
+            "favorite_courses": favorite_courses,
+            "recent_lessons": recent_lessons,
+            "course_stats": course_stats,
+        }
     )
-    submission_paths = [s.file_path for s in submissions if s.file_path]
-    content_by_path = {}
-    if submission_paths:
-        sources = (
-            ContentFile.objects.filter(
-                storage_path__in=submission_paths,
-                kind=ContentFile.FileKind.SOURCE,
-            )
-            .select_related("content")
-            .only("storage_path", "content_id", "content")
-        )
-        for source in sources:
-            content_by_path[source.storage_path] = source.content
-    for submission in submissions:
-        submission.published_content = content_by_path.get(submission.file_path)
-    own_content = (
-        ContentItem.objects.filter(owner=request.user).order_by("-created_at")[:5]
-    )
+    return render(request, "accounts/profile_modal.html", context)
+
+
+@login_required
+def my_library(request):
     favorites = (
         Favorite.objects.filter(user=request.user)
         .select_related("content")
-        .order_by("-created_at")[:5]
+        .order_by("-created_at")
     )
-    content_pool = {}
-    for unlock in unlocks:
-        content_pool[unlock.content_id] = unlock.content
-    for favorite in favorites:
-        content_pool[favorite.content_id] = favorite.content
-    for item in own_content:
-        content_pool[item.id] = item
-    for submission in submissions:
-        if submission.published_content:
-            content_pool[submission.published_content.id] = submission.published_content
-    _attach_previews(list(content_pool.values()))
+    favorite_contents = [favorite.content for favorite in favorites]
+    _attach_previews(favorite_contents)
+
+    course_favorites = (
+        CourseFavorite.objects.filter(user=request.user, course__is_published=True)
+        .select_related("course")
+        .order_by("-created_at")
+    )
+    favorite_courses = [favorite.course for favorite in course_favorites]
+
+    recent_lessons_qs = (
+        CourseLessonProgress.objects.filter(
+            user=request.user, last_watched_at__isnull=False
+        )
+        .select_related("lesson__course")
+        .order_by("-last_watched_at")
+    )
+    recent_lessons = list(recent_lessons_qs[:10])
+
+    course_ids = {
+        progress.lesson.course_id for progress in recent_lessons if progress.lesson_id
+    }
+    course_ids.update(course.id for course in favorite_courses if course)
+    course_stats = {}
+    if course_ids:
+        totals = (
+            CourseLesson.objects.filter(course_id__in=course_ids)
+            .values("course_id")
+            .annotate(total=Count("id"))
+        )
+        completed = (
+            CourseLessonProgress.objects.filter(
+                user=request.user,
+                lesson__course_id__in=course_ids,
+                is_completed=True,
+            )
+            .values("lesson__course_id")
+            .annotate(total=Count("id"))
+        )
+        total_map = {row["course_id"]: row["total"] for row in totals}
+        completed_map = {row["lesson__course_id"]: row["total"] for row in completed}
+        for course_id in course_ids:
+            total = total_map.get(course_id, 0)
+            done = completed_map.get(course_id, 0)
+            percent = int((done / total) * 100) if total else 0
+            course_stats[course_id] = {
+                "total": total,
+                "completed": done,
+                "percent": percent,
+            }
+
+    for course in favorite_courses:
+        course.progress = course_stats.get(course.id, {"total": 0, "completed": 0, "percent": 0})
 
     context = {
-        "form": form,
-        "unlocks": unlocks,
-        "submissions": submissions,
-        "own_content": own_content,
-        "favorites": favorites,
+        "favorite_contents": favorite_contents,
+        "favorite_courses": favorite_courses,
+        "recent_lessons": recent_lessons,
+        "course_stats": course_stats,
     }
-    return render(request, "accounts/profile.html", context)
-
+    return render(request, "accounts/my_library.html", context)
 
 class ModalLoginView(LoginView):
     def get_template_names(self):

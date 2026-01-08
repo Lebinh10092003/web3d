@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% if request.LANGUAGE_CODE == "vi" %}Điều khoản sử dụng{% else %}Terms of Use{% endif %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}{% if request.LANGUAGE_CODE == "vi" %}Điều khoản sử dụng | V+ STEAM LAB Library{% else %}Terms of Use | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block meta_description %}{% if request.LANGUAGE_CODE == "vi" %}Điều khoản sử dụng và quy định tài khoản, thanh toán, và nội dung số.{% else %}Terms of use for accounts, payments, and digital content on V+ STEAM LAB Library.{% endif %}{% endblock %}
+{% block og_description %}{% if request.LANGUAGE_CODE == "vi" %}Điều khoản sử dụng và quy định tài khoản, thanh toán, và nội dung số.{% else %}Terms of use for accounts, payments, and digital content on V+ STEAM LAB Library.{% endif %}{% endblock %}
+{% block twitter_title %}{% if request.LANGUAGE_CODE == "vi" %}Điều khoản sử dụng | V+ STEAM LAB Library{% else %}Terms of Use | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block twitter_description %}{% if request.LANGUAGE_CODE == "vi" %}Điều khoản sử dụng và quy định tài khoản, thanh toán, và nội dung số.{% else %}Terms of use for accounts, payments, and digital content on V+ STEAM LAB Library.{% endif %}{% endblock %}
+
+{% block content %}
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+<section class="panel policy-page">
+  {% if request.LANGUAGE_CODE == "vi" %}
+    <h1>Điều khoản sử dụng</h1>
+    <p>Cập nhật lần cuối: {% now "d/m/Y" %}</p>
+
+    <h2>1. Phạm vi áp dụng</h2>
+    <p>Điều khoản này áp dụng cho tất cả người dùng khi truy cập và sử dụng V+ STEAM LAB Library.</p>
+
+    <h2>2. Tài khoản và bảo mật</h2>
+    <ul class="policy-list">
+      <li>Cung cấp thông tin chính xác khi đăng ký.</li>
+      <li>Tự bảo vệ mật khẩu và không chia sẻ tài khoản.</li>
+      <li>Một người dùng chỉ nên sở hữu một tài khoản.</li>
+    </ul>
+
+    <h2>3. Điểm và giao dịch</h2>
+    <ul class="policy-list">
+      <li>Điểm là đơn vị quy đổi để mở khóa nội dung, không có giá trị tiền mặt.</li>
+      <li>Điểm được cộng sau khi giao dịch thành công qua ZaloPay.</li>
+      <li>Giao dịch hoàn tất được xác nhận dựa trên callback từ hệ thống thanh toán.</li>
+    </ul>
+
+    <h2>4. Sử dụng nội dung số</h2>
+    <ul class="policy-list">
+      <li>Nội dung chỉ được sử dụng cho mục đích học tập/thử nghiệm cá nhân.</li>
+      <li>Không được sao chép, phân phối, bán lại hoặc chia sẻ công khai khi chưa được phép.</li>
+    </ul>
+
+    <h2>5. Hành vi cấm</h2>
+    <ul class="policy-list">
+      <li>Gian lận, can thiệp hệ thống thanh toán, hoặc truy cập trái phép.</li>
+      <li>Đăng tải nội dung vi phạm bản quyền, pháp luật, hoặc có tính chất độc hại.</li>
+    </ul>
+
+    <h2>6. Thay đổi dịch vụ</h2>
+    <p>Chúng tôi có thể cập nhật tính năng, giá gói điểm, hoặc điều khoản theo thực tế vận hành.</p>
+
+    <h2>7. Liên hệ</h2>
+    <p>Mọi thắc mắc về tài khoản hoặc điều khoản, vui lòng liên hệ qua trang Contact.</p>
+  {% else %}
+    <h1>Terms of Use</h1>
+    <p>Last updated: {% now "M d, Y" %}</p>
+
+    <h2>1. Scope</h2>
+    <p>These terms apply to all users of V+ STEAM LAB Library.</p>
+
+    <h2>2. Accounts & security</h2>
+    <ul class="policy-list">
+      <li>Provide accurate registration details.</li>
+      <li>Keep your password secure and do not share your account.</li>
+      <li>One account per user.</li>
+    </ul>
+
+    <h2>3. Points & transactions</h2>
+    <ul class="policy-list">
+      <li>Points are used to unlock digital content and have no cash value.</li>
+      <li>Points are credited after successful ZaloPay payment confirmation.</li>
+      <li>Transaction status is confirmed by the payment callback.</li>
+    </ul>
+
+    <h2>4. Digital content usage</h2>
+    <ul class="policy-list">
+      <li>Content is for personal/educational use only.</li>
+      <li>No redistribution or resale without permission.</li>
+    </ul>
+
+    <h2>5. Prohibited activities</h2>
+    <ul class="policy-list">
+      <li>Fraud, payment manipulation, or unauthorized access.</li>
+      <li>Uploading infringing or unlawful content.</li>
+    </ul>
+
+    <h2>6. Service updates</h2>
+    <p>We may update features, pricing, or these terms to reflect operational changes.</p>
+
+    <h2>7. Contact</h2>
+    <p>Please reach out via the Contact page for any questions.</p>
+  {% endif %}
+</section>
+{% endblock %}

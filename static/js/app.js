@@ -33,6 +33,10 @@ function getPointsModal() {
   return document.getElementById("points-modal");
 }
 
+function getOwnerModal() {
+  return document.getElementById("owner-modal");
+}
+
 function openContactModal() {
   const modal = getContactModal();
   if (modal && !modal.open) {
@@ -44,6 +48,20 @@ function openPointsModal() {
   const modal = getPointsModal();
   if (modal && !modal.open) {
     modal.showModal();
+  }
+}
+
+function openOwnerModal() {
+  const modal = getOwnerModal();
+  if (modal && !modal.open) {
+    modal.showModal();
+  }
+}
+
+function closeOwnerModal() {
+  const modal = getOwnerModal();
+  if (modal && modal.open) {
+    modal.close();
   }
 }
 
@@ -74,10 +92,42 @@ function resolveAlertIcon(tags) {
   return "info";
 }
 
+let lastNotifyKey = "";
+let lastNotifyAt = 0;
+
+function normalizeAlertMessage(entry) {
+  if (!entry) {
+    return null;
+  }
+  if (typeof entry === "string") {
+    return { level: "info", text: entry };
+  }
+  if (entry.text) {
+    return entry;
+  }
+  if (entry.message) {
+    return { level: entry.level || entry.tags || "info", text: entry.message };
+  }
+  return entry;
+}
+
 async function showSweetAlerts(messages) {
   if (!window.Swal || !Array.isArray(messages) || messages.length === 0) {
     return;
   }
+  const normalized = messages
+    .map(normalizeAlertMessage)
+    .filter((message) => message && String(message.text || "").trim().length > 0);
+  if (!normalized.length) {
+    return;
+  }
+  const key = JSON.stringify(normalized);
+  const now = Date.now();
+  if (key === lastNotifyKey && now - lastNotifyAt < 800) {
+    return;
+  }
+  lastNotifyKey = key;
+  lastNotifyAt = now;
   const toast = window.Swal.mixin({
     toast: true,
     position: "top-end",
@@ -85,12 +135,82 @@ async function showSweetAlerts(messages) {
     timer: 3500,
     timerProgressBar: true
   });
-  for (const message of messages) {
+  for (const message of normalized) {
     await toast.fire({
       icon: resolveAlertIcon(message.level),
       title: message.text || ""
     });
   }
+}
+
+function parseTriggerPayload(value) {
+  if (!value) {
+    return null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        return JSON.parse(trimmed);
+      } catch (error) {
+        return trimmed;
+      }
+    }
+    return trimmed;
+  }
+  return value;
+}
+
+function extractNotifyMessages(payload) {
+  if (!payload) {
+    return null;
+  }
+  if (payload.notify) {
+    return payload.notify;
+  }
+  if (payload.messages) {
+    return payload.messages;
+  }
+  return payload;
+}
+
+function handleNotifyEvent(event) {
+  let detail = event.detail;
+  if (!detail) {
+    return;
+  }
+  detail = parseTriggerPayload(detail);
+  detail = extractNotifyMessages(detail);
+  const messages = Array.isArray(detail) ? detail : [detail];
+  showSweetAlerts(messages);
+}
+
+document.addEventListener("notify", handleNotifyEvent, true);
+if (document.body) {
+  document.body.addEventListener("notify", handleNotifyEvent, true);
+}
+
+function handleHtmxTriggerHeaders(xhr) {
+  if (!xhr || typeof xhr.getResponseHeader !== "function") {
+    return;
+  }
+  const headers = [
+    xhr.getResponseHeader("HX-Trigger"),
+    xhr.getResponseHeader("HX-Trigger-After-Swap"),
+    xhr.getResponseHeader("HX-Trigger-After-Settle")
+  ];
+  headers.forEach((headerValue) => {
+    const payload = parseTriggerPayload(headerValue);
+    const notifyPayload = extractNotifyMessages(payload);
+    if (!notifyPayload) {
+      return;
+    }
+    const messages = Array.isArray(notifyPayload) ? notifyPayload : [notifyPayload];
+    showSweetAlerts(messages);
+  });
 }
 
 function bindBackdropClose(modal) {
@@ -109,6 +229,7 @@ function bindModalEvents() {
   bindBackdropClose(getAuthModal());
   bindBackdropClose(getContactModal());
   bindBackdropClose(getPointsModal());
+  bindBackdropClose(getOwnerModal());
 }
 
 function bindContactTriggers() {
@@ -145,6 +266,182 @@ function bindPointsTriggers() {
   });
 }
 
+function normalizeUrl(value) {
+  const url = String(value || "").trim();
+  if (!url) {
+    return "";
+  }
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+  return `https://${url}`;
+}
+
+function getLinkLabel(url) {
+  let hostname = "";
+  try {
+    hostname = new URL(url).hostname.toLowerCase();
+  } catch (error) {
+    hostname = url.toLowerCase();
+  }
+  if (hostname.includes("facebook.com") || hostname.includes("fb.com")) {
+    return "Facebook";
+  }
+  if (hostname.includes("github.com")) {
+    return "GitHub";
+  }
+  if (hostname.includes("tiktok.com")) {
+    return "TikTok";
+  }
+  if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) {
+    return "YouTube";
+  }
+  if (hostname.includes("instagram.com")) {
+    return "Instagram";
+  }
+  if (hostname.includes("twitter.com") || hostname.includes("x.com")) {
+    return "Twitter";
+  }
+  if (hostname.includes("linkedin.com")) {
+    return "LinkedIn";
+  }
+  if (hostname.includes("behance.net")) {
+    return "Behance";
+  }
+  if (hostname.includes("dribbble.com")) {
+    return "Dribbble";
+  }
+  return "Website";
+}
+
+let ownerModalTimer = null;
+
+function cancelOwnerModalOpen() {
+  if (ownerModalTimer) {
+    window.clearTimeout(ownerModalTimer);
+    ownerModalTimer = null;
+  }
+}
+
+function scheduleOwnerModalOpen(callback) {
+  cancelOwnerModalOpen();
+  ownerModalTimer = window.setTimeout(() => {
+    ownerModalTimer = null;
+    callback();
+  }, 150);
+}
+
+function bindOwnerTriggers() {
+  const modal = getOwnerModal();
+  if (!modal) {
+    return;
+  }
+  const nameEl = modal.querySelector("#owner-modal-name");
+  const usernameEl = modal.querySelector("#owner-modal-username");
+  const roleEl = modal.querySelector("#owner-modal-role");
+  const bioEl = modal.querySelector("#owner-modal-bio");
+  const avatarImg = modal.querySelector("#owner-modal-avatar-img");
+  const avatarInitial = modal.querySelector("#owner-modal-avatar-initial");
+  const linksWrap = modal.querySelector("#owner-modal-links");
+  const linksEmpty = modal.querySelector("#owner-modal-links-empty");
+  const triggers = document.querySelectorAll("[data-owner-modal-open]");
+  if (!triggers.length) {
+    return;
+  }
+  triggers.forEach((trigger) => {
+    if (trigger.dataset.ownerBound === "true") {
+      return;
+    }
+    trigger.dataset.ownerBound = "true";
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      const dataset = trigger.dataset;
+      const payload = {
+        name: dataset.ownerName || "",
+        username: dataset.ownerUsername || "",
+        avatar: dataset.ownerAvatar || "",
+        role: dataset.ownerRole || "",
+        bio: dataset.ownerBio || "",
+        urls: [
+          dataset.ownerWebsite,
+          dataset.ownerFacebook,
+          dataset.ownerGithub
+        ]
+      };
+      scheduleOwnerModalOpen(() => {
+        const name = payload.name;
+        const username = payload.username;
+        const avatar = payload.avatar;
+        const role = payload.role;
+        const bio = payload.bio;
+      const urls = [
+        payload.urls[0],
+        payload.urls[1],
+        payload.urls[2]
+      ]
+        .map(normalizeUrl)
+        .filter(Boolean);
+      const uniqueUrls = Array.from(new Set(urls));
+      const fallbackName = modal.dataset.ownerNameEmpty || "User";
+      const fallbackRole = modal.dataset.ownerRoleEmpty || "Community member";
+      const fallbackBio = modal.dataset.ownerBioEmpty || "No bio yet.";
+      const fallbackLinks = modal.dataset.ownerLinksEmpty || "No links yet.";
+
+      if (nameEl) {
+        nameEl.textContent = name || username || fallbackName;
+      }
+      if (usernameEl) {
+        const showUsername = username && username !== name;
+        usernameEl.textContent = showUsername ? `@${username}` : "";
+        usernameEl.hidden = !showUsername;
+      }
+      if (roleEl) {
+        roleEl.textContent = role || fallbackRole;
+        roleEl.hidden = false;
+      }
+      if (bioEl) {
+        bioEl.textContent = bio || fallbackBio;
+        bioEl.hidden = false;
+      }
+      if (avatarImg && avatarInitial) {
+        if (avatar) {
+          avatarImg.src = avatar;
+          avatarImg.hidden = false;
+          avatarInitial.hidden = true;
+        } else {
+          const initialSource = name || username || fallbackName;
+          avatarInitial.textContent = initialSource.trim().charAt(0).toUpperCase();
+          avatarImg.removeAttribute("src");
+          avatarImg.hidden = true;
+          avatarInitial.hidden = false;
+        }
+      }
+      if (linksWrap) {
+        linksWrap.innerHTML = "";
+        if (uniqueUrls.length) {
+          uniqueUrls.forEach((url) => {
+            const label = getLinkLabel(url);
+            const linkEl = document.createElement("a");
+            linkEl.className = "owner-modal-link";
+            linkEl.href = url;
+            linkEl.target = "_blank";
+            linkEl.rel = "noopener noreferrer";
+            linkEl.textContent = label;
+            linkEl.title = url;
+            linksWrap.appendChild(linkEl);
+          });
+        }
+        if (linksEmpty) {
+          linksEmpty.textContent = uniqueUrls.length ? "" : fallbackLinks;
+          linksEmpty.hidden = uniqueUrls.length > 0;
+        }
+      }
+        openOwnerModal();
+      });
+    });
+  });
+}
+
 function bindBackButtons() {
   const buttons = document.querySelectorAll("[data-back-button]");
   if (!buttons.length) {
@@ -168,6 +465,148 @@ function bindLanguageSwitcher() {
   }
   select.addEventListener("change", () => {
     select.form.submit();
+  });
+}
+
+let userMenuDocBound = false;
+
+function setUserMenuOpen(menu, open) {
+  menu.classList.toggle("is-open", open);
+  const toggle = menu.querySelector("[data-user-menu-toggle]");
+  if (toggle) {
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+}
+
+function bindUserMenu() {
+  const menus = document.querySelectorAll("[data-user-menu]");
+  if (!menus.length) {
+    return;
+  }
+  menus.forEach((menu) => {
+    if (menu.dataset.userMenuBound === "true") {
+      return;
+    }
+    const toggle = menu.querySelector("[data-user-menu-toggle]");
+    const dropdown = menu.querySelector("[data-user-menu-dropdown]");
+    if (!toggle || !dropdown) {
+      return;
+    }
+    menu.dataset.userMenuBound = "true";
+    toggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      const isOpen = menu.classList.contains("is-open");
+      setUserMenuOpen(menu, !isOpen);
+    });
+    dropdown.addEventListener("click", (event) => {
+      const action = event.target.closest(".user-menu-link, button");
+      if (action) {
+        setUserMenuOpen(menu, false);
+      }
+    });
+  });
+  if (userMenuDocBound) {
+    return;
+  }
+  userMenuDocBound = true;
+  document.addEventListener("click", (event) => {
+    document.querySelectorAll("[data-user-menu].is-open").forEach((menu) => {
+      if (!menu.contains(event.target)) {
+        setUserMenuOpen(menu, false);
+      }
+    });
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      document.querySelectorAll("[data-user-menu].is-open").forEach((menu) => {
+        setUserMenuOpen(menu, false);
+      });
+    }
+  });
+}
+
+function bindNavToggle() {
+  const header = document.querySelector("[data-site-header]");
+  const toggle = document.querySelector("[data-nav-toggle]");
+  const nav = document.querySelector("[data-nav-panel]");
+  if (!header || !toggle || !nav) {
+    return;
+  }
+  if (toggle.dataset.bound === "true") {
+    return;
+  }
+  toggle.dataset.bound = "true";
+  header.dataset.navReady = "true";
+
+  const setOpen = (open) => {
+    header.classList.toggle("is-nav-open", open);
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+
+  toggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    const isOpen = header.classList.contains("is-nav-open");
+    setOpen(!isOpen);
+  });
+
+  nav.addEventListener("click", (event) => {
+    const link = event.target.closest(".nav-link, .user-menu-link");
+    if (link) {
+      setOpen(false);
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!header.contains(event.target)) {
+      setOpen(false);
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 700) {
+      setOpen(false);
+    }
+  });
+}
+
+function bindProfileMenu() {
+  const menu = document.querySelector(".profile-menu-list");
+  if (!menu || menu.dataset.profileMenuBound === "true") {
+    return;
+  }
+  menu.dataset.profileMenuBound = "true";
+  syncProfileMenuActive();
+  menu.addEventListener("click", (event) => {
+    const link = event.target.closest(".profile-menu-link");
+    if (!link) {
+      return;
+    }
+    menu.querySelectorAll(".profile-menu-link").forEach((item) => {
+      item.classList.toggle("is-active", item === link);
+    });
+  });
+}
+
+function getProfileSectionFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("section") || "personal";
+}
+
+function syncProfileMenuActive() {
+  const menu = document.querySelector(".profile-menu-list");
+  if (!menu) {
+    return;
+  }
+  const current = getProfileSectionFromUrl();
+  menu.querySelectorAll(".profile-menu-link").forEach((link) => {
+    let linkSection = "";
+    try {
+      const url = new URL(link.getAttribute("href"), window.location.origin);
+      linkSection = url.searchParams.get("section") || "";
+    } catch (error) {
+      linkSection = "";
+    }
+    link.classList.toggle("is-active", linkSection === current);
   });
 }
 
@@ -480,6 +919,55 @@ function bindDownloadBanner() {
   }
 }
 
+function bindPolicyTabs() {
+  const root = document.querySelector("[data-policy-tabs]");
+  if (!root || root.dataset.policyBound === "true") {
+    return;
+  }
+  root.dataset.policyBound = "true";
+
+  const tabs = Array.from(root.querySelectorAll("[data-policy-tab]"));
+  const panels = Array.from(root.querySelectorAll("[data-policy-panel]"));
+  if (!tabs.length || !panels.length) {
+    return;
+  }
+
+  const setActive = (name, updateUrl) => {
+    let found = false;
+    tabs.forEach((tab) => {
+      const active = tab.dataset.policyTab === name;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", active ? "true" : "false");
+      tab.tabIndex = active ? 0 : -1;
+      if (active) {
+        found = true;
+      }
+    });
+    panels.forEach((panel) => {
+      const active = panel.dataset.policyPanel === name;
+      panel.classList.toggle("is-active", active);
+      panel.hidden = !active;
+    });
+    if (found && updateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", name);
+      window.history.replaceState({}, "", url);
+    }
+  };
+
+  const params = new URLSearchParams(window.location.search);
+  const initial = params.get("tab");
+  const valid = tabs.some((tab) => tab.dataset.policyTab === initial);
+  const defaultTab = tabs[0].dataset.policyTab;
+  setActive(valid ? initial : defaultTab, false);
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      setActive(tab.dataset.policyTab, true);
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   applyStagger(document);
   bindModalEvents();
@@ -487,10 +975,22 @@ document.addEventListener("DOMContentLoaded", () => {
   bindPointsTriggers();
   bindBackButtons();
   bindLanguageSwitcher();
+  bindUserMenu();
+  bindNavToggle();
+  bindProfileMenu();
   bindRecapLibrary();
   bindDownloadBanner();
+  bindPolicyTabs();
+  bindOwnerTriggers();
   if (window.__djangoMessages) {
     showSweetAlerts(window.__djangoMessages);
+  }
+});
+
+document.addEventListener("htmx:afterRequest", (event) => {
+  const xhr = event.detail ? event.detail.xhr : null;
+  if (xhr) {
+    handleHtmxTriggerHeaders(xhr);
   }
 });
 
@@ -504,6 +1004,12 @@ document.addEventListener("htmx:afterSwap", (event) => {
   bindRecapLibrary();
   bindDownloadBanner();
   bindPointsTriggers();
+  bindPolicyTabs();
+  bindOwnerTriggers();
+  bindNavToggle();
+  bindUserMenu();
+  bindProfileMenu();
+  syncProfileMenuActive();
 });
 
 document.addEventListener("htmx:beforeRequest", (event) => {
@@ -511,11 +1017,16 @@ document.addEventListener("htmx:beforeRequest", (event) => {
   if (target && target.id === "auth-modal-body") {
     openAuthModal();
   }
+  cancelOwnerModalOpen();
+  closeOwnerModal();
 });
 
 document.addEventListener("click", (event) => {
   const closeButton = event.target.closest("[data-modal-close]");
   if (!closeButton) {
+    if (!event.target.closest("[data-owner-modal-open]")) {
+      cancelOwnerModalOpen();
+    }
     return;
   }
   const dialog = closeButton.closest("dialog");
@@ -525,4 +1036,16 @@ document.addEventListener("click", (event) => {
   }
   closeAuthModal();
   closeContactModal();
+  closeOwnerModal();
+});
+
+window.addEventListener("popstate", () => {
+  cancelOwnerModalOpen();
+  closeOwnerModal();
+  syncProfileMenuActive();
+});
+
+window.addEventListener("beforeunload", () => {
+  cancelOwnerModalOpen();
+  closeOwnerModal();
 });

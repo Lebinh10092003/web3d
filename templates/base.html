@@ -8,8 +8,11 @@
   <title>{% block title %}V+ STEAM LAB Library{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}{{ DEFAULT_META_DESCRIPTION }}{% endblock %}">
   <meta name="robots" content="index,follow">
-  <link rel="icon" type="image/png" href="{% static 'img/logoV+.png' %}">
-  <link rel="apple-touch-icon" href="{% static 'img/logoV+.png' %}">
+  <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
+  <link rel="icon" type="image/png" sizes="48x48" href="{% static 'img/favicon-48x48.png' %}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32x32.png' %}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16x16.png' %}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/favicon-180x180.png' %}">
   <link rel="canonical" href="{% block canonical_url %}{{ canonical_url|default:request.build_absolute_uri }}{% endblock %}">
   <meta property="og:site_name" content="{{ SITE_NAME }}">
   <meta property="og:locale" content="{% if request.LANGUAGE_CODE == 'vi' %}vi_VN{% else %}en_US{% endif %}">
@@ -30,7 +33,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-  <header class="site-header">
+  <header class="site-header" data-site-header>
     <a class="brand" href="{% url 'library:home' %}">
       <img src="{% static 'img/logoV+.png' %}" alt="V+ STEAM LAB Library" class="brand-logo">
       <div>
@@ -42,58 +45,110 @@
         {% endif %}
       </div>
     </a>
-    <nav class="site-nav">
-      <a class="nav-link" href="{% url 'library:home' %}">
+    <button class="nav-toggle" type="button" aria-controls="site-nav" aria-expanded="false" data-nav-toggle>
+      <span class="nav-toggle-label">{% trans "Menu" %}</span>
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    {% with view_name=request.resolver_match.view_name|default:"" %}
+    <nav class="site-nav" id="site-nav" data-nav-panel>
+      <a class="nav-link{% if view_name == 'library:home' %} is-active{% endif %}" href="{% url 'library:home' %}">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
         </svg>
         <span>{% trans "Library" %}</span>
       </a>
-      <a class="nav-link" href="{% url 'contributions:submit' %}">
+      {% if request.user.is_authenticated %}
+        <a class="nav-link{% if view_name == 'accounts:my-library' %} is-active{% endif %}" href="{% url 'accounts:my-library' %}">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 5h16v14H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M8 9h8M8 13h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>{% trans "My library" %}</span>
+        </a>
+      {% endif %}
+      <a class="nav-link{% if view_name == 'contributions:submit' %} is-active{% endif %}" href="{% url 'contributions:submit' %}">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <span>{% trans "Submit" %}</span>
       </a>
-      <a class="nav-link" href="{% url 'recaps' %}">
+      <a class="nav-link{% if view_name == 'recaps' %} is-active{% endif %}" href="{% url 'recaps' %}">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M3 8h8l2-3h8v14H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
           <path d="M9 12l4 3-4 3z" fill="currentColor"/>
         </svg>
         <span>{% trans "Recaps" %}</span>
       </a>
-      <a class="nav-link" href="{% url 'about' %}">
+      <a class="nav-link{% if view_name == 'courses' or view_name == 'course-detail' %} is-active{% endif %}" href="{% url 'courses' %}">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 5h16v10H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M9 19h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 9l4 3-4 3z" fill="currentColor"/>
+        </svg>
+        <span>{% trans "Courses" %}</span>
+      </a>
+      <a class="nav-link{% if view_name == 'about' %} is-active{% endif %}" href="{% url 'about' %}">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 5a1.5 1.5 0 1 1-1.5 1.5A1.5 1.5 0 0 1 12 7zm2 10h-4v-2h1v-3h-1V10h3v5h1z" fill="currentColor"/>
         </svg>
         <span>{% trans "About" %}</span>
       </a>
       {% if request.user.is_authenticated %}
-        <a class="user-chip nav-link" href="{% url 'accounts:profile' %}">
-          <span class="user-avatar">
-            {% if request.user.avatar_path %}
-              <img src="{{ request.user.avatar_path }}" alt="Avatar">
-            {% else %}
-              <img src="{% static 'img/test.jpg' %}" alt="Avatar">
-            {% endif %}
-          </span>
-          <span class="user-info">
-            <span class="user-name">{{ request.user.display_name|default:request.user.username }}</span>
-            <span class="user-points">
-              {% blocktrans with points=request.user.points_balance %}{{ points }} pts{% endblocktrans %}
+        <div class="user-menu" data-user-menu>
+          <button class="user-chip user-menu-toggle" type="button" aria-haspopup="menu" aria-expanded="false" data-user-menu-toggle>
+            <span class="user-avatar">
+              {% if request.user.avatar_path %}
+                <img src="{{ request.user.avatar_path }}" alt="Avatar">
+              {% else %}
+                <img src="{% static 'img/test.jpg' %}" alt="Avatar">
+              {% endif %}
             </span>
-          </span>
-        </a>
-        <form action="{% url 'accounts:logout' %}" method="post" class="nav-form">
-          {% csrf_token %}
-          <button class="nav-link" type="submit">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M16 17l5-5-5-5M21 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M13 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <span class="user-info">
+              <span class="user-name">{{ request.user.display_name|default:request.user.username }}</span>
+              <span class="user-points">
+                {% blocktrans with points=request.user.points_balance %}{{ points }} pts{% endblocktrans %}
+              </span>
+            </span>
+            <svg class="icon user-menu-caret" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span>{% trans "Logout" %}</span>
           </button>
-        </form>
+          <div class="user-menu-dropdown" role="menu" data-user-menu-dropdown>
+            <a
+              class="user-menu-link"
+              role="menuitem"
+              href="{% url 'accounts:profile' %}?section=personal"
+            >{% trans "Your profile" %}</a>
+            <a
+              class="user-menu-link"
+              role="menuitem"
+              href="{% url 'accounts:profile' %}?section=public"
+            >{% trans "Your published items" %}</a>
+            <a
+              class="user-menu-link"
+              role="menuitem"
+              href="{% url 'accounts:profile' %}?section=favorites"
+            >{% trans "Favorite models" %}</a>
+            <a
+              class="user-menu-link"
+              role="menuitem"
+              href="{% url 'accounts:profile' %}?section=courses"
+            >{% trans "My library" %}</a>
+            <div class="user-menu-divider" aria-hidden="true"></div>
+            <form action="{% url 'accounts:logout' %}" method="post" class="user-menu-form">
+              {% csrf_token %}
+              <button class="user-menu-link" type="submit" role="menuitem">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M16 17l5-5-5-5M21 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M13 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>{% trans "Logout" %}</span>
+              </button>
+            </form>
+          </div>
+        </div>
       {% else %}
         <a class="nav-link"
           href="{% url 'accounts:login' %}"
@@ -135,6 +190,7 @@
         </select>
       </form>
     </nav>
+    {% endwith %}
   </header>
 
   <main class="site-main">
@@ -191,6 +247,14 @@
             </svg>
             <span>{% trans "Recaps" %}</span>
           </a>
+          <a class="footer-link" href="{% url 'courses' %}">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 5h16v10H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M9 19h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 9l4 3-4 3z" fill="currentColor"/>
+            </svg>
+            <span>{% trans "Courses" %}</span>
+          </a>
           {% if request.user.is_authenticated %}
             <a class="footer-link" href="{% url 'accounts:profile' %}">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -216,25 +280,25 @@
             </svg>
             <span>{% trans "Contact" %}</span>
           </a>
-          <a class="footer-link" href="{% url 'privacy' %}">
+          <a class="footer-link" href="{% url 'policies' %}">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 3l8 4v5c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
               <path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <span>{% trans "Privacy" %}</span>
+            <span>{% if request.LANGUAGE_CODE == "vi" %}Điều khoản & Chính sách{% else %}Policies{% endif %}</span>
           </a>
         </div>
       </div>
       <div class="footer-group">
         <div class="footer-heading">{% trans "Social" %}</div>
         <div class="footer-list">
-          <a class="footer-link" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">
+          <a class="footer-link" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
             </svg>
-            <span>V+ STEAM LAB Library</span>
+            <span>V+ STEAM LAB</span>
           </a>
-          <a class="footer-link" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noreferrer">
+          <a class="footer-link" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
             </svg>
@@ -244,7 +308,7 @@
               <span>Personal Facebook</span>
             {% endif %}
           </a>
-          <a class="footer-link" href="https://www.tiktok.com/@lebinh240803" target="_blank" rel="noreferrer">
+          <a class="footer-link" href="https://www.tiktok.com/@lebinh240803" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3a6 6 0 0 0 4 2v4a9.6 9.6 0 0 1-4-1v8a6 6 0 1 1-6-6h1v4h-1a2 2 0 1 0 2 2V3h4z" fill="currentColor"/>
             </svg>
@@ -318,8 +382,9 @@
             {% endif %}
           </p>
         </div>
+        {% comment %}
         <div class="contact-modal-grid">
-          <a class="contact-item" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noreferrer">
+          <a class="contact-item" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
             </svg>
@@ -328,7 +393,7 @@
               <div class="contact-value">/VPlusSteamLab</div>
             </div>
           </a>
-          <a class="contact-item" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noreferrer">
+          <a class="contact-item" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
             </svg>
@@ -341,7 +406,7 @@
               <div class="contact-value">/lebinh.24082003</div>
             </div>
           </a>
-          <a class="contact-item" href="https://www.tiktok.com/@lebinh240803" target="_blank" rel="noreferrer">
+          <a class="contact-item" href="https://www.tiktok.com/@lebinh240803" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3a6 6 0 0 0 4 2v4a9.6 9.6 0 0 1-4-1v8a6 6 0 1 1-6-6h1v4h-1a2 2 0 1 0 2 2V3h4z" fill="currentColor"/>
             </svg>
@@ -350,7 +415,7 @@
               <div class="contact-value">@lebinh240803</div>
             </div>
           </a>
-          <a class="contact-item" href="https://zalo.me/0374202948" target="_blank" rel="noreferrer">
+          <a class="contact-item" href="https://zalo.me/0374202948" target="_blank" rel="noopener noreferrer">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M21 12a8 8 0 0 1-8 8H5l2-3a8 8 0 1 1 14-5z" fill="currentColor"/>
             </svg>
@@ -369,6 +434,8 @@
             </div>
           </a>
         </div>
+        {% endcomment %}
+        {% include "partials/_contact_links.html" %}
       </div>
     </div>
   </dialog>
@@ -388,13 +455,42 @@
               {% trans "Submit a PDF or 3D file to earn points after approval." %}
             </div>
           </a>
-          <a class="points-option" href="{% url 'contact' %}">
+          <a class="points-option" href="{% url 'gating:points' %}">
             <div class="points-option-title">{% trans "Buy points" %}</div>
             <div class="points-option-desc">
-              {% trans "Contact us to top up points for premium models." %}
+              {% trans "Top up instantly via ZaloPay." %}
             </div>
           </a>
         </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog
+    id="owner-modal"
+    class="auth-modal owner-modal"
+    data-owner-name-empty="{% if request.LANGUAGE_CODE == 'vi' %}Người dùng{% else %}User{% endif %}"
+    data-owner-role-empty="{% if request.LANGUAGE_CODE == 'vi' %}Thành viên cộng đồng{% else %}Community member{% endif %}"
+    data-owner-bio-empty="{% if request.LANGUAGE_CODE == 'vi' %}Chưa có giới thiệu.{% else %}No bio yet.{% endif %}"
+    data-owner-links-empty="{% if request.LANGUAGE_CODE == 'vi' %}Chưa có liên kết.{% else %}No links yet.{% endif %}"
+  >
+    <div class="auth-modal-content owner-modal-content">
+      <button class="modal-close" type="button" data-modal-close>&times;</button>
+      <div class="owner-modal-body">
+        <div class="owner-modal-header">
+          <div class="owner-modal-avatar" aria-hidden="true">
+            <img id="owner-modal-avatar-img" alt="">
+            <span id="owner-modal-avatar-initial" class="owner-modal-initial"></span>
+          </div>
+          <div>
+            <h2 id="owner-modal-name"></h2>
+            <p id="owner-modal-username" class="owner-modal-username"></p>
+            <p id="owner-modal-role" class="owner-modal-role"></p>
+          </div>
+        </div>
+        <p id="owner-modal-bio" class="owner-modal-bio"></p>
+        <div id="owner-modal-links" class="owner-modal-links"></div>
+        <p id="owner-modal-links-empty" class="owner-modal-empty"></p>
       </div>
     </div>
   </dialog>

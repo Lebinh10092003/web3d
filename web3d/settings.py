@@ -7,20 +7,16 @@ from django.utils.translation import gettext_lazy as _
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 try:
-    from dotenv import load_dotenv, dotenv_values
+    from dotenv import load_dotenv
 except Exception:
     load_dotenv = None
-    dotenv_values = None
 
 if load_dotenv:
     env_path = BASE_DIR / ".env"
     env_local_path = BASE_DIR / ".env_local"
-    debug_value = os.environ.get("DJANGO_DEBUG")
-    if debug_value is None and dotenv_values and env_local_path.exists():
-        debug_value = dotenv_values(env_local_path).get("DJANGO_DEBUG")
-    if debug_value == "1" and env_local_path.exists():
+    if env_local_path.exists():
         load_dotenv(env_local_path, override=True)
-    else:
+    elif env_path.exists():
         load_dotenv(env_path, override=True)
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
@@ -62,6 +58,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "web3d.middleware.HtmxMessageMiddleware",
 ]
 
 ROOT_URLCONF = "web3d.urls"
@@ -144,6 +141,8 @@ LEGO_THREE_BASE_URL = os.environ.get(
     "LEGO_THREE_BASE_URL", "https://cdn.jsdelivr.net/npm/three@0.160.0"
 )
 
+YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
+
 USE_BACKGROUND_JOBS = os.environ.get("USE_BACKGROUND_JOBS", "1") == "1"
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 RQ_DEFAULT_TIMEOUT = int(os.environ.get("RQ_DEFAULT_TIMEOUT", "600"))
@@ -162,6 +161,8 @@ ZALOPAY_ENDPOINT_CREATE = os.environ.get(
 )
 ZALOPAY_CALLBACK_URL = os.environ.get("ZALOPAY_CALLBACK_URL", "")
 ZALOPAY_RETURN_URL = os.environ.get("ZALOPAY_RETURN_URL", "")
+ZALOPAY_TOPUP_CALLBACK_URL = os.environ.get("ZALOPAY_TOPUP_CALLBACK_URL", "")
+ZALOPAY_TOPUP_RETURN_URL = os.environ.get("ZALOPAY_TOPUP_RETURN_URL", "")
 
 
 AUTH_USER_MODEL = "accounts.User"

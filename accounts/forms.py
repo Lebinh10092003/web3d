@@ -2,6 +2,7 @@ import os
 
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.utils.translation import gettext_lazy as _
 
 from .models import User
 
@@ -24,6 +25,7 @@ class UserRegistrationForm(UserCreationForm):
 class ProfileForm(forms.ModelForm):
     file_upload = forms.FileField(
         required=False,
+        help_text=_("Recommended size: 400x400px (square)."),
         widget=forms.ClearableFileInput(
             attrs={"accept": "image/*", "class": "file-input"}
         ),
@@ -31,7 +33,7 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ("display_name", "role", "bio")
+        fields = ("display_name", "role", "bio", "website_url", "facebook_url", "github_url")
         widgets = {
             "bio": forms.Textarea(attrs={"rows": 4}),
         }

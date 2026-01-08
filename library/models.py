@@ -4,8 +4,70 @@ from urllib.parse import parse_qs, urlparse, urlunparse
 from django.conf import settings
 
 from django.db import models
+from django.db.models.signals import post_delete, pre_save
+from django.dispatch import receiver
+from django.urls import reverse
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+
+
+def _extract_iframe_src(value):
+    if "<iframe" not in value:
+        return ""
+    match = re.search(r'src=["\']([^"\']+)', value)
+    return match.group(1).strip() if match else ""
+
+
+def _normalize_youtube_id(value):
+    value = (value or "").strip()
+    if not value:
+        return ""
+    iframe_src = _extract_iframe_src(value)
+    if iframe_src:
+        value = iframe_src
+    if "youtu" not in value:
+        return value
+    try:
+        parsed = urlparse(value)
+    except Exception:
+        return value
+    host = parsed.hostname or ""
+    if host in ("youtu.be", "www.youtu.be"):
+        path = parsed.path.lstrip("/")
+        return path.split("/")[0] if path else value
+    if host in (
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtube-nocookie.com",
+        "www.youtube-nocookie.com",
+    ):
+        if parsed.path.startswith("/watch"):
+            query = parse_qs(parsed.query)
+            return query.get("v", [value])[0] or value
+        if parsed.path.startswith("/embed/") or parsed.path.startswith("/shorts/"):
+            parts = parsed.path.split("/")
+            if len(parts) > 2:
+                return parts[2]
+    return value
+
+
+def _normalize_playlist_id(value):
+    value = (value or "").strip()
+    if not value:
+        return ""
+    iframe_src = _extract_iframe_src(value)
+    if iframe_src:
+        value = iframe_src
+    if "list=" not in value and "youtube" not in value and "youtu.be" not in value:
+        return value
+    try:
+        parsed = urlparse(value)
+    except Exception:
+        return value
+    query = parse_qs(parsed.query or "")
+    playlist_id = query.get("list", [""])[0]
+    return playlist_id or value
 
 
 class Category(models.Model):
@@ -41,11 +103,16 @@ class ContentItem(models.Model):
         REJECTED = "REJECTED", _("Rejected")
 
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, related_name="contents", on_delete=models.CASCADE
+        settings.AUTH_USER_MODEL,
+        related_name="contents",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     description = models.TextField(blank=True)
+    external_links = models.URLField(blank=True, max_length=500)
     content_type = models.CharField(max_length=20, choices=ContentType.choices)
     categories = models.ManyToManyField(Category, blank=True, related_name="items")
     download_cost_points = models.PositiveIntegerField(default=0)
@@ -84,6 +151,37 @@ class ContentItem(models.Model):
         if not self.slug:
             self.slug = self._build_unique_slug()
         super().save(*args, **kwargs)
+
+    def _clean_external_link(self):
+        link = (self.external_links or "").strip()
+        if not link:
+            return ""
+        if (link.startswith('"') and link.endswith('"')) or (
+            link.startswith("'") and link.endswith("'")
+        ):
+            link = link[1:-1].strip()
+        return link
+
+    @property
+    def external_link_url(self):
+        link = self._clean_external_link()
+        if not link:
+            return ""
+        parsed = urlparse(link)
+        if not parsed.scheme:
+            return f"https://{link}"
+        return link
+
+    @property
+    def external_link_label(self):
+        link = self.external_link_url
+        if not link:
+            return ""
+        parsed = urlparse(link)
+        host = (parsed.netloc or "").strip()
+        if host.startswith("www."):
+            host = host[4:]
+        return host or link
 
 
 class ContentFile(models.Model):
@@ -316,11 +414,161 @@ class RecapVideo(models.Model):
         return ""
 
 
+class Course(models.Model):
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(
+        max_length=220,
+        unique=True,
+        blank=True,
+        help_text="Leave blank to auto-generate from the title.",
+    )
+    description = models.TextField(blank=True)
+    playlist_id = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Paste a YouTube playlist ID or URL; it will be normalized.",
+    )
+    featured_video_id = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Paste a YouTube video ID, URL, or iframe; it will be normalized.",
+    )
+    is_published = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["sort_order", "title"]
+
+    def __str__(self):
+        return self.title
+
+    def _build_unique_slug(self):
+        base = slugify(self.title)[:200] or "course"
+        slug = base
+        counter = 2
+        qs = type(self).objects.exclude(pk=self.pk)
+        while qs.filter(slug=slug).exists():
+            suffix = f"-{counter}"
+            trimmed = base[: max(1, 200 - len(suffix))]
+            slug = f"{trimmed}{suffix}"
+            counter += 1
+        return slug
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self._build_unique_slug()
+        if self.playlist_id:
+            self.playlist_id = _normalize_playlist_id(self.playlist_id)
+        if self.featured_video_id:
+            self.featured_video_id = _normalize_youtube_id(self.featured_video_id)
+        super().save(*args, **kwargs)
+
+    @property
+    def playlist_embed_url(self):
+        playlist_id = (self.playlist_id or "").strip()
+        return (
+            f"https://www.youtube-nocookie.com/embed/videoseries?list={playlist_id}"
+            if playlist_id
+            else ""
+        )
+
+    @property
+    def playlist_url(self):
+        playlist_id = (self.playlist_id or "").strip()
+        return (
+            f"https://www.youtube.com/playlist?list={playlist_id}"
+            if playlist_id
+            else ""
+        )
+
+    def get_video_embed_url(self, video_id):
+        video_id = (video_id or "").strip()
+        playlist_id = (self.playlist_id or "").strip()
+        if not video_id:
+            return self.playlist_embed_url
+        base = "https://www.youtube-nocookie.com/embed"
+        if playlist_id:
+            return f"{base}/{video_id}?list={playlist_id}"
+        return f"{base}/{video_id}"
+
+    @property
+    def featured_embed_url(self):
+        return self.get_video_embed_url(self.featured_video_id)
+
+    def get_absolute_url(self):
+        return reverse("course-detail", kwargs={"slug": self.slug})
+
+
+class CourseLesson(models.Model):
+    course = models.ForeignKey(Course, related_name="lessons", on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    video_id = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Paste a YouTube video ID, URL, or iframe; it will be normalized.",
+    )
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return f"{self.course_id}: {self.title}"
+
+    def save(self, *args, **kwargs):
+        if self.video_id:
+            self.video_id = _normalize_youtube_id(self.video_id)
+        super().save(*args, **kwargs)
+
+
+class CourseFavorite(models.Model):
+    course = models.ForeignKey(Course, related_name="favorites", on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="course_favorites",
+        on_delete=models.CASCADE,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("course", "user")
+
+    def __str__(self):
+        return f"Course favorite {self.course_id}"
+
+
+class CourseLessonProgress(models.Model):
+    lesson = models.ForeignKey(
+        CourseLesson, related_name="progresses", on_delete=models.CASCADE
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="course_lesson_progress",
+        on_delete=models.CASCADE,
+    )
+    is_completed = models.BooleanField(default=False)
+    last_watched_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("lesson", "user")
+
+    def __str__(self):
+        return f"Course progress {self.lesson_id}"
+
+
 class RecapHeroBanner(models.Model):
     title = models.CharField(max_length=200)
     body = models.TextField(blank=True)
     eyebrow = models.CharField(max_length=80, blank=True)
-    background_image = models.FileField(upload_to="banners/recaps/", blank=True)
+    background_image = models.FileField(
+        upload_to="banners/recaps/",
+        blank=True,
+        help_text=_("Recommended size: 1600x900px (16:9)."),
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -338,3 +586,83 @@ class RecapHeroBanner(models.Model):
         super().save(*args, **kwargs)
         if self.is_active:
             RecapHeroBanner.objects.exclude(pk=self.pk).update(is_active=False)
+
+
+class LibrarySideBanner(models.Model):
+    class Position(models.TextChoices):
+        LEFT = "LEFT", _("Left")
+        RIGHT = "RIGHT", _("Right")
+        DOWNLOAD = "DOWNLOAD", _("Download")
+
+    title = models.CharField(max_length=120, blank=True)
+    image = models.FileField(
+        upload_to="banners/library/",
+        help_text=_("Recommended size: 600x900px for side banners, 1200x800px for download banner."),
+    )
+    link_url = models.URLField(blank=True)
+    position = models.CharField(max_length=10, choices=Position.choices, default=Position.LEFT)
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["position", "sort_order", "-updated_at"]
+
+    def __str__(self):
+        label = self.title or "Library banner"
+        return f"{label} ({self.position})"
+
+
+def _delete_file_field_file(instance, field_name, using=None):
+    field = getattr(instance, field_name, None)
+    if not field or not getattr(field, "name", ""):
+        return
+    file_name = field.name
+    model = type(instance)
+    qs = model.objects.using(using) if using else model.objects
+    if qs.filter(**{field_name: file_name}).exclude(pk=instance.pk).exists():
+        return
+    storage = field.storage
+    try:
+        if storage.exists(file_name):
+            storage.delete(file_name)
+    except Exception:
+        return
+
+
+def _delete_replaced_file(sender, instance, field_name, using=None):
+    if not instance.pk:
+        return
+    try:
+        qs = sender.objects.using(using) if using else sender.objects
+        old = qs.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        return
+    old_field = getattr(old, field_name, None)
+    new_field = getattr(instance, field_name, None)
+    old_name = getattr(old_field, "name", "")
+    new_name = getattr(new_field, "name", "")
+    if not old_name or old_name == new_name:
+        return
+    _delete_file_field_file(old, field_name, using=using)
+
+
+@receiver(post_delete, sender=RecapHeroBanner)
+def _delete_recap_hero_banner_file(sender, instance, using, **kwargs):
+    _delete_file_field_file(instance, "background_image", using=using)
+
+
+@receiver(pre_save, sender=RecapHeroBanner)
+def _delete_recap_hero_banner_replaced_file(sender, instance, using, **kwargs):
+    _delete_replaced_file(sender, instance, "background_image", using=using)
+
+
+@receiver(post_delete, sender=LibrarySideBanner)
+def _delete_library_side_banner_file(sender, instance, using, **kwargs):
+    _delete_file_field_file(instance, "image", using=using)
+
+
+@receiver(pre_save, sender=LibrarySideBanner)
+def _delete_library_side_banner_replaced_file(sender, instance, using, **kwargs):
+    _delete_replaced_file(sender, instance, "image", using=using)

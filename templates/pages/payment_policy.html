@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách thanh toán{% else %}Payment Policy{% endif %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách thanh toán | V+ STEAM LAB Library{% else %}Payment Policy | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block meta_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy trình thanh toán, các phương thức chấp nhận, và xác nhận giao dịch.{% else %}Payment methods, processing steps, and transaction confirmation details.{% endif %}{% endblock %}
+{% block og_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy trình thanh toán, các phương thức chấp nhận, và xác nhận giao dịch.{% else %}Payment methods, processing steps, and transaction confirmation details.{% endif %}{% endblock %}
+{% block twitter_title %}{% if request.LANGUAGE_CODE == "vi" %}Chính sách thanh toán | V+ STEAM LAB Library{% else %}Payment Policy | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block twitter_description %}{% if request.LANGUAGE_CODE == "vi" %}Quy trình thanh toán, các phương thức chấp nhận, và xác nhận giao dịch.{% else %}Payment methods, processing steps, and transaction confirmation details.{% endif %}{% endblock %}
+
+{% block content %}
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+<section class="panel policy-page">
+  {% if request.LANGUAGE_CODE == "vi" %}
+    <h1>Chính sách thanh toán</h1>
+    <p>Chúng tôi hiện chấp nhận thanh toán qua ZaloPay cho việc nạp điểm và mở khóa nội dung số.</p>
+
+    <h2>1. Phương thức thanh toán</h2>
+    <ul class="policy-list">
+      <li>ZaloPay (ví ZaloPay và các nguồn tiền được liên kết).</li>
+      <li>Tất cả giá được hiển thị bằng VND.</li>
+    </ul>
+
+    <h2>2. Quy trình thanh toán</h2>
+    <ul class="policy-list">
+      <li>Chọn gói điểm hoặc nội dung cần mở khóa.</li>
+      <li>Hệ thống chuyển hướng sang ZaloPay để thực hiện thanh toán.</li>
+      <li>Giao dịch thành công được xác nhận qua callback từ ZaloPay.</li>
+    </ul>
+
+    <h2>3. Xác nhận giao dịch</h2>
+    <ul class="policy-list">
+      <li>Thông báo thanh toán sẽ được hiển thị sau khi ZaloPay trả về kết quả.</li>
+      <li>Trong trường hợp trễ thông báo, vui lòng kiểm tra lại sau vài phút.</li>
+    </ul>
+
+    <h2>4. Hóa đơn và chứng từ</h2>
+    <p>Hệ thống lưu lịch sử giao dịch trên tài khoản. Nếu cần chứng từ, vui lòng liên hệ.</p>
+  {% else %}
+    <h1>Payment Policy</h1>
+    <p>We currently accept ZaloPay for point top-ups and digital content unlocks.</p>
+
+    <h2>1. Payment methods</h2>
+    <ul class="policy-list">
+      <li>ZaloPay wallet and linked funding sources.</li>
+      <li>All prices are listed in VND.</li>
+    </ul>
+
+    <h2>2. Payment flow</h2>
+    <ul class="policy-list">
+      <li>Select a point package or content to unlock.</li>
+      <li>Redirect to ZaloPay to complete payment.</li>
+      <li>Transaction success is confirmed via ZaloPay callback.</li>
+    </ul>
+
+    <h2>3. Transaction confirmation</h2>
+    <ul class="policy-list">
+      <li>Payment status is shown after ZaloPay returns the result.</li>
+      <li>If the status is pending, please refresh after a few minutes.</li>
+    </ul>
+
+    <h2>4. Receipts</h2>
+    <p>Transactions are stored in your account history. Contact us if you need a receipt.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% if request.LANGUAGE_CODE == "vi" %}Điều khoản & Chính sách{% else %}Terms & Policies{% endif %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}{% if request.LANGUAGE_CODE == "vi" %}Điều khoản & Chính sách | V+ STEAM LAB Library{% else %}Terms & Policies | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block meta_description %}{% if request.LANGUAGE_CODE == "vi" %}Tổng hợp điều khoản, thanh toán, hoàn tiền, giao hàng nội dung số, khiếu nại và bảo mật.{% else %}Consolidated terms, payment, refund, digital delivery, complaints, and privacy policies.{% endif %}{% endblock %}
+{% block og_description %}{% if request.LANGUAGE_CODE == "vi" %}Tổng hợp điều khoản, thanh toán, hoàn tiền, giao hàng nội dung số, khiếu nại và bảo mật.{% else %}Consolidated terms, payment, refund, digital delivery, complaints, and privacy policies.{% endif %}{% endblock %}
+{% block twitter_title %}{% if request.LANGUAGE_CODE == "vi" %}Điều khoản & Chính sách | V+ STEAM LAB Library{% else %}Terms & Policies | V+ STEAM LAB Library{% endif %}{% endblock %}
+{% block twitter_description %}{% if request.LANGUAGE_CODE == "vi" %}Tổng hợp điều khoản, thanh toán, hoàn tiền, giao hàng nội dung số, khiếu nại và bảo mật.{% else %}Consolidated terms, payment, refund, digital delivery, complaints, and privacy policies.{% endif %}{% endblock %}
+
+{% block content %}
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+<section class="panel policy-tabs" data-policy-tabs>
+  {% if request.LANGUAGE_CODE == "vi" %}
+    <div class="policy-tabs-header">
+      <h1>Điều khoản & Chính sách</h1>
+      <p>Cập nhật lần cuối: {% now "d/m/Y" %}</p>
+    </div>
+  {% else %}
+    <div class="policy-tabs-header">
+      <h1>Terms & Policies</h1>
+      <p>Last updated: {% now "M d, Y" %}</p>
+    </div>
+  {% endif %}
+
+  <div class="policy-tabs-nav" role="tablist">
+    <button type="button" class="policy-tab" data-policy-tab="terms" role="tab" aria-controls="policy-panel-terms">
+      {% if request.LANGUAGE_CODE == "vi" %}Điều khoản{% else %}Terms{% endif %}
+    </button>
+    <button type="button" class="policy-tab" data-policy-tab="payment" role="tab" aria-controls="policy-panel-payment">
+      {% if request.LANGUAGE_CODE == "vi" %}Thanh toán{% else %}Payment{% endif %}
+    </button>
+    <button type="button" class="policy-tab" data-policy-tab="refund" role="tab" aria-controls="policy-panel-refund">
+      {% if request.LANGUAGE_CODE == "vi" %}Hoàn tiền{% else %}Refund{% endif %}
+    </button>
+    <button type="button" class="policy-tab" data-policy-tab="delivery" role="tab" aria-controls="policy-panel-delivery">
+      {% if request.LANGUAGE_CODE == "vi" %}Giao hàng{% else %}Delivery{% endif %}
+    </button>
+    <button type="button" class="policy-tab" data-policy-tab="complaints" role="tab" aria-controls="policy-panel-complaints">
+      {% if request.LANGUAGE_CODE == "vi" %}Khiếu nại{% else %}Complaints{% endif %}
+    </button>
+    <button type="button" class="policy-tab" data-policy-tab="privacy" role="tab" aria-controls="policy-panel-privacy">
+      {% if request.LANGUAGE_CODE == "vi" %}Bảo mật{% else %}Privacy{% endif %}
+    </button>
+  </div>
+
+  <div class="policy-tabs-body">
+    <section id="policy-panel-terms" class="policy-panel" data-policy-panel="terms" role="tabpanel">
+      {% if request.LANGUAGE_CODE == "vi" %}
+        <h2>Điều khoản sử dụng</h2>
+        <p>Điều khoản này áp dụng cho tất cả người dùng khi truy cập và sử dụng V+ STEAM LAB Library.</p>
+
+        <h3>1. Tài khoản và bảo mật</h3>
+        <ul class="policy-list">
+          <li>Cung cấp thông tin chính xác khi đăng ký.</li>
+          <li>Tự bảo vệ mật khẩu và không chia sẻ tài khoản.</li>
+          <li>Một người dùng chỉ nên sở hữu một tài khoản.</li>
+        </ul>
+
+        <h3>2. Điểm và giao dịch</h3>
+        <ul class="policy-list">
+          <li>Điểm là đơn vị quy đổi để mở khóa nội dung, không có giá trị tiền mặt.</li>
+          <li>Điểm được cộng sau khi giao dịch thành công qua ZaloPay.</li>
+          <li>Giao dịch hoàn tất được xác nhận dựa trên callback từ hệ thống thanh toán.</li>
+        </ul>
+
+        <h3>3. Sử dụng nội dung số</h3>
+        <ul class="policy-list">
+          <li>Nội dung chỉ được sử dụng cho mục đích học tập/thử nghiệm cá nhân.</li>
+          <li>Không được sao chép, phân phối, bán lại hoặc chia sẻ công khai khi chưa được phép.</li>
+        </ul>
+
+        <h3>4. Hành vi cấm</h3>
+        <ul class="policy-list">
+          <li>Gian lận, can thiệp hệ thống thanh toán, hoặc truy cập trái phép.</li>
+          <li>Đăng tải nội dung vi phạm bản quyền, pháp luật, hoặc có tính chất độc hại.</li>
+        </ul>
+
+        <h3>5. Thay đổi dịch vụ</h3>
+        <p>Chúng tôi có thể cập nhật tính năng, giá gói điểm, hoặc điều khoản theo thực tế vận hành.</p>
+      {% else %}
+        <h2>Terms of Use</h2>
+        <p>These terms apply to all users of V+ STEAM LAB Library.</p>
+
+        <h3>1. Accounts & security</h3>
+        <ul class="policy-list">
+          <li>Provide accurate registration details.</li>
+          <li>Keep your password secure and do not share your account.</li>
+          <li>One account per user.</li>
+        </ul>
+
+        <h3>2. Points & transactions</h3>
+        <ul class="policy-list">
+          <li>Points are used to unlock digital content and have no cash value.</li>
+          <li>Points are credited after successful ZaloPay payment confirmation.</li>
+          <li>Transaction status is confirmed by the payment callback.</li>
+        </ul>
+
+        <h3>3. Digital content usage</h3>
+        <ul class="policy-list">
+          <li>Content is for personal/educational use only.</li>
+          <li>No redistribution or resale without permission.</li>
+        </ul>
+
+        <h3>4. Prohibited activities</h3>
+        <ul class="policy-list">
+          <li>Fraud, payment manipulation, or unauthorized access.</li>
+          <li>Uploading infringing or unlawful content.</li>
+        </ul>
+
+        <h3>5. Service updates</h3>
+        <p>We may update features, pricing, or these terms to reflect operational changes.</p>
+      {% endif %}
+    </section>
+
+    <section id="policy-panel-payment" class="policy-panel" data-policy-panel="payment" role="tabpanel">
+      {% if request.LANGUAGE_CODE == "vi" %}
+        <h2>Chính sách thanh toán</h2>
+        <p>Chúng tôi hiện chấp nhận thanh toán qua ZaloPay cho việc nạp điểm và mở khóa nội dung số.</p>
+
+        <h3>1. Phương thức thanh toán</h3>
+        <ul class="policy-list">
+          <li>ZaloPay (ví ZaloPay và các nguồn tiền được liên kết).</li>
+          <li>Tất cả giá được hiển thị bằng VND.</li>
+        </ul>
+
+        <h3>2. Quy trình thanh toán</h3>
+        <ul class="policy-list">
+          <li>Chọn gói điểm hoặc nội dung cần mở khóa.</li>
+          <li>Hệ thống chuyển hướng sang ZaloPay để thực hiện thanh toán.</li>
+          <li>Giao dịch thành công được xác nhận qua callback từ ZaloPay.</li>
+        </ul>
+
+        <h3>3. Xác nhận giao dịch</h3>
+        <ul class="policy-list">
+          <li>Thông báo thanh toán sẽ được hiển thị sau khi ZaloPay trả về kết quả.</li>
+          <li>Trong trường hợp trễ thông báo, vui lòng kiểm tra lại sau vài phút.</li>
+        </ul>
+      {% else %}
+        <h2>Payment Policy</h2>
+        <p>We currently accept ZaloPay for point top-ups and digital content unlocks.</p>
+
+        <h3>1. Payment methods</h3>
+        <ul class="policy-list">
+          <li>ZaloPay wallet and linked funding sources.</li>
+          <li>All prices are listed in VND.</li>
+        </ul>
+
+        <h3>2. Payment flow</h3>
+        <ul class="policy-list">
+          <li>Select a point package or content to unlock.</li>
+          <li>Redirect to ZaloPay to complete payment.</li>
+          <li>Transaction success is confirmed via ZaloPay callback.</li>
+        </ul>
+
+        <h3>3. Transaction confirmation</h3>
+        <ul class="policy-list">
+          <li>Payment status is shown after ZaloPay returns the result.</li>
+          <li>If the status is pending, please refresh after a few minutes.</li>
+        </ul>
+      {% endif %}
+    </section>
+
+    <section id="policy-panel-refund" class="policy-panel" data-policy-panel="refund" role="tabpanel">
+      {% if request.LANGUAGE_CODE == "vi" %}
+        <h2>Chính sách hoàn tiền</h2>
+        <p>Do đặc thù nội dung số và điểm quy đổi, chúng tôi áp dụng các điều kiện hoàn tiền sau.</p>
+
+        <h3>1. Trường hợp được hoàn tiền</h3>
+        <ul class="policy-list">
+          <li>Giao dịch lỗi, thanh toán trùng, hoặc trừ tiền nhưng không cộng điểm.</li>
+          <li>Gói điểm chưa sử dụng và yêu cầu hoàn tiền trong vòng 24 giờ.</li>
+        </ul>
+
+        <h3>2. Trường hợp không hoàn tiền</h3>
+        <ul class="policy-list">
+          <li>Điểm đã được sử dụng để mở khóa nội dung.</li>
+          <li>Nội dung số đã được tải về hoặc truy cập thành công.</li>
+        </ul>
+
+        <h3>3. Thời gian xử lý</h3>
+        <p>Chúng tôi phản hồi trong 24-48 giờ làm việc. Hoàn tiền (nếu có) dự kiến 7-15 ngày làm việc tùy phương thức thanh toán.</p>
+      {% else %}
+        <h2>Refund Policy</h2>
+        <p>Due to the nature of digital content and points, refunds are limited to the cases below.</p>
+
+        <h3>1. Eligible cases</h3>
+        <ul class="policy-list">
+          <li>Payment errors, duplicate charges, or points not credited.</li>
+          <li>Unused point packages requested within 24 hours.</li>
+        </ul>
+
+        <h3>2. Non-refundable cases</h3>
+        <ul class="policy-list">
+          <li>Points already spent to unlock content.</li>
+          <li>Digital content already downloaded or accessed successfully.</li>
+        </ul>
+
+        <h3>3. Processing time</h3>
+        <p>We respond within 24-48 business hours. Refunds (if approved) take 7-15 business days.</p>
+      {% endif %}
+    </section>
+
+    <section id="policy-panel-delivery" class="policy-panel" data-policy-panel="delivery" role="tabpanel">
+      {% if request.LANGUAGE_CODE == "vi" %}
+        <h2>Chính sách giao hàng nội dung số</h2>
+        <p>Nội dung được cung cấp dưới dạng tài nguyên số (PDF, tệp 3D, bài học).</p>
+
+        <h3>1. Cách cung cấp</h3>
+        <ul class="policy-list">
+          <li>Sau khi mở khóa bằng điểm, nút tải về sẽ hiển thị ngay.</li>
+          <li>Với nội dung trả phí, hệ thống sẽ mở khóa sau khi thanh toán thành công.</li>
+        </ul>
+
+        <h3>2. Thời gian xử lý</h3>
+        <ul class="policy-list">
+          <li>Thông thường xử lý ngay lập tức.</li>
+          <li>Nếu hệ thống bị trễ, vui lòng chờ tối đa 24 giờ và liên hệ hỗ trợ.</li>
+        </ul>
+      {% else %}
+        <h2>Digital Delivery Policy</h2>
+        <p>Content is delivered digitally (PDFs, 3D files, lesson materials).</p>
+
+        <h3>1. Delivery method</h3>
+        <ul class="policy-list">
+          <li>After unlocking with points, the download button becomes available.</li>
+          <li>Paid content is unlocked after successful payment.</li>
+        </ul>
+
+        <h3>2. Processing time</h3>
+        <ul class="policy-list">
+          <li>Usually instant.</li>
+          <li>If delayed, allow up to 24 hours and contact support.</li>
+        </ul>
+      {% endif %}
+    </section>
+
+    <section id="policy-panel-complaints" class="policy-panel" data-policy-panel="complaints" role="tabpanel">
+      {% if request.LANGUAGE_CODE == "vi" %}
+        <h2>Chính sách giải quyết khiếu nại</h2>
+        <p>Chúng tôi cam kết tiếp nhận và xử lý khiếu nại minh bạch, nhanh chóng.</p>
+
+        <h3>1. Kênh tiếp nhận</h3>
+        <ul class="policy-list">
+          <li>Email: 09.levanbinh2003@gmail.com</li>
+          <li>Hotline: 0374202948</li>
+          <li>Fanpage: facebook.com/VPlusSteamLab</li>
+        </ul>
+
+        <h3>2. Thông tin cần cung cấp</h3>
+        <ul class="policy-list">
+          <li>Mã giao dịch/tên tài khoản.</li>
+          <li>Mô tả vấn đề và thời điểm phát sinh.</li>
+          <li>Hình ảnh chứng minh (nếu có).</li>
+        </ul>
+
+        <h3>3. Thời gian xử lý</h3>
+        <p>Chúng tôi phản hồi trong 24-48 giờ làm việc và đưa ra phương án giải quyết phù hợp.</p>
+      {% else %}
+        <h2>Complaint Handling Policy</h2>
+        <p>We commit to receiving and resolving complaints transparently and promptly.</p>
+
+        <h3>1. Contact channels</h3>
+        <ul class="policy-list">
+          <li>Email: 09.levanbinh2003@gmail.com</li>
+          <li>Hotline: 0374202948</li>
+          <li>Fanpage: facebook.com/VPlusSteamLab</li>
+        </ul>
+
+        <h3>2. Required information</h3>
+        <ul class="policy-list">
+          <li>Transaction ID or account name.</li>
+          <li>Issue details and time of occurrence.</li>
+          <li>Supporting evidence (if any).</li>
+        </ul>
+
+        <h3>3. Resolution timeline</h3>
+        <p>We respond within 24-48 business hours and provide the best resolution possible.</p>
+      {% endif %}
+    </section>
+
+    <section id="policy-panel-privacy" class="policy-panel" data-policy-panel="privacy" role="tabpanel">
+      {% if request.LANGUAGE_CODE == "vi" %}
+        <h2>Chính sách bảo mật</h2>
+        <p>Chúng tôi thu thập thông tin cơ bản để cung cấp dịch vụ, quản lý tài khoản và theo dõi điểm.</p>
+        <ul class="policy-list">
+          <li>Dữ liệu tài khoản được lưu trữ an toàn và chỉ dùng cho mục đích vận hành.</li>
+          <li>Tệp tải lên được lưu trên hệ thống, không bán dữ liệu cá nhân cho bên thứ ba.</li>
+          <li>Liên hệ nếu bạn muốn xóa tài khoản hoặc dữ liệu.</li>
+        </ul>
+      {% else %}
+        <h2>Privacy Policy</h2>
+        <p>We collect basic account information to provide access to content and track points.</p>
+        <ul class="policy-list">
+          <li>Account data is stored securely and used for service delivery only.</li>
+          <li>Uploaded files are stored on our servers. We do not sell personal data.</li>
+          <li>Contact us if you want your account removed.</li>
+        </ul>
+      {% endif %}
+    </section>
+  </div>
+</section>
+{% endblock %}

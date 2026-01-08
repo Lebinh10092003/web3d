@@ -1,0 +1,86 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .course-import-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .course-import-overlay[hidden] {
+      display: none;
+    }
+    .course-import-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 22px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+      color: #222;
+    }
+    .course-import-spinner {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: 3px solid #cfcfcf;
+      border-top-color: #2b7a3d;
+      animation: course-import-spin 0.8s linear infinite;
+    }
+    @keyframes course-import-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+{% endblock %}
+
+{% block submit_buttons_bottom %}
+  {{ block.super }}
+  <div class="submit-row">
+    <input type="submit" value="Save &amp; import lessons" class="default" name="_import_lessons">
+  </div>
+  <div class="course-import-overlay" data-course-import-overlay hidden>
+    <div class="course-import-card">
+      <div class="course-import-spinner" aria-hidden="true"></div>
+      <div data-course-import-text>Saving...</div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var form = document.querySelector("form#course_form") || document.querySelector("form");
+      var overlay = document.querySelector("[data-course-import-overlay]");
+      var textNode = document.querySelector("[data-course-import-text]");
+      if (!form || !overlay) {
+        return;
+      }
+      var buttons = form.querySelectorAll("input[type='submit'], button[type='submit']");
+      var importRequested = false;
+      buttons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          importRequested = button.name === "_import_lessons";
+        });
+      });
+      form.addEventListener("submit", function () {
+        buttons.forEach(function (button) {
+          button.disabled = true;
+        });
+        if (textNode) {
+          textNode.textContent = importRequested ? "Importing lessons..." : "Saving...";
+        }
+        overlay.hidden = false;
+      });
+    });
+  </script>
+{% endblock %}

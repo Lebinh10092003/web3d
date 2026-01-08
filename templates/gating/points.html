@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Buy points" %} | V+ STEAM LAB Library{% endblock %}
+
+{% block content %}
+<section class="panel points-page">
+  <div class="points-page-header">
+    <div>
+      <h1>{% trans "Buy points" %}</h1>
+      <p class="points-page-note">
+        {% trans "Exchange rate:" %} 10,000 VND = 10 points
+      </p>
+    </div>
+    <div class="points-page-badge">
+      <span>{% if request.LANGUAGE_CODE == "vi" %}Nạp nhanh qua ZaloPay{% else %}Top up fast with ZaloPay{% endif %}</span>
+    </div>
+  </div>
+
+  {% if packages %}
+    <div class="points-packages">
+      {% for package in packages %}
+        <div class="points-package-card">
+          <div class="points-package-header">
+            <div class="points-package-points">{{ package.points }}</div>
+            <div class="points-package-label">{% trans "points" %}</div>
+          </div>
+          <div class="points-package-price">{{ package.price_vnd }} VND</div>
+          <div class="points-package-name">{{ package.name }}</div>
+          {% if request.user.is_authenticated %}
+            <form method="post" action="{% url 'gating:points-topup' package.id %}">
+              {% csrf_token %}
+              <button class="button points-package-action" type="submit">{% trans "Pay with ZaloPay" %}</button>
+            </form>
+          {% else %}
+            <a class="button button-ghost points-package-action" href="{% url 'accounts:login' %}?next={{ request.path }}">
+              {% trans "Login to top up" %}
+            </a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>{% trans "No point packages are available right now." %}</p>
+  {% endif %}
+</section>
+
+<section class="panel points-support">
+  {% if request.LANGUAGE_CODE == "vi" %}
+    <h2>Hỗ trợ đổi điểm khi thanh toán lỗi</h2>
+    <p>Nếu thanh toán online bị lỗi nhưng đã bị trừ tiền, hãy liên hệ trực tiếp để được kiểm tra và cộng điểm thủ công.</p>
+  {% else %}
+    <h2>Support for failed payments</h2>
+    <p>If your online payment failed but your account was charged, contact us so we can verify and top up points manually.</p>
+  {% endif %}
+  {% include "partials/_contact_links.html" %}
+</section>
+{% endblock %}

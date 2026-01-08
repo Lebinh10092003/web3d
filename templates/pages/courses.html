@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Courses" %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_title %}{% trans "Courses" %} | V+ STEAM LAB Library{% endblock %}
+{% block meta_description %}{% trans "Watch curated course playlists and learn step by step." %}{% endblock %}
+{% block og_description %}{% trans "Watch curated course playlists and learn step by step." %}{% endblock %}
+{% block twitter_description %}{% trans "Watch curated course playlists and learn step by step." %}{% endblock %}
+
+{% block content %}
+<section class="course-hero">
+  <p class="course-eyebrow">{% trans "Courses" %}</p>
+  <h1>{% trans "Course playlists" %}</h1>
+  <p class="course-subtitle">{% trans "Watch curated YouTube playlists and follow each lesson in order." %}</p>
+</section>
+
+{% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
+
+{% if course_playlists %}
+  <section class="course-grid">
+    {% for item in course_playlists %}
+      {% with course=item.course lessons=item.lessons %}
+      <article class="course-card{% if item.is_favorite %} is-favorite{% endif %}">
+        <div class="course-embed">
+          {% if item.preview_embed_url %}
+          <iframe
+            src="{{ item.preview_embed_url }}"
+            title="{{ course.title|default:'Course playlist' }}"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            loading="lazy"
+          ></iframe>
+          {% else %}
+            <div class="preview-placeholder large">{% trans "No videos yet." %}</div>
+          {% endif %}
+        </div>
+        <div class="course-body">
+          <h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3>
+          {% if item.is_favorite %}
+            <span class="course-favorite-badge">{% trans "Saved" %}</span>
+          {% endif %}
+          {% if course.description %}
+            <p>{{ course.description }}</p>
+          {% endif %}
+          {% if lessons %}
+            <div class="course-lessons">
+              <div class="course-lessons-title">{% trans "Lessons" %}</div>
+              <ul>
+                {% for lesson in lessons|slice:":6" %}
+                  <li>
+                    {% if lesson.video_id %}
+                      <a href="{{ course.get_absolute_url }}?v={{ lesson.video_id }}">{{ lesson.title }}</a>
+                    {% else %}
+                      {{ lesson.title }}
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+          <a class="button button-ghost course-link" href="{{ course.get_absolute_url }}">{% trans "View course" %}</a>
+        </div>
+      </article>
+      {% endwith %}
+    {% endfor %}
+  </section>
+{% else %}
+  <div class="empty-state">{% trans "No courses yet." %}</div>
+{% endif %}
+{% endblock %}

@@ -2,7 +2,7 @@
 <div class="content-grid">
   {% for item in page_obj %}
     <article class="content-card" data-stagger="{{ forloop.counter0 }}">
-      <a href="{% url 'library:content-detail' item.slug %}" class="card-media">
+      <a href="{% url 'library:content-detail' item.slug %}" class="card-media{% if item.lock_preview %} card-media--locked{% endif %}">
         {% if item.preview_url %}
           <img src="{{ item.preview_url }}" alt="{% trans 'Preview' %}" loading="lazy"{% if item.file_type == "pdf" %} class="card-preview--pdf"{% endif %}>
         {% else %}
@@ -16,6 +16,13 @@
         </div>
         <h3><a href="{% url 'library:content-detail' item.slug %}">{{ item.title }}</a></h3>
         <p>{{ item.description|default:""|truncatechars:140 }}</p>
+        {% if item.owner %}
+          {% if item.owner.website_url or item.owner.facebook_url or item.owner.github_url %}
+            <div class="card-owner">
+              {% include "partials/_owner_links.html" with owner=item.owner show_label=False show_links=True show_name=False compact=True %}
+            </div>
+          {% endif %}
+        {% endif %}
         <div class="card-meta">
           <span>{% trans "Rating" %}: {{ item.rating_avg|default_if_none:"-" }}</span>
           <span>{% blocktrans with count=item.favorites_count %}{{ count }} saves{% endblocktrans %}</span>

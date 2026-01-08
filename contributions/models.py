@@ -30,10 +30,15 @@ class ContributionSubmission(models.Model):
         REJECTED = "REJECTED", "Rejected"
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, related_name="submissions", on_delete=models.CASCADE
+        settings.AUTH_USER_MODEL,
+        related_name="submissions",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+    external_links = models.URLField(blank=True, max_length=500)
     content_type = models.CharField(max_length=20)
     category = models.ForeignKey(
         Category,
@@ -151,6 +156,9 @@ class ContributionSubmission(models.Model):
             if content.download_cost_points != effective_points:
                 content.download_cost_points = effective_points
                 update_fields.append("download_cost_points")
+            if content.external_links != self.external_links:
+                content.external_links = self.external_links
+                update_fields.append("external_links")
             if getattr(content, "price_vnd", 0):
                 content.price_vnd = 0
                 update_fields.append("price_vnd")
@@ -171,6 +179,7 @@ class ContributionSubmission(models.Model):
             owner=self.user,
             title=self.title,
             description=self.description,
+            external_links=self.external_links,
             content_type=self._resolve_content_type(),
             download_cost_points=effective_points,
             price_vnd=0,
@@ -240,14 +249,15 @@ class ContributionSubmission(models.Model):
         super().save(*args, **kwargs)
 
         if should_award:
-            from gating.models import PointLedger
+            if self.user_id:
+                from gating.models import PointLedger
 
-            if self.award_points is None:
-                points = int(getattr(settings, "CONTRIBUTION_APPROVAL_POINTS", 10))
-            else:
-                points = int(self.award_points or 0)
-            if points:
-                PointLedger.record(self.user, points, f"Contribution approved #{self.id}")
+                if self.award_points is None:
+                    points = int(getattr(settings, "CONTRIBUTION_APPROVAL_POINTS", 10))
+                else:
+                    points = int(self.award_points or 0)
+                if points:
+                    PointLedger.record(self.user, points, f"Contribution approved #{self.id}")
             type(self).objects.filter(pk=self.pk).update(points_awarded=True)
             self.points_awarded = True
 
