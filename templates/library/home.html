@@ -67,6 +67,9 @@
       {% endfor %}
     </select>
     <select name="sort">
+      {% if query %}
+        <option value="relevance" {% if sort == "relevance" %}selected{% endif %}>{% if request.LANGUAGE_CODE == "vi" %}Liên quan{% else %}Relevance{% endif %}</option>
+      {% endif %}
       {% if request.LANGUAGE_CODE == "vi" %}
         <option value="newest" {% if sort == "newest" %}selected{% endif %}>Mới nhất</option>
         <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Cũ nhất</option>
@@ -105,7 +108,11 @@
   <div class="library-content">
     <section id="content-grid">
       {% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_HOME class_name="ad-slot-wide" %}
-      {% include "library/_content_grid.html" %}
+      {% if content_grid_html %}
+        {{ content_grid_html|safe }}
+      {% else %}
+        {% include "library/_content_grid.html" %}
+      {% endif %}
     </section>
   </div>
 

@@ -3,6 +3,7 @@ import mimetypes
 import os
 import re
 import time
+import hashlib
 from pathlib import Path, PurePosixPath
 from urllib.parse import urlencode
 
@@ -15,10 +16,11 @@ from django.core import signing
 from django.core.paginator import Paginator
 from django.core.files.storage import default_storage
 from django.core.cache import cache
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, transaction, connection
 from django.db.models import Avg, Count, Q
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
@@ -45,6 +47,53 @@ STARS = [5, 4, 3, 2, 1]
 logger = logging.getLogger(__name__)
 
 
+def _cache_ttl(seconds, *, max_seconds=None):
+    try:
+        ttl = int(seconds or 0)
+    except (TypeError, ValueError):
+        ttl = 0
+    if ttl <= 0:
+        return 0
+    if max_seconds is not None:
+        ttl = min(ttl, max(0, int(max_seconds)))
+    return max(ttl, 0)
+
+
+def _library_grid_cache_ttl():
+    ttl = _cache_ttl(getattr(settings, "LIBRARY_GRID_CACHE_TTL", 60))
+    if not ttl:
+        return 0
+    if getattr(settings, "MEDIA_SIGNED_URLS", True):
+        media_ttl = _cache_ttl(getattr(settings, "MEDIA_SIGNED_URL_TTL", 300))
+        if media_ttl:
+            ttl = min(ttl, max(10, media_ttl - 5))
+    return ttl
+
+
+def _build_library_grid_cache_key(request):
+    lang = getattr(request, "LANGUAGE_CODE", "") or ""
+    if request.user.is_authenticated:
+        user_key = f"u:{request.user.id}"
+    else:
+        user_key = "anon"
+    query = request.GET.get("q", "").strip()
+    sort = request.GET.get("sort", "").strip().lower()
+    if not sort:
+        sort = "relevance" if query else "newest"
+    params = {
+        "lang": lang,
+        "user": user_key,
+        "q": query,
+        "category": request.GET.get("category", "").strip(),
+        "content_type": request.GET.get("content_type", "").strip().lower(),
+        "sort": sort,
+        "page": request.GET.get("page") or 1,
+    }
+    raw = "|".join(f"{key}={params[key]}" for key in sorted(params))
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:24]
+    return f"library:grid:v2:{digest}"
+
+
 def _build_meta_description(content):
     description = (content.description or "").strip()
     if not description:
@@ -64,6 +113,26 @@ def _get_client_ip(request):
         return ip or None
     ip = request.META.get("REMOTE_ADDR")
     return ip if ip else None
+
+
+def _should_log_content_view(request, content_id):
+    ttl = _cache_ttl(getattr(settings, "CONTENT_VIEW_LOG_TTL", 900))
+    if ttl <= 0:
+        return True
+
+    if request.user.is_authenticated:
+        identity = f"user:{request.user.id}"
+    else:
+        ip = _get_client_ip(request) or "anon"
+        ua = request.META.get("HTTP_USER_AGENT", "")[:200]
+        ua_hash = hashlib.sha256(ua.encode("utf-8")).hexdigest()[:12] if ua else "na"
+        identity = f"ip:{ip}:ua:{ua_hash}"
+
+    cache_key = f"content:view:{content_id}:{identity}"
+    if cache.get(cache_key):
+        return False
+    cache.set(cache_key, 1, timeout=ttl)
+    return True
 
 
 def _safe_signed_url(content_file, expires_in=None):
@@ -217,6 +286,49 @@ def _annotate_preview(items):
 
 
 def home(request):
+    is_htmx = request.headers.get("HX-Request") == "true"
+    grid_cache_ttl = _library_grid_cache_ttl()
+    grid_cache_key = _build_library_grid_cache_key(request) if grid_cache_ttl else ""
+    if grid_cache_key:
+        cached_html = cache.get(grid_cache_key)
+        if cached_html:
+            if is_htmx:
+                return HttpResponse(cached_html)
+            query = request.GET.get("q", "").strip()
+            category_slug = request.GET.get("category", "").strip()
+            content_type = request.GET.get("content_type", "").strip().lower()
+            sort = request.GET.get("sort", "").strip().lower()
+            if not sort:
+                sort = "relevance" if query else "newest"
+
+            categories = Category.objects.filter(is_active=True)
+            left_banners = LibrarySideBanner.objects.filter(
+                is_active=True, position=LibrarySideBanner.Position.LEFT
+            ).order_by("sort_order", "id")
+            right_banners = LibrarySideBanner.objects.filter(
+                is_active=True, position=LibrarySideBanner.Position.RIGHT
+            ).order_by("sort_order", "id")
+            file_types = [
+                {"value": ext, "label": ext.upper()} for ext in _collect_file_types()
+            ]
+
+            context = {
+                "categories": categories,
+                "query": query,
+                "category_slug": category_slug,
+                "content_type": content_type,
+                "sort": sort,
+                "file_types": file_types,
+                "canonical_url": request.build_absolute_uri(request.path),
+                "left_banners": left_banners,
+                "right_banners": right_banners,
+                "content_grid_html": cached_html,
+            }
+            return render(request, "library/home.html", context)
+        content_grid_html = ""
+    else:
+        content_grid_html = ""
+
     items = (
         ContentItem.objects.filter(is_public=True, status=ContentItem.Status.PUBLISHED)
         .select_related("owner")
@@ -224,7 +336,27 @@ def home(request):
     )
 
     query = request.GET.get("q", "").strip()
-    if query:
+    search_ranked = False
+    if query and connection.vendor == "postgresql" and getattr(settings, "USE_FULLTEXT_SEARCH", True):
+        try:
+            from django.contrib.postgres.search import (
+                SearchQuery,
+                SearchRank,
+                SearchVector,
+            )
+        except Exception:
+            search_ranked = False
+        else:
+            search_config = getattr(settings, "POSTGRES_FTS_CONFIG", "simple") or "simple"
+            vector = SearchVector("title", weight="A", config=search_config) + SearchVector(
+                "description", weight="B", config=search_config
+            )
+            search_query = SearchQuery(query, search_type="websearch", config=search_config)
+            items = items.annotate(search_rank=SearchRank(vector, search_query)).filter(
+                search_rank__gt=0
+            )
+            search_ranked = True
+    if query and not search_ranked:
         items = items.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
     category_slug = request.GET.get("category", "").strip()
@@ -243,8 +375,13 @@ def home(request):
         favorites_count=Count("favorites", distinct=True),
     )
 
-    sort = request.GET.get("sort", "newest").strip().lower()
-    if sort == "oldest":
+    sort = request.GET.get("sort", "").strip().lower()
+    if not sort:
+        sort = "relevance" if query and search_ranked else "newest"
+
+    if sort == "relevance" and query and search_ranked:
+        items = items.order_by("-search_rank", "-created_at")
+    elif sort == "oldest":
         items = items.order_by("created_at")
     elif sort == "rating":
         items = items.order_by("-rating_avg", "-created_at")
@@ -313,8 +450,17 @@ def home(request):
         "right_banners": right_banners,
     }
 
-    if request.headers.get("HX-Request") == "true":
-        return render(request, "library/_content_grid.html", context)
+    if not content_grid_html:
+        content_grid_html = render_to_string(
+            "library/_content_grid.html", context=context, request=request
+        )
+        if grid_cache_key and content_grid_html:
+            cache.set(grid_cache_key, content_grid_html, grid_cache_ttl)
+
+    if is_htmx:
+        return HttpResponse(content_grid_html)
+
+    context["content_grid_html"] = content_grid_html
     return render(request, "library/home.html", context)
 
 
@@ -365,7 +511,7 @@ def content_detail(request, slug):
     if not og_image_url:
         og_image_url = preview_url
 
-    if request.method == "GET":
+    if request.method == "GET" and _should_log_content_view(request, content.id):
         ContentView.objects.create(
             content=content,
             user=request.user if request.user.is_authenticated else None,

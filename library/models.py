@@ -3,6 +3,8 @@ from urllib.parse import parse_qs, urlparse, urlunparse
 
 from django.conf import settings
 
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector
 from django.db import models
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
@@ -130,6 +132,11 @@ class ContentItem(models.Model):
                 name="content_pub_status_created_idx",
             ),
             models.Index(fields=["title"], name="content_title_idx"),
+            GinIndex(
+                SearchVector("title", weight="A", config="simple")
+                + SearchVector("description", weight="B", config="simple"),
+                name="content_search_vector_idx",
+            ),
         ]
 
     def __str__(self):

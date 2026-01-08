@@ -1019,6 +1019,22 @@ textarea {
   font-size: 14px;
 }
 
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%236b6760' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 42px;
+  cursor: pointer;
+}
+
+select[multiple] {
+  background-image: none;
+  padding-right: 12px;
+}
+
 .file-input {
   padding: 6px 10px;
   background: rgba(255, 255, 255, 0.9);
@@ -3114,6 +3130,19 @@ textarea:focus {
   justify-content: center;
 }
 
+.mobile-download-bar {
+  display: none;
+}
+
+.mobile-download-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -3266,6 +3295,7 @@ textarea:focus {
     max-height: 800px;
     opacity: 1;
     pointer-events: auto;
+    overflow: visible;
     padding: 8px;
     border-radius: 16px;
     border: 1px solid rgba(0, 0, 0, 0.08);
@@ -3322,6 +3352,7 @@ textarea:focus {
     width: 100%;
     min-height: 44px;
     padding: 10px 12px;
+    padding-right: 42px;
     border: 1px solid rgba(0, 0, 0, 0.08);
     background: rgba(255, 255, 255, 0.98);
   }
@@ -3347,7 +3378,29 @@ textarea:focus {
   }
 
   .site-main {
-    padding: 18px 5vw 40px;
+    padding: 18px 5vw 120px;
+  }
+
+  .mobile-download-bar {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 12px 5vw calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    z-index: 40;
+  }
+
+  .mobile-download-bar-inner {
+    flex-wrap: wrap;
+  }
+
+  .mobile-download-bar .button {
+    flex: 1 1 160px;
+    justify-content: center;
   }
 
   .footer-grid {
@@ -3384,7 +3437,7 @@ textarea:focus {
 
   .contact-fab {
     right: 14px;
-    bottom: 14px;
+    bottom: 86px;
     width: 48px;
     height: 48px;
   }
@@ -3400,6 +3453,38 @@ textarea:focus {
   .detail-meta {
     flex-direction: column;
     gap: 8px;
+    align-items: stretch;
+  }
+
+  .detail-preview {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .detail-meta-item,
+  .detail-meta .owner-links {
+    width: 100%;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .detail-meta .owner-social {
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+
+  .detail-meta .points-badge {
+    width: 100%;
+    padding: 10px 12px;
+    justify-content: center;
+  }
+
+  .detail-owner-line__link {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .preview-frame,

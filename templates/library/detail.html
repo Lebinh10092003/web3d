@@ -148,6 +148,30 @@
   </div>
 </div>
 
+<div class="mobile-download-bar" aria-label="{% trans 'Unlock & download' %}">
+  <div class="mobile-download-bar-inner">
+    {% if request.user.is_authenticated %}
+      <button class="button" type="submit" form="download-form-{{ content.id }}">
+        {% if is_unlocked %}{% trans "Download now" %}{% else %}{% trans "Unlock with points" %}{% endif %}
+      </button>
+      {% if not is_unlocked and content.download_cost_points > 0 and request.user.points_balance < content.download_cost_points %}
+        <button class="button button-ghost" type="button" data-points-modal-open>
+          {% trans "Get more points" %}
+        </button>
+      {% endif %}
+    {% else %}
+      <a
+        class="button"
+        href="{% url 'accounts:login' %}"
+        hx-get="{% url 'accounts:login' %}?modal=1"
+        hx-target="#auth-modal-body"
+        hx-swap="innerHTML"
+      >{% trans "Login to download" %}</a>
+    {% endif %}
+    <a class="button button-ghost" href="#download-actions">{% trans "Details" %}</a>
+  </div>
+</div>
+
 <section class="detail-comments">
   <div class="panel">
     <h2>{% trans "Community notes" %}</h2>

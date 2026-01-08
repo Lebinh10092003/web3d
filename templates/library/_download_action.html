@@ -8,6 +8,7 @@
 {% endif %}
 {% if request.user.is_authenticated %}
   <form
+    id="download-form-{{ content.id }}"
     method="post"
     action="{% url 'library:content-download' content.id %}"
     data-download-form
