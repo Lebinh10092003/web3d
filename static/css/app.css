@@ -1674,6 +1674,34 @@ textarea:focus {
   color: var(--muted);
 }
 
+.detail-owner-line {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(37, 197, 86, 0.35);
+  background: rgba(37, 197, 86, 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.detail-owner-line__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.detail-owner-line__link {
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+.detail-owner-line__link:hover,
+.detail-owner-line__link:focus-visible {
+  text-decoration: underline;
+}
+
 .detail-meta-item {
   display: inline-flex;
   align-items: center;

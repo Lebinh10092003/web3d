@@ -35,12 +35,16 @@
       </span>
       {% include "partials/_owner_links.html" with owner=content.owner show_label=True show_links=True show_name=True %}
       {% if content.external_link_url %}
-        <div class="owner-links content-links">
-          <span class="owner-social">
-            <a class="owner-link" href="{{ content.external_link_url }}" target="_blank" rel="noopener noreferrer">
-              {{ content.external_link_label|default:_("Website") }}
-            </a>
-          </span>
+        <div class="detail-owner-line">
+          <span class="detail-owner-line__label">{% trans "Owned by" %}</span>
+          <a
+            class="detail-owner-line__link"
+            href="{{ content.external_link_url }}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ content.external_link_label|default:_("Website") }}
+          </a>
         </div>
       {% endif %}
       {% if content.download_cost_points == 0 %}
