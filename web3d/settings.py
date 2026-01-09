@@ -153,6 +153,22 @@ RQ_QUEUES = {
     }
 }
 
+# Caching (optional): enable Redis cache by setting USE_REDIS_CACHE=1 or DJANGO_CACHE_URL.
+USE_REDIS_CACHE = os.environ.get("USE_REDIS_CACHE", "0") == "1"
+DJANGO_CACHE_URL = os.environ.get("DJANGO_CACHE_URL", "").strip()
+if USE_REDIS_CACHE or DJANGO_CACHE_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": DJANGO_CACHE_URL or REDIS_URL,
+        }
+    }
+
+LIBRARY_GRID_CACHE_TTL = int(os.environ.get("LIBRARY_GRID_CACHE_TTL", "60"))
+CONTENT_VIEW_LOG_TTL = int(os.environ.get("CONTENT_VIEW_LOG_TTL", "900"))
+USE_FULLTEXT_SEARCH = os.environ.get("USE_FULLTEXT_SEARCH", "1") == "1"
+POSTGRES_FTS_CONFIG = os.environ.get("POSTGRES_FTS_CONFIG", "simple")
+
 ZALOPAY_APP_ID = os.environ.get("ZALOPAY_APP_ID", "")
 ZALOPAY_KEY1 = os.environ.get("ZALOPAY_KEY1", "")
 ZALOPAY_KEY2 = os.environ.get("ZALOPAY_KEY2", "")
