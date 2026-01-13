@@ -43,11 +43,22 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function getBlocklyQuizI18nString(key, fallback) {
+  const i18n = window.BLOCKLY_QUIZ_I18N;
+  const value = i18n && typeof i18n === "object" ? i18n[key] : null;
+  if (typeof value === "string" && value.length) {
+    return value;
+  }
+  return fallback;
+}
+
 function showPreviewError(element, title, message) {
   if (!element) {
     return;
   }
-  const safeTitle = escapeHtml(title || "Preview error");
+  const safeTitle = escapeHtml(
+    title || getBlocklyQuizI18nString("previewError", "Preview error")
+  );
   const safeMessage = escapeHtml(message || "");
   element.innerHTML = `
     <div class="alert alert-warning mb-0">
@@ -60,12 +71,12 @@ function showPreviewError(element, title, message) {
 function parseBlocklyXmlText(xmlText) {
   const text = String(xmlText || "").trim();
   if (!text) {
-    throw new Error("Blockly XML is empty.");
+    throw new Error(getBlocklyQuizI18nString("blocklyXmlEmpty", "Blockly XML is empty."));
   }
 
   const blockly = window.Blockly;
   if (!blockly) {
-    throw new Error("Blockly is not loaded.");
+    throw new Error(getBlocklyQuizI18nString("blocklyIsNotLoaded", "Blockly is not loaded."));
   }
 
   if (blockly.Xml && typeof blockly.Xml.textToDom === "function") {
@@ -82,18 +93,28 @@ function parseBlocklyXmlText(xmlText) {
     const doc = parser.parseFromString(text, "text/xml");
     const parserError = doc.querySelector("parsererror");
     if (parserError) {
-      throw new Error("Invalid Blockly XML.");
+      throw new Error(getBlocklyQuizI18nString("invalidBlocklyXml", "Invalid Blockly XML."));
     }
     return doc.documentElement || doc;
   }
 
-  throw new Error("Blockly XML parser is not available in this Blockly build.");
+  throw new Error(
+    getBlocklyQuizI18nString(
+      "blocklyXmlParserUnavailable",
+      "Blockly XML parser is not available in this Blockly build."
+    )
+  );
 }
 
 function loadBlocklyXmlIntoWorkspace(xmlDom, workspace) {
   const blockly = window.Blockly;
   if (!blockly || !blockly.Xml) {
-    throw new Error("Blockly.Xml is not available in this Blockly build.");
+    throw new Error(
+      getBlocklyQuizI18nString(
+        "blocklyXmlUnavailable",
+        "Blockly.Xml is not available in this Blockly build."
+      )
+    );
   }
 
   const dom =
@@ -104,7 +125,9 @@ function loadBlocklyXmlIntoWorkspace(xmlDom, workspace) {
         : null;
 
   if (!dom) {
-    throw new Error("Invalid Blockly XML DOM.");
+    throw new Error(
+      getBlocklyQuizI18nString("invalidBlocklyXmlDom", "Invalid Blockly XML DOM.")
+    );
   }
 
   if (typeof blockly.Xml.domToWorkspace === "function") {
@@ -117,7 +140,12 @@ function loadBlocklyXmlIntoWorkspace(xmlDom, workspace) {
     return;
   }
 
-  throw new Error("Blockly XML loader is not available in this Blockly build.");
+  throw new Error(
+    getBlocklyQuizI18nString(
+      "blocklyXmlLoaderUnavailable",
+      "Blockly XML loader is not available in this Blockly build."
+    )
+  );
 }
 
 function initBlocklyPreviewElement(element) {
@@ -137,8 +165,11 @@ function initBlocklyPreviewElement(element) {
     element.dataset.blocklyInit = "missing";
     showPreviewError(
       element,
-      "Chưa tải thư viện Blockly",
-      "Kiểm tra cấu hình BLOCKLY_QUIZ_BLOCKLY_JS_URLS / BLOCKLY_QUIZ_BLOCKLY_JS_URL."
+      getBlocklyQuizI18nString("blocklyNotLoadedTitle", "Blockly library is not loaded."),
+      getBlocklyQuizI18nString(
+        "blocklyNotLoadedHint",
+        "Check BLOCKLY_QUIZ_BLOCKLY_JS_URLS / BLOCKLY_QUIZ_BLOCKLY_JS_URL."
+      )
     );
     return;
   }
@@ -188,7 +219,10 @@ function initBlocklyPreviewElement(element) {
     if (payload.kind === "state") {
       if (!canLoadState) {
         throw new Error(
-          "Thiếu Blockly.serialization. Hãy load build mới (ví dụ blockly.min.js) hoặc dùng blockly_xml thay cho blockly_state."
+          getBlocklyQuizI18nString(
+            "missingSerialization",
+            "Missing Blockly.serialization. Load a newer build (e.g. blockly.min.js) or use blockly_xml instead of blockly_state."
+          )
         );
       }
       window.Blockly.serialization.workspaces.load(payload.value, workspace);
@@ -204,10 +238,15 @@ function initBlocklyPreviewElement(element) {
     } catch (disposeError) {
       // ignore
     }
+    const hint = getBlocklyQuizI18nString(
+      "blocklyRenderHint",
+      "Usually caused by missing block types/custom blocks; load the same JS block definitions as the editor."
+    );
+    const errorMessage = `${(error && error.message) || String(error || "")}`;
     showPreviewError(
       element,
-      "Không hiển thị được khối Blockly",
-      `${(error && error.message) || String(error || "")} (thường do thiếu block type/custom blocks; hãy load đúng JS định nghĩa blocks giống editor).`
+      getBlocklyQuizI18nString("blocklyRenderFailedTitle", "Could not render Blockly blocks."),
+      hint ? `${errorMessage} (${hint})` : errorMessage
     );
     return;
   }
@@ -242,3 +281,49 @@ window.addEventListener("resize", () => {
 
 window.BlocklyQuiz = window.BlocklyQuiz || {};
 window.BlocklyQuiz.initPreviews = initBlocklyPreviews;
+
+function syncChoiceListSelection(choiceList) {
+  if (!choiceList) {
+    return;
+  }
+  const labels = choiceList.querySelectorAll("label.list-group-item");
+  labels.forEach((label) => {
+    const input = label.querySelector("input[name='choice_id']");
+    label.classList.toggle("is-selected", Boolean(input && input.checked));
+  });
+}
+
+function syncChoiceSelection(root) {
+  const container = root || document;
+  if (!container || typeof container.querySelectorAll !== "function") {
+    return;
+  }
+  container.querySelectorAll(".quiz-choice-list").forEach(syncChoiceListSelection);
+}
+
+document.addEventListener("change", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement)) {
+    return;
+  }
+  if (target.name !== "choice_id") {
+    return;
+  }
+  const choiceList = target.closest(".quiz-choice-list");
+  if (!choiceList) {
+    return;
+  }
+  syncChoiceListSelection(choiceList);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  syncChoiceSelection(document);
+});
+
+document.addEventListener("htmx:afterSwap", (event) => {
+  const target =
+    event && event.detail && event.detail.target && event.detail.target.querySelectorAll
+      ? event.detail.target
+      : event.target;
+  syncChoiceSelection(target);
+});

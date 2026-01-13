@@ -51,75 +51,17 @@
         </div>
       </div>
       <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-3">
-        <form method="get" action="{% url 'blockly_quiz:play' quiz.slug %}">
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-4">
-              <label class="form-label" for="quiz-name">{% trans "Name" %}</label>
-              <input
-                class="form-control"
-                id="quiz-name"
-                name="name"
-                value="{% if request.user.is_authenticated %}{{ request.user.display_name|default:request.user.username }}{% endif %}"
-                autocomplete="name"
-              >
-            </div>
-            <div class="col-12 col-md-4">
-              <label class="form-label" for="quiz-dob">{% trans "Date of birth" %}</label>
-              <input class="form-control" id="quiz-dob" name="dob" type="date" autocomplete="bday">
-            </div>
-            <div class="col-12 col-md-4">
-              <label class="form-label" for="quiz-campus">{% trans "Campus" %}</label>
-              <input class="form-control" id="quiz-campus" name="campus" autocomplete="organization">
-            </div>
-          </div>
-
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-4">
-              <label class="form-label" for="quiz-count">{% trans "Number of questions" %}</label>
-              <input
-                class="form-control"
-                id="quiz-count"
-                name="count"
-                type="number"
-                min="1"
-                max="{{ question_count }}"
-                placeholder="{% trans 'All' %}"
-              >
-            </div>
-            <div class="col-6 col-md-4">
-              <label class="form-label" for="quiz-type">{% trans "Type" %}</label>
-              <select class="form-select" id="quiz-type" name="type">
-                <option value="">{% trans "All" %}</option>
-                <option value="blockly">Blockly</option>
-                <option value="scratch">Scratch</option>
-                <option value="code">{% trans "Code" %}</option>
-              </select>
-            </div>
-            <div class="col-6 col-md-4">
-              <label class="form-label" for="quiz-difficulty">{% trans "Difficulty" %}</label>
-              <select class="form-select" id="quiz-difficulty" name="difficulty">
-                <option value="">{% trans "All" %}</option>
-                <option value="easy">{% trans "Easy" %}</option>
-                <option value="medium">{% trans "Medium" %}</option>
-                <option value="hard">{% trans "Hard" %}</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" value="1" id="quiz-shuffle" name="shuffle" checked>
-            <label class="form-check-label" for="quiz-shuffle">
-              {% trans "Shuffle questions" %}
-            </label>
-          </div>
-
-          <button class="btn btn-primary" type="submit">
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-primary" href="{% url 'blockly_quiz:play' quiz.slug %}">
             {% trans "Start quiz" %}
-          </button>
-          <button class="btn btn-outline-primary ms-2" type="submit" name="random" value="1">
-            {% trans "Random practice" %}
-          </button>
-        </form>
+          </a>
+          <a class="btn btn-outline-primary" href="{% url 'blockly_quiz:random' %}">
+            {% trans "Random quiz" %}
+          </a>
+        </div>
+        <div class="text-muted small mt-3">
+          {% trans "Default: 30 questions, no shuffle." %}
+        </div>
       </div>
     </div>
   </div>

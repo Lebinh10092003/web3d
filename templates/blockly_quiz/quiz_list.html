@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static i18n %}
 
-{% block title %}{% trans "Blockly quizzes" %} - {{ SITE_NAME }}{% endblock %}
+{% block title %}{% trans "Quizzes" %} - {{ SITE_NAME }}{% endblock %}
 
 {% block extra_head %}
   <link rel="stylesheet" href="{% static 'css/bootstrap_layered.css' %}">
@@ -12,8 +12,8 @@
   <div class="container py-4" data-blockly-quiz>
     <div class="quiz-hero mb-4">
       <div class="quiz-hero-text">
-        <h1 class="h3 mb-1">{% trans "Blockly quizzes" %}</h1>
-        <p class="text-muted mb-0">{% trans "Practice with multiple-choice questions illustrated by Blockly blocks." %}</p>
+        <h1 class="h3 mb-1">{% trans "Quizzes" %}</h1>
+        <p class="text-muted mb-0">{% trans "Practice multiple-choice questions with Blockly, Scratch, and code snippets." %}</p>
       </div>
       <div class="quiz-brand-icons quiz-brand-icons--hero" aria-hidden="true">
         <img class="quiz-brand-icon" src="{% static 'img/brands/blockly.svg' %}" alt="">
@@ -32,7 +32,7 @@
               id="quiz-search"
               name="q"
               value="{{ q|default:'' }}"
-              placeholder="{% trans 'Search by name…' %}"
+              placeholder="{% trans 'Search by name' %}"
             >
           </div>
           <div class="col-6 col-md-3">
@@ -53,14 +53,14 @@
               <option value="hard" {% if filter_difficulty == 'hard' %}selected{% endif %}>{% trans "Hard" %}</option>
             </select>
           </div>
-          <div class="col-12 d-flex flex-wrap gap-2">
-            <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
-            <a class="btn btn-outline-secondary" href="{% url 'blockly_quiz:list' %}">{% trans "Reset" %}</a>
-            <button class="btn btn-outline-primary ms-auto" type="submit" name="random" value="1">{% trans "Random quiz" %}</button>
-          </div>
-        </form>
-      </div>
-    </div>
+           <div class="col-12 d-flex flex-wrap gap-2">
+             <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
+             <a class="btn btn-outline-secondary" href="{% url 'blockly_quiz:list' %}">{% trans "Reset" %}</a>
+            <a class="btn btn-outline-primary ms-auto" href="{% url 'blockly_quiz:random' %}">{% trans "Random quiz" %}</a>
+           </div>
+         </form>
+       </div>
+     </div>
 
     {% if quizzes %}
       <div class="row g-3">

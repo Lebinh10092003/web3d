@@ -176,6 +176,67 @@ body {
   box-shadow: 0 0 0 4px var(--ring);
 }
 
+[data-blockly-quiz] .quiz-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--quiz-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+[data-blockly-quiz] .quiz-switch .form-check-input {
+  margin: 0;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--quiz-border);
+  background: rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  flex: 0 0 auto;
+  position: relative;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+[data-blockly-quiz] .quiz-switch .form-check-input::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+  transition: transform 140ms ease;
+}
+
+[data-blockly-quiz] .quiz-switch .form-check-input:checked {
+  background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+  border-color: rgba(37, 197, 86, 0.45);
+}
+
+[data-blockly-quiz] .quiz-switch .form-check-input:checked::before {
+  transform: translateX(20px);
+}
+
+[data-blockly-quiz] .quiz-switch .form-check-input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--ring), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+[data-blockly-quiz] .quiz-switch .form-check-label {
+  margin: 0;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
 [data-blockly-quiz] .list-group {
   border: 0;
   display: grid;
@@ -209,6 +270,12 @@ body {
 [data-blockly-quiz] label.list-group-item {
   position: relative;
   padding-left: 56px;
+  padding-right: 56px;
+}
+
+[data-blockly-quiz] label.list-group-item > span {
+  display: block;
+  line-height: 1.5;
 }
 
 [data-blockly-quiz] label.list-group-item::before {
@@ -230,6 +297,27 @@ body {
   color: var(--ink);
 }
 
+[data-blockly-quiz] label.list-group-item::after {
+  content: "\2713";
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--quiz-border);
+  color: transparent;
+  transform: scale(0.96);
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease,
+    transform 120ms ease;
+}
+
 [data-blockly-quiz] label.list-group-item:focus-within {
   border-color: rgba(37, 197, 86, 0.55);
   box-shadow: 0 0 0 4px var(--ring);
@@ -245,16 +333,30 @@ body {
   border-color: rgba(37, 197, 86, 0.35);
 }
 
+[data-blockly-quiz] label.list-group-item:hover::after {
+  border-color: rgba(37, 197, 86, 0.35);
+}
+
+[data-blockly-quiz] label.list-group-item.is-selected,
 [data-blockly-quiz] label.list-group-item:has(input:checked) {
   background: rgba(69, 224, 107, 0.12);
   border-color: var(--accent-strong);
   box-shadow: 0 0 0 4px var(--ring);
 }
 
+[data-blockly-quiz] label.list-group-item.is-selected::before,
 [data-blockly-quiz] label.list-group-item:has(input:checked)::before {
   background: linear-gradient(90deg, var(--accent-strong), var(--accent));
   border-color: rgba(37, 197, 86, 0.35);
   color: #fff;
+}
+
+[data-blockly-quiz] label.list-group-item.is-selected::after,
+[data-blockly-quiz] label.list-group-item:has(input:checked)::after {
+  background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+  border-color: rgba(37, 197, 86, 0.35);
+  color: #fff;
+  transform: scale(1);
 }
 
 [data-blockly-quiz] .list-group-item-success {

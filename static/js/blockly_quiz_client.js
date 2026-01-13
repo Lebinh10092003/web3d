@@ -9,6 +9,22 @@ function getCookie(name) {
   return decodeURIComponent(cookieValue.split("=").slice(1).join("="));
 }
 
+function getQuizI18n() {
+  const i18n = window.BLOCKLY_QUIZ_I18N;
+  if (i18n && typeof i18n === "object") {
+    return i18n;
+  }
+  return {};
+}
+
+function formatTemplate(template, params) {
+  const map = params && typeof params === "object" ? params : {};
+  return String(template || "").replace(/\{(\w+)\}/g, (_, key) => {
+    const value = Object.prototype.hasOwnProperty.call(map, key) ? map[key] : "";
+    return value == null ? "" : String(value);
+  });
+}
+
 function buildChoiceList(choices, selectedId) {
   return choices
     .map((choice) => {
@@ -92,9 +108,13 @@ function selectQuestions(allQuestions) {
   const randomMode = isTruthyParam(params.get("random"));
   const shuffleMode = randomMode || isTruthyParam(params.get("shuffle"));
 
+  const DEFAULT_QUESTION_COUNT = 30;
+  const hasCountParam = params.has("count");
   const countRaw = String(params.get("count") || "").trim();
   let desiredCount = Number.parseInt(countRaw, 10);
-  if (!Number.isFinite(desiredCount) || desiredCount <= 0) {
+  if (!hasCountParam) {
+    desiredCount = DEFAULT_QUESTION_COUNT;
+  } else if (!Number.isFinite(desiredCount) || desiredCount <= 0) {
     desiredCount = null;
   }
 
@@ -168,6 +188,7 @@ function copyToClipboard(rawText) {
 }
 
 function renderQuestionStage(container, question, meta) {
+  const i18n = getQuizI18n();
   const payloadId = `blockly-client-${question.id}`;
   const scratchId = `scratchblocks-client-${question.id}`;
   const promptHtml = String(question.prompt || "")
@@ -180,12 +201,22 @@ function renderQuestionStage(container, question, meta) {
   const hasCode = Boolean(question.code_text);
   const codeLanguage = sanitizeLanguage(question.code_language);
 
+  const questionCounter = i18n.questionCounterTemplate
+    ? formatTemplate(i18n.questionCounterTemplate, {
+        n: meta.index + 1,
+        total: meta.total
+      })
+    : `Question ${meta.index + 1} / ${meta.total}`;
+  const copyLabel = i18n.copy || "Copy";
+  const submitLabel =
+    meta.index + 1 >= meta.total ? i18n.finish || "Finish" : i18n.next || "Next";
+
   container.innerHTML = `
     <div class="card shadow-sm">
       <div class="card-body">
         <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
           <div class="text-muted small">
-            Question ${meta.index + 1} / ${meta.total}
+            ${escapeHtml(questionCounter)}
           </div>
         </div>
         <div class="mb-3 blockly-quiz-prompt">${promptHtml}</div>
@@ -203,17 +234,17 @@ function renderQuestionStage(container, question, meta) {
 
         ${hasScratch ? `<script id="${scratchId}" type="application/json"></script>` : ""}
         ${
-          hasScratch
-            ? `
-              <div class="mb-3 quiz-snippet">
-                <div class="quiz-snippet-toolbar">
-                  <button type="button" class="btn btn-outline-secondary btn-sm" data-quiz-copy="scratch">
-                    Copy
-                  </button>
-                </div>
-                <div class="scratchblocks-preview border rounded" data-scratchblocks-preview data-scratchblocks-script-id="${scratchId}"></div>
-              </div>
-            `
+           hasScratch
+             ? `
+               <div class="mb-3 quiz-snippet">
+                 <div class="quiz-snippet-toolbar">
+                   <button type="button" class="btn btn-outline-secondary btn-sm" data-quiz-copy="scratch">
+                     ${escapeHtml(copyLabel)}
+                   </button>
+                 </div>
+                 <div class="scratchblocks-preview border rounded" data-scratchblocks-preview data-scratchblocks-script-id="${scratchId}"></div>
+               </div>
+             `
             : ""
         }
 
@@ -223,7 +254,7 @@ function renderQuestionStage(container, question, meta) {
               <div class="mb-3 quiz-snippet">
                 <div class="quiz-snippet-toolbar">
                   <button type="button" class="btn btn-outline-secondary btn-sm" data-quiz-copy="code">
-                    Copy
+                    ${escapeHtml(copyLabel)}
                   </button>
                 </div>
                 <pre class="code-preview"><code class="language-${codeLanguage}">${escapeHtml(
@@ -240,7 +271,7 @@ function renderQuestionStage(container, question, meta) {
           </div>
           <div class="d-flex flex-wrap justify-content-end gap-2">
             <button type="submit" class="btn btn-primary">
-              ${meta.index + 1 >= meta.total ? "Finish" : "Next"}
+              ${escapeHtml(submitLabel)}
             </button>
           </div>
         </form>
@@ -280,15 +311,17 @@ function renderQuestionStage(container, question, meta) {
   }
 
   container.querySelector("[data-quiz-copy='scratch']")?.addEventListener("click", () => {
+    const i18n = getQuizI18n();
     copyToClipboard(question.scratchblocks_text || "")
-      .then(() => showToast("Copied.", "success"))
-      .catch(() => showToast("Copy failed.", "error"));
+      .then(() => showToast(i18n.copied || "Copied.", "success"))
+      .catch(() => showToast(i18n.copyFailed || "Copy failed.", "error"));
   });
 
   container.querySelector("[data-quiz-copy='code']")?.addEventListener("click", () => {
+    const i18n = getQuizI18n();
     copyToClipboard(question.code_text || "")
-      .then(() => showToast("Copied.", "success"))
-      .catch(() => showToast("Copy failed.", "error"));
+      .then(() => showToast(i18n.copied || "Copied.", "success"))
+      .catch(() => showToast(i18n.copyFailed || "Copy failed.", "error"));
   });
 }
 
@@ -320,11 +353,14 @@ async function postJson(url, payload) {
 }
 
 function updateProgress(root, index, total) {
+  const i18n = getQuizI18n();
   const progressText = root.querySelector("[data-quiz-progress-text]");
   const progressBar = root.querySelector("[data-quiz-progress-bar]");
   const percent = total ? Math.round((index / total) * 100) : 0;
   if (progressText) {
-    progressText.textContent = `${index} / ${total} answered`;
+    progressText.textContent = i18n.answeredCounterTemplate
+      ? formatTemplate(i18n.answeredCounterTemplate, { done: index, total })
+      : `${index} / ${total} answered`;
   }
   if (progressBar) {
     progressBar.style.width = `${percent}%`;
@@ -333,14 +369,102 @@ function updateProgress(root, index, total) {
 }
 
 function showError(container, message) {
+  const i18n = getQuizI18n();
   container.innerHTML = `
     <div class="alert alert-danger mb-0">
-      ${escapeHtml(message || "Something went wrong.")}
+      ${escapeHtml(message || i18n.somethingWentWrong || "Something went wrong.")}
     </div>
   `;
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+function showStageCard(container, message, tone) {
+  const text = escapeHtml(message || "");
+  const variant = tone === "error" ? "danger" : tone === "success" ? "success" : "info";
+  container.innerHTML = `
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="alert alert-${variant} mb-0">${text}</div>
+      </div>
+    </div>
+  `;
+}
+
+function normalizeText(value) {
+  return String(value ?? "").trim();
+}
+
+function formatDobForSubmission(rawDob) {
+  const value = normalizeText(rawDob);
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+  return value;
+}
+
+function getFieldLabelText(root, inputId) {
+  const label = root.querySelector(`label[for='${inputId}']`);
+  const raw = label ? normalizeText(label.textContent) : "";
+  return raw || inputId;
+}
+
+function validateParticipantInfo(root, revealIntro) {
+  const nameInput = root.querySelector("#quiz-play-name");
+  const dobInput = root.querySelector("#quiz-play-dob");
+  const campusInput = root.querySelector("#quiz-play-campus");
+
+  [nameInput, dobInput, campusInput].forEach((input) => input?.classList?.remove("is-invalid"));
+
+  const name = normalizeText(nameInput?.value);
+  const dobRaw = normalizeText(dobInput?.value);
+  const campus = normalizeText(campusInput?.value);
+
+  const missing = [];
+  if (!name) {
+    nameInput?.classList?.add("is-invalid");
+    missing.push({ id: "quiz-play-name", label: getFieldLabelText(root, "quiz-play-name") });
+  }
+  if (!dobRaw) {
+    dobInput?.classList?.add("is-invalid");
+    missing.push({ id: "quiz-play-dob", label: getFieldLabelText(root, "quiz-play-dob") });
+  }
+  if (!campus) {
+    campusInput?.classList?.add("is-invalid");
+    missing.push({ id: "quiz-play-campus", label: getFieldLabelText(root, "quiz-play-campus") });
+  }
+
+  if (missing.length) {
+    const labels = missing.map((item) => item.label).join(", ");
+    const message = `Please fill in: ${labels}.`;
+    const title = "Missing information";
+    if (typeof revealIntro === "function") {
+      revealIntro();
+    }
+    if (window.Swal) {
+      window.Swal.fire({
+        icon: "warning",
+        title,
+        text: message
+      }).then(() => {
+        const first = root.querySelector(`#${missing[0].id}`);
+        first?.focus?.();
+      });
+    } else {
+      alert(`${title}\n\n${message}`);
+      const first = root.querySelector(`#${missing[0].id}`);
+      first?.focus?.();
+    }
+    return null;
+  }
+
+  return {
+    name,
+    dob: formatDobForSubmission(dobRaw),
+    campus
+  };
+}
+
+document.addEventListener("DOMContentLoaded", () => {
   const root = document.querySelector("[data-quiz-play]");
   if (!root) {
     return;
@@ -373,102 +497,161 @@ document.addEventListener("DOMContentLoaded", async () => {
   const apiQuizUrl = root.dataset.apiQuizUrl;
   const apiSubmitUrl = root.dataset.apiSubmitUrl;
   if (!apiQuizUrl || !apiSubmitUrl) {
-    showError(stage, "Missing quiz API URLs.");
+    const i18n = getQuizI18n();
+    showError(stage, i18n.missingQuizApiUrls || "Missing quiz API URLs.");
     return;
   }
 
-  try {
-    const payload = await fetchJson(apiQuizUrl);
-    const allQuestions = Array.isArray(payload?.questions) ? payload.questions : [];
-    const questions = selectQuestions(allQuestions);
-    if (!questions.length) {
-      showError(
-        stage,
-        allQuestions.length ? "No questions match your filters." : "This quiz has no questions yet."
-      );
+  const introForm = intro?.querySelector("[data-quiz-intro-form]");
+  const startButton = intro?.querySelector("[data-quiz-start]");
+
+  const nameInput = root.querySelector("#quiz-play-name");
+  const dobInput = root.querySelector("#quiz-play-dob");
+  const campusInput = root.querySelector("#quiz-play-campus");
+
+  [nameInput, dobInput, campusInput].forEach((input) => {
+    input?.addEventListener?.("input", () => input.classList.remove("is-invalid"));
+  });
+
+  let started = false;
+
+  const renderLoading = () => {
+    showStageCard(stage, "Loading...", "info");
+  };
+
+  const startQuiz = async () => {
+    if (started) {
       return;
     }
+    started = true;
+    startButton?.setAttribute("disabled", "disabled");
+    renderLoading();
 
-    const answers = new Map();
-    let index = 0;
-
-    const nameInput = root.querySelector("#quiz-play-name");
-    const dobInput = root.querySelector("#quiz-play-dob");
-    const campusInput = root.querySelector("#quiz-play-campus");
-
-    const render = () => {
-      const current = questions[index];
-      const selectedChoiceId = answers.get(current.id);
-      renderQuestionStage(stage, current, {
-        index,
-        total: questions.length,
-        selectedChoiceId
-      });
-      updateProgress(root, answers.size, questions.length);
-
-      const form = stage.querySelector("[data-quiz-answer-form]");
-      if (!form) {
+    try {
+      const payload = await fetchJson(apiQuizUrl);
+      const allQuestions = Array.isArray(payload?.questions) ? payload.questions : [];
+      const questions = selectQuestions(allQuestions);
+      if (!questions.length) {
+        const i18n = getQuizI18n();
+        showError(
+          stage,
+          allQuestions.length
+            ? i18n.noQuestionsMatch || "No questions match your filters."
+            : i18n.quizHasNoQuestions || "This quiz has no questions yet."
+        );
+        started = false;
+        startButton?.removeAttribute("disabled");
         return;
       }
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const choiceInput = form.querySelector("input[name='choice_id']:checked");
-        if (!choiceInput) {
-          if (window.Swal) {
-            window.Swal.fire({
-              icon: "warning",
-              title: "Please choose an answer."
-            });
-          }
-          return;
-        }
-        answers.set(current.id, choiceInput.value);
-        setIntroHidden(true);
 
-        if (index + 1 < questions.length) {
-          index += 1;
-          render();
-          return;
-        }
+      const answers = new Map();
+      let index = 0;
 
+      const render = () => {
+        const current = questions[index];
+        const selectedChoiceId = answers.get(current.id);
+        renderQuestionStage(stage, current, {
+          index,
+          total: questions.length,
+          selectedChoiceId
+        });
         updateProgress(root, answers.size, questions.length);
-        const submitPayload = {
-          name: nameInput?.value || "",
-          dob: dobInput?.value || "",
-          campus: campusInput?.value || "",
-          answers: Array.from(answers.entries()).map(([question_id, choice_id]) => ({
-            question_id,
-            choice_id
-          }))
-        };
 
-        try {
-          if (window.Swal) {
-            window.Swal.fire({
-              title: "Submitting...",
-              allowOutsideClick: false,
-              didOpen: () => window.Swal.showLoading()
-            });
-          }
-          const result = await postJson(apiSubmitUrl, submitPayload);
-          const reviewUrl = result?.review_url;
-          if (reviewUrl) {
-            window.location.assign(reviewUrl);
+        const form = stage.querySelector("[data-quiz-answer-form]");
+        if (!form) {
+          return;
+        }
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const i18n = getQuizI18n();
+          const participant = validateParticipantInfo(root, () => setIntroHidden(false));
+          if (!participant) {
             return;
           }
-          showError(stage, "Submitted, but no review URL returned.");
-        } catch (error) {
-          showError(stage, `Submit failed: ${error?.message || error}`);
-        } finally {
-          if (window.Swal) {
-            window.Swal.close();
+          const choiceInput = form.querySelector("input[name='choice_id']:checked");
+          if (!choiceInput) {
+            if (window.Swal) {
+              window.Swal.fire({
+                icon: "warning",
+                title: i18n.pleaseChooseAnswer || "Please choose an answer."
+              });
+            }
+            return;
           }
-        }
-      });
-    };
+          answers.set(current.id, choiceInput.value);
+          setIntroHidden(true);
 
-    render();
-  } catch (error) {
-    showError(stage, `Failed to load quiz: ${error?.message || error}`);
-  }
+          if (index + 1 < questions.length) {
+            index += 1;
+            render();
+            return;
+          }
+
+          updateProgress(root, answers.size, questions.length);
+          const submitPayload = {
+            name: participant.name,
+            dob: participant.dob,
+            campus: participant.campus,
+            answers: Array.from(answers.entries()).map(([question_id, choice_id]) => ({
+              question_id,
+              choice_id
+            }))
+          };
+
+          try {
+            if (window.Swal) {
+              window.Swal.fire({
+                title: i18n.submitting || "Submitting...",
+                allowOutsideClick: false,
+                didOpen: () => window.Swal.showLoading()
+              });
+            }
+            const result = await postJson(apiSubmitUrl, submitPayload);
+            const reviewUrl = result?.review_url;
+            if (reviewUrl) {
+              window.location.assign(reviewUrl);
+              return;
+            }
+            showError(
+              stage,
+              i18n.submittedNoReviewUrl || "Submitted, but no review URL returned."
+            );
+          } catch (error) {
+            const message = i18n.submitFailedTemplate
+              ? formatTemplate(i18n.submitFailedTemplate, { error: error?.message || error })
+              : `Submit failed: ${error?.message || error}`;
+            showError(stage, message);
+          } finally {
+            if (window.Swal) {
+              window.Swal.close();
+            }
+          }
+        });
+      };
+
+      render();
+    } catch (error) {
+      const i18n = getQuizI18n();
+      const message = i18n.failedToLoadQuizTemplate
+        ? formatTemplate(i18n.failedToLoadQuizTemplate, { error: error?.message || error })
+        : `Failed to load quiz: ${error?.message || error}`;
+      showError(stage, message);
+      started = false;
+      startButton?.removeAttribute("disabled");
+    }
+  };
+
+  const startHandler = (event) => {
+    event.preventDefault();
+    const participant = validateParticipantInfo(root);
+    if (!participant) {
+      return;
+    }
+    setIntroHidden(true);
+    startQuiz();
+  };
+
+  introForm?.addEventListener("submit", startHandler);
+
+  showStageCard(stage, "Enter your details above to start.", "info");
 });

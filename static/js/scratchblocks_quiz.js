@@ -30,6 +30,15 @@ function getScratchblocksLanguages() {
   return languages;
 }
 
+function getScratchQuizI18nString(key, fallback) {
+  const i18n = window.BLOCKLY_QUIZ_I18N;
+  const value = i18n && typeof i18n === "object" ? i18n[key] : null;
+  if (typeof value === "string" && value.length) {
+    return value;
+  }
+  return fallback;
+}
+
 function initScratchblocksPreviewElement(element) {
   if (!element || element.dataset.scratchInit === "1") {
     return;
@@ -55,10 +64,13 @@ function initScratchblocksPreviewElement(element) {
   const scratchblocks = window.scratchblocks;
   if (!scratchblocks) {
     element.dataset.scratchInit = "missing";
-    element.insertAdjacentHTML(
-      "beforeend",
-      '<div class="text-muted small mt-2">Scratch blocks renderer is not loaded.</div>'
+    const info = document.createElement("div");
+    info.className = "text-muted small mt-2";
+    info.textContent = getScratchQuizI18nString(
+      "scratchRendererMissing",
+      "Scratch blocks renderer is not loaded."
     );
+    element.appendChild(info);
     return;
   }
 

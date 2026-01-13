@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Random quiz" %} - {{ SITE_NAME }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/bootstrap_layered.css' %}">
+  <link rel="stylesheet" href="{% static 'css/blockly_quiz.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="container py-4" data-blockly-quiz>
+    <div class="mb-4">
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:list' %}">
+        &larr; {% trans "All quizzes" %}
+      </a>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="h3 mb-1">{% trans "Random quiz" %}</h1>
+        <p class="text-muted mb-4">
+          {% trans "Generate a temporary quiz from the question bank." %}
+        </p>
+
+        <form method="post" action="{% url 'blockly_quiz:random-start' %}">
+          {% csrf_token %}
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label" for="random-count">{% trans "Number of questions" %}</label>
+              <input
+                class="form-control"
+                id="random-count"
+                name="count"
+                type="number"
+                min="1"
+                value="{{ default_count }}"
+              >
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label" for="random-type">{% trans "Type" %}</label>
+              <select class="form-select" id="random-type" name="type">
+                <option value="" {% if default_type == '' %}selected{% endif %}>{% trans "All" %}</option>
+                <option value="blockly" {% if default_type == 'blockly' %}selected{% endif %}>Blockly</option>
+                <option value="scratch" {% if default_type == 'scratch' %}selected{% endif %}>Scratch</option>
+                <option value="code" {% if default_type == 'code' %}selected{% endif %}>{% trans "Code" %}</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label" for="random-difficulty">{% trans "Difficulty" %}</label>
+              <select class="form-select" id="random-difficulty" name="difficulty">
+                <option value="" {% if default_difficulty == '' %}selected{% endif %}>{% trans "All" %}</option>
+                <option value="easy" {% if default_difficulty == 'easy' %}selected{% endif %}>{% trans "Easy" %}</option>
+                <option value="medium" {% if default_difficulty == 'medium' %}selected{% endif %}>{% trans "Medium" %}</option>
+                <option value="hard" {% if default_difficulty == 'hard' %}selected{% endif %}>{% trans "Hard" %}</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" type="submit">
+            {% trans "Start random quiz" %}
+          </button>
+        </form>
+
+        <div class="text-muted small mt-3">
+          {% trans "This quiz is temporary and will be deleted after you finish." %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+

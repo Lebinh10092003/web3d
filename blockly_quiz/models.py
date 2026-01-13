@@ -9,6 +9,16 @@ class Quiz(models.Model):
     slug = models.SlugField(max_length=220, unique=True)
     description = models.TextField(blank=True)
     is_published = models.BooleanField(default=False)
+    is_temporary = models.BooleanField(
+        default=False,
+        help_text=_("Temporary quizzes are generated for random practice."),
+    )
+    temporary_session_key = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        help_text=_("Owner session key for temporary quizzes."),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

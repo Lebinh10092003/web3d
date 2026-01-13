@@ -1,8 +1,11 @@
 import json
 import random
+from urllib.parse import urlencode
+from uuid import uuid4
 
 from django.conf import settings
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Exists, OuterRef, Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -32,6 +35,20 @@ def _ensure_session_key(request) -> str:
         return session_key
     request.session.save()
     return request.session.session_key or ""
+
+
+def _get_playable_quiz_or_404(request, slug: str, *, include_type_flags: bool = False):
+    quizzes = Quiz.objects.all()
+    if include_type_flags:
+        quizzes = _with_quiz_type_flags(quizzes)
+    quiz = get_object_or_404(quizzes, slug=slug)
+    if quiz.is_published:
+        return quiz
+    if quiz.is_temporary:
+        session_key = _ensure_session_key(request)
+        if session_key and (quiz.temporary_session_key or "") == session_key:
+            return quiz
+    raise Http404
 
 
 def _get_attempt_or_404(request, attempt_id: int) -> Attempt:
@@ -137,14 +154,6 @@ def quiz_list(request):
     elif difficulty:
         quizzes = quizzes.none()
 
-    if (request.GET.get("random") or "").strip() == "1":
-        quiz_ids = list(quizzes.values_list("id", flat=True))
-        if quiz_ids:
-            picked = random.choice(quiz_ids)
-            quiz = Quiz.objects.filter(id=picked).first()
-            if quiz:
-                return redirect(quiz.get_absolute_url())
-
     quizzes = _with_quiz_type_flags(quizzes)
     return render(
         request,
@@ -156,6 +165,158 @@ def quiz_list(request):
             "filter_difficulty": difficulty,
         },
     )
+
+
+@require_GET
+def random_quiz(request):
+    count_raw = (request.GET.get("count") or "").strip()
+    try:
+        default_count = int(count_raw)
+    except (TypeError, ValueError):
+        default_count = 30
+    if default_count <= 0:
+        default_count = 30
+
+    question_type = (request.GET.get("type") or "").strip().lower()
+    if question_type not in {"", "blockly", "scratch", "code"}:
+        question_type = ""
+
+    difficulty = (request.GET.get("difficulty") or "").strip().lower()
+    if difficulty not in {"", "easy", "medium", "hard"}:
+        difficulty = ""
+
+    return render(
+        request,
+        "blockly_quiz/random_quiz.html",
+        {
+            "default_count": default_count,
+            "default_type": question_type,
+            "default_difficulty": difficulty,
+        },
+    )
+
+
+@require_POST
+def random_quiz_start(request):
+    count_raw = (request.POST.get("count") or "").strip()
+    try:
+        desired_count = int(count_raw)
+    except (TypeError, ValueError):
+        desired_count = 30
+    if desired_count <= 0:
+        desired_count = 30
+    desired_count = min(desired_count, 200)
+
+    question_type = (request.POST.get("type") or "").strip().lower()
+    if question_type not in {"", "blockly", "scratch", "code"}:
+        question_type = ""
+
+    difficulty = (request.POST.get("difficulty") or "").strip().lower()
+    if difficulty not in {"", "easy", "medium", "hard"}:
+        difficulty = ""
+
+    questions_qs = Question.objects.filter(quiz__is_published=True)
+    if question_type:
+        questions_qs = questions_qs.filter(question_type=question_type)
+    if difficulty:
+        questions_qs = questions_qs.filter(difficulty=difficulty)
+
+    candidate_ids = list(questions_qs.values_list("id", flat=True))
+    if not candidate_ids:
+        messages.error(request, _("No questions match your filters."))
+        query = {"count": str(desired_count)}
+        if question_type:
+            query["type"] = question_type
+        if difficulty:
+            query["difficulty"] = difficulty
+        url = reverse("blockly_quiz:random")
+        return redirect(f"{url}?{urlencode(query)}")
+
+    selected_count = min(desired_count, len(candidate_ids))
+    if selected_count < len(candidate_ids):
+        selected_ids = random.sample(candidate_ids, selected_count)
+    else:
+        selected_ids = candidate_ids
+
+    selected_questions = list(
+        Question.objects.filter(id__in=selected_ids).prefetch_related("choices")
+    )
+    question_map = {question.id: question for question in selected_questions}
+    ordered_questions = [question_map[qid] for qid in selected_ids if qid in question_map]
+    if not ordered_questions:
+        messages.error(request, _("No questions match your filters."))
+        return redirect("blockly_quiz:random")
+
+    session_key = _ensure_session_key(request)
+    quiz_slug = ""
+    for attempt_index in range(6):
+        quiz_slug = f"tmp-{uuid4().hex[:12]}"
+        if not Quiz.objects.filter(slug=quiz_slug).exists():
+            break
+        quiz_slug = ""
+    if not quiz_slug:
+        raise Http404
+
+    type_label = {"blockly": "Blockly", "scratch": "Scratch", "code": _("Code")}
+    difficulty_label = {
+        "easy": _("Easy"),
+        "medium": _("Medium"),
+        "hard": _("Hard"),
+    }
+    title_parts: list[str] = [_("Random quiz")]
+    if question_type:
+        title_parts.append(str(type_label.get(question_type, question_type)))
+    if difficulty:
+        title_parts.append(str(difficulty_label.get(difficulty, difficulty)))
+    title_parts.append(_("%(count)s questions") % {"count": str(len(ordered_questions))})
+    quiz_title = " - ".join(title_parts)
+
+    with transaction.atomic():
+        quiz = Quiz.objects.create(
+            title=quiz_title[:200],
+            slug=quiz_slug,
+            description="",
+            is_published=False,
+            is_temporary=True,
+            temporary_session_key=session_key,
+        )
+        for index, original in enumerate(ordered_questions):
+            new_question = Question.objects.create(
+                quiz=quiz,
+                sort_order=index,
+                question_type=original.question_type,
+                difficulty=original.difficulty,
+                prompt=original.prompt,
+                blockly_state=original.blockly_state,
+                blockly_xml=original.blockly_xml,
+                scratchblocks_text=original.scratchblocks_text,
+                code_language=original.code_language,
+                code_text=original.code_text,
+                explanation=original.explanation,
+            )
+            for choice in original.choices.all().order_by("sort_order", "id"):
+                Choice.objects.create(
+                    question=new_question,
+                    sort_order=choice.sort_order,
+                    text=choice.text,
+                    is_correct=bool(choice.is_correct),
+                )
+
+    play_url = reverse("blockly_quiz:play", kwargs={"slug": quiz.slug})
+    return redirect(f"{play_url}?count={len(ordered_questions)}")
+
+
+@require_POST
+def random_quiz_discard(request, slug):
+    quiz = get_object_or_404(Quiz.objects.filter(is_temporary=True), slug=slug)
+    session_key = _ensure_session_key(request)
+    if not session_key or (quiz.temporary_session_key or "") != session_key:
+        raise Http404
+    try:
+        quiz.delete()
+    except Exception:
+        pass
+    return redirect("blockly_quiz:random")
 
 
 @require_GET
@@ -192,10 +353,7 @@ def quiz_detail(request, slug):
 @require_GET
 @ensure_csrf_cookie
 def quiz_play(request, slug):
-    quiz = get_object_or_404(
-        _with_quiz_type_flags(Quiz.objects.filter(is_published=True)),
-        slug=slug,
-    )
+    quiz = _get_playable_quiz_or_404(request, slug, include_type_flags=True)
     context = {
         "quiz": quiz,
         "initial_name": (request.GET.get("name") or "").strip(),
@@ -344,7 +502,7 @@ def attempt_review(request, attempt_id):
             (choice for choice in question.choices.all() if choice.is_correct),
             None,
         )
-    return render(
+    response = render(
         request,
         "blockly_quiz/attempt_review.html",
         {
@@ -353,6 +511,12 @@ def attempt_review(request, attempt_id):
             "questions": questions,
         },
     )
+    if getattr(attempt.quiz, "is_temporary", False):
+        try:
+            attempt.quiz.delete()
+        except Exception:
+            pass
+    return response
 
 
 def _parse_json_request(request):
@@ -367,7 +531,7 @@ def _parse_json_request(request):
 
 @require_GET
 def api_quiz_payload(request, slug):
-    quiz = get_object_or_404(Quiz, slug=slug, is_published=True)
+    quiz = _get_playable_quiz_or_404(request, slug)
     questions_qs = (
         Question.objects.filter(quiz=quiz)
         .prefetch_related("choices")
@@ -415,7 +579,7 @@ def api_quiz_payload(request, slug):
 
 @require_POST
 def api_quiz_submit(request, slug):
-    quiz = get_object_or_404(Quiz, slug=slug, is_published=True)
+    quiz = _get_playable_quiz_or_404(request, slug)
     payload = _parse_json_request(request)
     if payload is None:
         return JsonResponse({"error": "invalid_json"}, status=400)

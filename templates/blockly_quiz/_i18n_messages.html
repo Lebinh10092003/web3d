@@ -1,0 +1,67 @@
+{% load i18n %}
+
+{% trans "Question {n} / {total}" as i18n_question_counter %}
+{% trans "{done} / {total} answered" as i18n_answered_counter %}
+{% trans "Copy" as i18n_copy %}
+{% trans "Finish" as i18n_finish %}
+{% trans "Next" as i18n_next %}
+{% trans "Copied." as i18n_copied %}
+{% trans "Copy failed." as i18n_copy_failed %}
+{% trans "Something went wrong." as i18n_something_wrong %}
+{% trans "Missing quiz API URLs." as i18n_missing_api %}
+{% trans "No questions match your filters." as i18n_no_questions_match %}
+{% trans "This quiz has no questions yet." as i18n_no_questions_yet %}
+{% trans "Please choose an answer." as i18n_choose_answer %}
+{% trans "Submitting..." as i18n_submitting %}
+{% trans "Submitted, but no review URL returned." as i18n_submitted_no_review %}
+{% trans "Submit failed: {error}" as i18n_submit_failed %}
+{% trans "Failed to load quiz: {error}" as i18n_failed_load_quiz %}
+{% trans "Preview error" as i18n_preview_error %}
+{% trans "Blockly library is not loaded." as i18n_blockly_not_loaded %}
+{% trans "Check BLOCKLY_QUIZ_BLOCKLY_JS_URLS / BLOCKLY_QUIZ_BLOCKLY_JS_URL." as i18n_blockly_not_loaded_hint %}
+{% trans "Missing Blockly.serialization. Load a newer build (e.g. blockly.min.js) or use blockly_xml instead of blockly_state." as i18n_missing_serialization %}
+{% trans "Could not render Blockly blocks." as i18n_blockly_render_failed %}
+{% trans "Usually caused by missing block types/custom blocks; load the same JS block definitions as the editor." as i18n_blockly_render_hint %}
+{% trans "Blockly XML is empty." as i18n_blockly_xml_empty %}
+{% trans "Blockly is not loaded." as i18n_blockly_is_not_loaded %}
+{% trans "Invalid Blockly XML." as i18n_invalid_blockly_xml %}
+{% trans "Blockly XML parser is not available in this Blockly build." as i18n_blockly_xml_parser_unavailable %}
+{% trans "Blockly.Xml is not available in this Blockly build." as i18n_blockly_xml_unavailable %}
+{% trans "Invalid Blockly XML DOM." as i18n_invalid_blockly_xml_dom %}
+{% trans "Blockly XML loader is not available in this Blockly build." as i18n_blockly_xml_loader_unavailable %}
+{% trans "Scratch blocks renderer is not loaded." as i18n_scratch_renderer_missing %}
+
+<script>
+  window.BLOCKLY_QUIZ_I18N = Object.assign({}, window.BLOCKLY_QUIZ_I18N || {}, {
+    questionCounterTemplate: "{{ i18n_question_counter|escapejs }}",
+    answeredCounterTemplate: "{{ i18n_answered_counter|escapejs }}",
+    copy: "{{ i18n_copy|escapejs }}",
+    finish: "{{ i18n_finish|escapejs }}",
+    next: "{{ i18n_next|escapejs }}",
+    copied: "{{ i18n_copied|escapejs }}",
+    copyFailed: "{{ i18n_copy_failed|escapejs }}",
+    somethingWentWrong: "{{ i18n_something_wrong|escapejs }}",
+    missingQuizApiUrls: "{{ i18n_missing_api|escapejs }}",
+    noQuestionsMatch: "{{ i18n_no_questions_match|escapejs }}",
+    quizHasNoQuestions: "{{ i18n_no_questions_yet|escapejs }}",
+    pleaseChooseAnswer: "{{ i18n_choose_answer|escapejs }}",
+    submitting: "{{ i18n_submitting|escapejs }}",
+    submittedNoReviewUrl: "{{ i18n_submitted_no_review|escapejs }}",
+    submitFailedTemplate: "{{ i18n_submit_failed|escapejs }}",
+    failedToLoadQuizTemplate: "{{ i18n_failed_load_quiz|escapejs }}",
+    previewError: "{{ i18n_preview_error|escapejs }}",
+    blocklyNotLoadedTitle: "{{ i18n_blockly_not_loaded|escapejs }}",
+    blocklyNotLoadedHint: "{{ i18n_blockly_not_loaded_hint|escapejs }}",
+    missingSerialization: "{{ i18n_missing_serialization|escapejs }}",
+    blocklyRenderFailedTitle: "{{ i18n_blockly_render_failed|escapejs }}",
+    blocklyRenderHint: "{{ i18n_blockly_render_hint|escapejs }}",
+    blocklyXmlEmpty: "{{ i18n_blockly_xml_empty|escapejs }}",
+    blocklyIsNotLoaded: "{{ i18n_blockly_is_not_loaded|escapejs }}",
+    invalidBlocklyXml: "{{ i18n_invalid_blockly_xml|escapejs }}",
+    blocklyXmlParserUnavailable: "{{ i18n_blockly_xml_parser_unavailable|escapejs }}",
+    blocklyXmlUnavailable: "{{ i18n_blockly_xml_unavailable|escapejs }}",
+    invalidBlocklyXmlDom: "{{ i18n_invalid_blockly_xml_dom|escapejs }}",
+    blocklyXmlLoaderUnavailable: "{{ i18n_blockly_xml_loader_unavailable|escapejs }}",
+    scratchRendererMissing: "{{ i18n_scratch_renderer_missing|escapejs }}"
+  });
+</script>

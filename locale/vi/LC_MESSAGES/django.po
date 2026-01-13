@@ -804,7 +804,7 @@ msgstr "Trước"
 
 #: .\templates\library\_content_grid.html:72
 msgid "Next"
-msgstr "Sau"
+msgstr "Tiếp"
 
 #: .\templates\library\_download_action.html:2
 msgid "Unlock & download"
@@ -846,7 +846,7 @@ msgstr "Bộ lọc"
 
 #: .\templates\library\_lego_viewer.html:25
 msgid "Reset"
-msgstr ""
+msgstr "Đặt lại"
 
 #: .\templates\library\_lego_viewer.html:39
 msgid "Enable JavaScript to view this 3D model."
@@ -1160,9 +1160,6 @@ msgstr "Thư viện tổng kết"
 #~ msgid "Recap library | Vsteam Lab"
 #~ msgstr "Thư viện tổng kết | Vsteam Lab"
 
-#~ msgid "Review"
-#~ msgstr "Xét duyệt"
-
 #~ msgid "Review usually takes 24-48 hours. Approved submissions earn points."
 #~ msgstr "Xét duyệt thường mất 24-48 giờ. Bài được duyệt sẽ nhận điểm."
 
@@ -1289,3 +1286,226 @@ msgstr "Bỏ đánh dấu hoàn thành"
 
 msgid "Top up instantly via ZaloPay."
 msgstr "Nạp điểm ngay qua ZaloPay."
+
+# Blockly quiz UI
+msgid "Quizzes"
+msgstr "Đề"
+
+msgid "Quiz review"
+msgstr "Xem lại đề"
+
+msgid "Review"
+msgstr "Xem lại"
+
+msgid "Practice multiple-choice questions with Blockly, Scratch, and code snippets."
+msgstr "Luyện tập trắc nghiệm với Blockly, Scratch và đoạn mã."
+
+msgid "Search"
+msgstr "Tìm kiếm"
+
+msgid "Search by name"
+msgstr "Tìm theo tên"
+
+msgid "Type"
+msgstr "Loại"
+
+msgid "Difficulty"
+msgstr "Độ khó"
+
+msgid "All"
+msgstr "Tất cả"
+
+msgid "Easy"
+msgstr "Dễ"
+
+msgid "Medium"
+msgstr "Trung bình"
+
+msgid "Hard"
+msgstr "Khó"
+
+msgid "Random quiz"
+msgstr "Đề ngẫu nhiên"
+
+msgid "Open quiz"
+msgstr "Mở đề"
+
+msgid "No quizzes available yet."
+msgstr "Chưa có đề nào."
+
+msgid "All quizzes"
+msgstr "Tất cả đề"
+
+msgid "Name"
+msgstr "Tên"
+
+msgid "Date of birth"
+msgstr "Ngày sinh"
+
+msgid "Campus"
+msgstr "Cơ sở"
+
+msgid "Number of questions"
+msgstr "Số câu hỏi"
+
+msgid "Shuffle questions"
+msgstr "Trộn câu hỏi"
+
+msgid "Start quiz"
+msgstr "Bắt đầu"
+
+msgid "Random practice"
+msgstr "Luyện ngẫu nhiên"
+
+msgid "Details"
+msgstr "Chi tiết"
+
+msgid "Progress"
+msgstr "Tiến độ"
+
+msgid "Exit"
+msgstr "Thoát"
+
+msgid "In progress"
+msgstr "Đang làm"
+
+msgid "Back to quiz"
+msgstr "Quay lại đề"
+
+msgid "Try again"
+msgstr "Làm lại"
+
+msgid "Score"
+msgstr "Điểm"
+
+msgid "Correct answers"
+msgstr "Câu đúng"
+
+msgid "Correct"
+msgstr "Đúng"
+
+msgid "Incorrect"
+msgstr "Sai"
+
+msgid "Unanswered"
+msgstr "Chưa trả lời"
+
+msgid "Correct answer"
+msgstr "Đáp án đúng"
+
+msgid "Your choice"
+msgstr "Bạn chọn"
+
+msgid "Explanation"
+msgstr "Giải thích"
+
+msgid "This quiz has no questions yet."
+msgstr "Đề này chưa có câu hỏi."
+
+msgid "Question %(n)s / %(total)s"
+msgstr "Câu %(n)s / %(total)s"
+
+msgid "%(n)s questions"
+msgstr "%(n)s câu hỏi"
+
+msgid "%(done)s / %(total)s answered"
+msgstr "Đã trả lời %(done)s / %(total)s"
+
+msgid "Completed at %(date)s"
+msgstr "Hoàn thành lúc %(date)s"
+
+msgid "Finish"
+msgstr "Kết thúc"
+
+msgid "Blockly preview"
+msgstr "Xem trước Blockly"
+
+msgid "Scratch blocks preview"
+msgstr "Xem trước Scratch blocks"
+
+msgid "Copy"
+msgstr "Sao chép"
+
+msgid "Copied."
+msgstr "Đã sao chép."
+
+msgid "Copy failed."
+msgstr "Sao chép thất bại."
+
+msgid "Something went wrong."
+msgstr "Có lỗi xảy ra."
+
+msgid "Missing quiz API URLs."
+msgstr "Thiếu URL API của đề."
+
+msgid "No questions match your filters."
+msgstr "Không có câu hỏi nào khớp bộ lọc."
+
+msgid "Please choose an answer."
+msgstr "Vui lòng chọn đáp án."
+
+msgid "Submitting..."
+msgstr "Đang nộp..."
+
+msgid "Submitted, but no review URL returned."
+msgstr "Đã nộp, nhưng không nhận được liên kết xem lại."
+
+msgid "Submit failed: {error}"
+msgstr "Nộp thất bại: {error}"
+
+msgid "Failed to load quiz: {error}"
+msgstr "Tải đề thất bại: {error}"
+
+msgid "Question {n} / {total}"
+msgstr "Câu {n} / {total}"
+
+msgid "{done} / {total} answered"
+msgstr "Đã trả lời {done} / {total}"
+
+msgid "Preview error"
+msgstr "Lỗi xem trước"
+
+msgid "Blockly library is not loaded."
+msgstr "Chưa tải thư viện Blockly."
+
+msgid "Check BLOCKLY_QUIZ_BLOCKLY_JS_URLS / BLOCKLY_QUIZ_BLOCKLY_JS_URL."
+msgstr "Kiểm tra cấu hình BLOCKLY_QUIZ_BLOCKLY_JS_URLS / BLOCKLY_QUIZ_BLOCKLY_JS_URL."
+
+msgid "Missing Blockly.serialization. Load a newer build (e.g. blockly.min.js) or use blockly_xml instead of blockly_state."
+msgstr "Thiếu Blockly.serialization. Hãy load bản build mới (ví dụ blockly.min.js) hoặc dùng blockly_xml thay cho blockly_state."
+
+msgid "Could not render Blockly blocks."
+msgstr "Không hiển thị được khối Blockly."
+
+msgid "Usually caused by missing block types/custom blocks; load the same JS block definitions as the editor."
+msgstr "Thường do thiếu block type/custom blocks; hãy load đúng JS định nghĩa blocks giống editor."
+
+msgid "Blockly XML is empty."
+msgstr "Blockly XML trống."
+
+msgid "Blockly is not loaded."
+msgstr "Chưa tải Blockly."
+
+msgid "Invalid Blockly XML."
+msgstr "Blockly XML không hợp lệ."
+
+msgid "Blockly XML parser is not available in this Blockly build."
+msgstr "Bản Blockly này không có bộ phân tích Blockly XML."
+
+msgid "Blockly.Xml is not available in this Blockly build."
+msgstr "Bản Blockly này không có Blockly.Xml."
+
+msgid "Invalid Blockly XML DOM."
+msgstr "Blockly XML DOM không hợp lệ."
+
+msgid "Blockly XML loader is not available in this Blockly build."
+msgstr "Bản Blockly này không có bộ nạp Blockly XML."
+
+msgid "Scratch blocks renderer is not loaded."
+msgstr "Chưa tải trình render Scratch blocks."
+
+msgid "Quiz completed."
+msgstr "Đã hoàn thành đề."
+
+msgid "Finish the quiz to view the review screen."
+msgstr "Hãy hoàn thành đề để xem phần xem lại."
