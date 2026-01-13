@@ -10,21 +10,46 @@
 
 {% block content %}
   <div class="container py-4" data-blockly-quiz data-quiz-play data-quiz-slug="{{ quiz.slug }}" data-api-quiz-url="{{ api_quiz_url }}" data-api-submit-url="{{ api_submit_url }}">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-      <div class="d-flex flex-wrap gap-2">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 quiz-play-topbar">
+      <div class="d-flex flex-wrap align-items-center gap-2">
         <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:detail' quiz.slug %}">
           &larr; {% trans "Back" %}
         </a>
         <button class="btn btn-outline-secondary btn-sm" type="button" data-quiz-toggle-intro>
           {% trans "Details" %}
         </button>
+        <div class="quiz-play-title">{{ quiz.title }}</div>
       </div>
-      <div class="text-muted small" data-quiz-progress-text></div>
+      <div class="d-flex flex-wrap align-items-center justify-content-end gap-2">
+        <div class="quiz-brand-icons quiz-brand-icons--sm" aria-hidden="true">
+          {% if quiz.has_blockly %}
+            <img class="quiz-brand-icon" src="{% static 'img/brands/blockly.svg' %}" alt="">
+          {% endif %}
+          {% if quiz.has_scratch %}
+            <img class="quiz-brand-icon" src="{% static 'img/brands/scratch.svg' %}" alt="">
+          {% endif %}
+          {% if quiz.has_code %}
+            <img class="quiz-brand-icon" src="{% static 'img/brands/python.svg' %}" alt="">
+          {% endif %}
+        </div>
+        <div class="text-muted small" data-quiz-progress-text></div>
+      </div>
     </div>
 
     <div class="card shadow-sm mb-4" data-quiz-intro>
       <div class="card-body">
         <h1 class="h4 mb-2">{{ quiz.title }}</h1>
+        <div class="quiz-brand-icons quiz-brand-icons--lg mb-3" aria-hidden="true">
+          {% if quiz.has_blockly %}
+            <img class="quiz-brand-icon" src="{% static 'img/brands/blockly.svg' %}" alt="">
+          {% endif %}
+          {% if quiz.has_scratch %}
+            <img class="quiz-brand-icon" src="{% static 'img/brands/scratch.svg' %}" alt="">
+          {% endif %}
+          {% if quiz.has_code %}
+            <img class="quiz-brand-icon" src="{% static 'img/brands/python.svg' %}" alt="">
+          {% endif %}
+        </div>
         {% if quiz.description %}
           <p class="text-muted mb-3">{{ quiz.description|linebreaksbr }}</p>
         {% endif %}

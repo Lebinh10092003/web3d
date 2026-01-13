@@ -36,6 +36,88 @@ body {
   box-shadow: 0 16px 36px var(--shadow) !important;
 }
 
+[data-blockly-quiz] .quiz-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 18px;
+  border: 1px solid var(--quiz-border);
+  border-radius: var(--quiz-radius);
+  background: linear-gradient(135deg, rgba(69, 224, 107, 0.22), rgba(76, 110, 245, 0.16)),
+    var(--quiz-surface);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 36px var(--shadow);
+}
+
+[data-blockly-quiz] .quiz-hero-text {
+  flex: 1 1 260px;
+  min-width: 240px;
+}
+
+[data-blockly-quiz] .quiz-brand-icons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+[data-blockly-quiz] .quiz-brand-icon {
+  display: block;
+  width: 38px;
+  height: 38px;
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--quiz-border);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  object-fit: contain;
+}
+
+[data-blockly-quiz] .quiz-brand-icons--hero .quiz-brand-icon {
+  width: 54px;
+  height: 54px;
+  padding: 10px;
+  border-radius: 18px;
+}
+
+[data-blockly-quiz] .quiz-brand-icons--lg .quiz-brand-icon {
+  width: 46px;
+  height: 46px;
+  padding: 8px;
+  border-radius: 16px;
+}
+
+[data-blockly-quiz] .quiz-brand-icons--sm .quiz-brand-icon {
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+[data-blockly-quiz] .quiz-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+[data-blockly-quiz] .quiz-card-meta .quiz-brand-icons {
+  gap: 8px;
+}
+
+[data-blockly-quiz] .quiz-play-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  max-width: min(42vw, 360px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 [data-blockly-quiz] .btn {
   border-radius: 999px;
   font-weight: 600;
