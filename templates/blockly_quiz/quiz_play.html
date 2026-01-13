@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ quiz.title }} - {{ SITE_NAME }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/bootstrap_layered.css' %}">
+  <link rel="stylesheet" href="{% static 'css/blockly_quiz.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="container py-4" data-blockly-quiz data-quiz-play data-quiz-slug="{{ quiz.slug }}" data-api-quiz-url="{{ api_quiz_url }}" data-api-submit-url="{{ api_submit_url }}">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:detail' quiz.slug %}">
+          &larr; {% trans "Back" %}
+        </a>
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-quiz-toggle-intro>
+          {% trans "Details" %}
+        </button>
+      </div>
+      <div class="text-muted small" data-quiz-progress-text></div>
+    </div>
+
+    <div class="card shadow-sm mb-4" data-quiz-intro>
+      <div class="card-body">
+        <h1 class="h4 mb-2">{{ quiz.title }}</h1>
+        {% if quiz.description %}
+          <p class="text-muted mb-3">{{ quiz.description|linebreaksbr }}</p>
+        {% endif %}
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="quiz-play-name">{% trans "Name" %}</label>
+            <input class="form-control" id="quiz-play-name" name="name" autocomplete="name" value="{{ initial_name }}">
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="quiz-play-dob">{% trans "Date of birth" %}</label>
+            <input class="form-control" id="quiz-play-dob" name="dob" type="date" autocomplete="bday" value="{{ initial_dob }}">
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="quiz-play-campus">{% trans "Campus" %}</label>
+            <input class="form-control" id="quiz-play-campus" name="campus" autocomplete="organization" value="{{ initial_campus }}">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress mb-4" role="progressbar" aria-label="{% trans 'Progress' %}" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+      <div class="progress-bar" data-quiz-progress-bar style="width: 0%"></div>
+    </div>
+
+    <div id="quiz-client-stage">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted">{% trans "Loading..." %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% for src in BLOCKLY_QUIZ_BLOCKLY_JS_URLS %}
+    <script src="{{ src }}"></script>
+  {% endfor %}
+  <script>
+    window.BLOCKLY_QUIZ_MEDIA_URL = "{{ BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL|escapejs }}";
+  </script>
+  <script src="{{ BLOCKLY_QUIZ_SCRATCHBLOCKS_JS_URL }}"></script>
+  <script src="{% static 'js/blockly_quiz.js' %}"></script>
+  <script src="{% static 'js/scratchblocks_quiz.js' %}"></script>
+  <script src="{% static 'js/blockly_quiz_client.js' %}"></script>
+{% endblock %}

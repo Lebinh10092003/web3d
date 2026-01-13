@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Blockly">
+  <rect x="10" y="18" width="44" height="34" rx="12" fill="#F7C948" stroke="rgba(0,0,0,0.15)" stroke-width="2"/>
+  <rect x="20" y="10" width="10" height="16" rx="5" fill="#F7C948" stroke="rgba(0,0,0,0.15)" stroke-width="2"/>
+  <rect x="34" y="10" width="10" height="16" rx="5" fill="#F7C948" stroke="rgba(0,0,0,0.15)" stroke-width="2"/>
+  <rect x="22" y="44" width="20" height="12" rx="6" fill="#F7C948" stroke="rgba(0,0,0,0.15)" stroke-width="2"/>
+  <path d="M20 30h24" stroke="rgba(0,0,0,0.18)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M20 38h18" stroke="rgba(0,0,0,0.18)" stroke-width="3" stroke-linecap="round"/>
+</svg>

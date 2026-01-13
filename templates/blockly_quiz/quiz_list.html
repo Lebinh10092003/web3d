@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Blockly quizzes" %} - {{ SITE_NAME }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/bootstrap_layered.css' %}">
+  <link rel="stylesheet" href="{% static 'css/blockly_quiz.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="container py-4" data-blockly-quiz>
+    <div class="quiz-hero mb-4">
+      <div class="quiz-hero-text">
+        <h1 class="h3 mb-1">{% trans "Blockly quizzes" %}</h1>
+        <p class="text-muted mb-0">{% trans "Practice with multiple-choice questions illustrated by Blockly blocks." %}</p>
+      </div>
+      <div class="quiz-brand-icons quiz-brand-icons--hero" aria-hidden="true">
+        <img class="quiz-brand-icon" src="{% static 'img/brands/blockly.svg' %}" alt="">
+        <img class="quiz-brand-icon" src="{% static 'img/brands/scratch.svg' %}" alt="">
+        <img class="quiz-brand-icon" src="{% static 'img/brands/python.svg' %}" alt="">
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="quiz-search">{% trans "Search" %}</label>
+            <input
+              class="form-control"
+              id="quiz-search"
+              name="q"
+              value="{{ q|default:'' }}"
+              placeholder="{% trans 'Search by name…' %}"
+            >
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="quiz-type">{% trans "Type" %}</label>
+            <select class="form-select" id="quiz-type" name="type">
+              <option value="">{% trans "All" %}</option>
+              <option value="blockly" {% if filter_type == 'blockly' %}selected{% endif %}>Blockly</option>
+              <option value="scratch" {% if filter_type == 'scratch' %}selected{% endif %}>Scratch</option>
+              <option value="code" {% if filter_type == 'code' %}selected{% endif %}>{% trans "Code" %}</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="quiz-difficulty">{% trans "Difficulty" %}</label>
+            <select class="form-select" id="quiz-difficulty" name="difficulty">
+              <option value="">{% trans "All" %}</option>
+              <option value="easy" {% if filter_difficulty == 'easy' %}selected{% endif %}>{% trans "Easy" %}</option>
+              <option value="medium" {% if filter_difficulty == 'medium' %}selected{% endif %}>{% trans "Medium" %}</option>
+              <option value="hard" {% if filter_difficulty == 'hard' %}selected{% endif %}>{% trans "Hard" %}</option>
+            </select>
+          </div>
+          <div class="col-12 d-flex flex-wrap gap-2">
+            <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
+            <a class="btn btn-outline-secondary" href="{% url 'blockly_quiz:list' %}">{% trans "Reset" %}</a>
+            <button class="btn btn-outline-primary ms-auto" type="submit" name="random" value="1">{% trans "Random quiz" %}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% if quizzes %}
+      <div class="row g-3">
+        {% for quiz in quizzes %}
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <div class="quiz-card-meta">
+                  <div class="quiz-brand-icons">
+                    {% if quiz.has_blockly %}
+                      <img class="quiz-brand-icon" src="{% static 'img/brands/blockly.svg' %}" alt="Blockly">
+                    {% endif %}
+                    {% if quiz.has_scratch %}
+                      <img class="quiz-brand-icon" src="{% static 'img/brands/scratch.svg' %}" alt="Scratch">
+                    {% endif %}
+                    {% if quiz.has_code %}
+                      <img class="quiz-brand-icon" src="{% static 'img/brands/python.svg' %}" alt="Python">
+                    {% endif %}
+                  </div>
+                </div>
+                <h2 class="h5 card-title">{{ quiz.title }}</h2>
+                {% if quiz.description %}
+                  <p class="card-text text-muted">{{ quiz.description|truncatechars:160 }}</p>
+                {% endif %}
+              </div>
+              <div class="card-footer bg-transparent border-0 pt-0 pb-3">
+                <a class="btn btn-primary w-100" href="{{ quiz.get_absolute_url }}">
+                  {% trans "Open quiz" %}
+                </a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info">{% trans "No quizzes available yet." %}</div>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

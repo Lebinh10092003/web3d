@@ -1,0 +1,381 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .quiz-import {
+      max-width: 980px;
+    }
+
+    .quiz-import form textarea {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .quiz-import__toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+
+    .quiz-import__examples {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .quiz-import-example {
+      border: 1px solid var(--hairline-color, #d8d8d8);
+      border-radius: 12px;
+      background: var(--body-bg, #fff);
+      overflow: hidden;
+    }
+
+    .quiz-import-example__header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--hairline-color, #d8d8d8);
+      background: rgba(0, 0, 0, 0.03);
+      background: color-mix(in srgb, var(--body-bg, #fff) 92%, #000 8%);
+    }
+
+    .quiz-import-example__title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .quiz-import-example__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .quiz-import-example__actions .button {
+      margin: 0;
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .quiz-import-example__pre {
+      margin: 0;
+      padding: 12px 14px;
+      max-height: 420px;
+      overflow: auto;
+      white-space: pre;
+      tab-size: 2;
+      background: rgba(0, 0, 0, 0.03);
+      background: color-mix(in srgb, var(--body-bg, #fff) 92%, #000 8%);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .quiz-import-example__note {
+      padding: 10px 14px 14px;
+      color: var(--body-quiet-color, #555);
+      font-size: 12px;
+    }
+
+    .quiz-import-example__note code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      font-size: 12px;
+    }
+  </style>
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script>
+    (function () {
+      function normalizeExample(text) {
+        return String(text || "").replace(/\\r\\n/g, "\\n").trim();
+      }
+
+      function showToast(message, icon) {
+        if (!window.Swal) {
+          return;
+        }
+        window.Swal.fire({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+          icon: icon || "info",
+          title: message || ""
+        });
+      }
+
+      async function copyToClipboard(text) {
+        const value = normalizeExample(text);
+        if (!value) {
+          throw new Error("empty");
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(value);
+          return;
+        }
+
+        const textarea = document.createElement("textarea");
+        textarea.value = value;
+        textarea.setAttribute("readonly", "readonly");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        textarea.style.top = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(textarea);
+        if (!ok) {
+          throw new Error("copy_failed");
+        }
+      }
+
+      function getSourceText(sourceId) {
+        const source = document.getElementById(sourceId);
+        if (!source) {
+          return "";
+        }
+        return normalizeExample(source.textContent || "");
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const root = document.querySelector("[data-quiz-import]");
+        if (!root) {
+          return;
+        }
+
+        const textarea = document.getElementById("id_data");
+
+        root.querySelectorAll("[data-import-pre]").forEach((pre) => {
+          const sourceId = pre.getAttribute("data-import-target") || "";
+          const value = getSourceText(sourceId);
+          if (value) {
+            pre.textContent = value;
+          }
+        });
+
+        root.querySelectorAll("[data-import-copy]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const sourceId = button.getAttribute("data-import-copy") || "";
+            const value = getSourceText(sourceId);
+            if (!value) {
+              showToast("Nothing to copy.", "warning");
+              return;
+            }
+            try {
+              await copyToClipboard(value);
+              showToast("Copied.", "success");
+            } catch (error) {
+              showToast("Copy failed.", "error");
+            }
+          });
+        });
+
+        root.querySelectorAll("[data-import-fill]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (!textarea) {
+              showToast("Form field not found.", "error");
+              return;
+            }
+            const sourceId = button.getAttribute("data-import-fill") || "";
+            const value = getSourceText(sourceId);
+            if (!value) {
+              showToast("Nothing to insert.", "warning");
+              return;
+            }
+            textarea.value = value;
+            textarea.focus();
+            textarea.scrollIntoView({ behavior: "smooth", block: "center" });
+            showToast("Inserted into form.", "success");
+          });
+        });
+      });
+    })();
+  </script>
+{% endblock %}
+
+{% block content %}
+  <div id="content-main" class="quiz-import" data-quiz-import>
+    <h1>{% trans "Import questions" %}: {{ quiz.title }}</h1>
+
+    <p>
+      {% trans "Paste YAML or JSON with many questions at once. Each question must have 2+ choices and exactly 1 correct choice." %}
+    </p>
+    <p>
+      {% trans "Optional fields per question:" %}
+      <code>question_type</code>, <code>difficulty</code>,
+      <code>blockly_state</code>/<code>blockly_xml</code>,
+      <code>scratchblocks_text</code>,
+      <code>code_text</code> + <code>code_language</code>.
+    </p>
+
+    <div class="quiz-import__toolbar">
+      <a class="button" href="{% url 'admin:blockly_quiz_quiz_change' quiz.id %}">{% trans "Back to quiz" %}</a>
+    </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="submit-row">
+        <input type="submit" value="{% trans 'Import' %}" class="default">
+        <a class="button cancel-link" href="{% url 'admin:blockly_quiz_quiz_change' quiz.id %}">{% trans "Cancel" %}</a>
+      </div>
+    </form>
+
+    <div class="quiz-import__examples">
+      <div class="quiz-import-example">
+        <div class="quiz-import-example__header">
+          <h2 class="quiz-import-example__title">{% trans "Example (YAML)" %}</h2>
+          <div class="quiz-import-example__actions">
+            <button type="button" class="button" data-import-fill="quiz-import-example-yaml">{% trans "Use" %}</button>
+            <button type="button" class="button" data-import-copy="quiz-import-example-yaml">{% trans "Copy" %}</button>
+          </div>
+        </div>
+        <pre class="quiz-import-example__pre" data-import-pre data-import-target="quiz-import-example-yaml"></pre>
+        <div class="quiz-import-example__note">
+          {% trans "Tip:" %} {% trans "You can paste this into the textarea above." %}
+        </div>
+        <script type="text/plain" id="quiz-import-example-yaml">
+questions:
+  - prompt: "Question 1: What does this loop do?"
+    question_type: "blockly"
+    difficulty: "easy"
+    blockly_xml: |
+      <xml xmlns="https://developers.google.com/blockly/xml">
+        <block type="controls_repeat_ext" x="10" y="10">
+          <value name="TIMES">
+            <shadow type="math_number">
+              <field name="NUM">5</field>
+            </shadow>
+          </value>
+          <statement name="DO">
+            <block type="text_print">
+              <value name="TEXT">
+                <shadow type="text">
+                  <field name="TEXT">Hi</field>
+                </shadow>
+              </value>
+            </block>
+          </statement>
+        </block>
+      </xml>
+    explanation: "It repeats 5 times and prints 'Hi' each time."
+    choices:
+      - text: "Prints 'Hi' 5 times"
+        is_correct: true
+      - text: "Prints 'Hi' forever"
+        is_correct: false
+        </script>
+      </div>
+
+      <div class="quiz-import-example">
+        <div class="quiz-import-example__header">
+          <h2 class="quiz-import-example__title">{% trans "Example (JSON with Blockly workspace state)" %}</h2>
+          <div class="quiz-import-example__actions">
+            <button type="button" class="button" data-import-fill="quiz-import-example-json-state">{% trans "Use" %}</button>
+            <button type="button" class="button" data-import-copy="quiz-import-example-json-state">{% trans "Copy" %}</button>
+          </div>
+        </div>
+        <pre class="quiz-import-example__pre" data-import-pre data-import-target="quiz-import-example-json-state"></pre>
+        <div class="quiz-import-example__note">
+          {% trans "Use" %} <code>blockly_state</code> {% trans "for accurate preview (requires modern Blockly build)." %}
+        </div>
+        <script type="text/plain" id="quiz-import-example-json-state">
+{
+  "questions": [
+    {
+      "prompt": "Question 2: How many times does the loop run?",
+      "question_type": "blockly",
+      "difficulty": "easy",
+      "blockly_state": {
+        "blocks": {
+          "languageVersion": 0,
+          "blocks": [
+            {
+              "type": "controls_repeat_ext",
+              "x": 10,
+              "y": 10,
+              "inputs": {
+                "TIMES": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": { "NUM": 5 }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "explanation": "The loop repeats 5 times.",
+      "choices": [
+        { "text": "5 times", "is_correct": true },
+        { "text": "Forever", "is_correct": false }
+      ]
+    }
+  ]
+}
+        </script>
+      </div>
+
+      <div class="quiz-import-example">
+        <div class="quiz-import-example__header">
+          <h2 class="quiz-import-example__title">{% trans "Example (JSON with Scratch blocks + Python)" %}</h2>
+          <div class="quiz-import-example__actions">
+            <button type="button" class="button" data-import-fill="quiz-import-example-json-scratch">{% trans "Use" %}</button>
+            <button type="button" class="button" data-import-copy="quiz-import-example-json-scratch">{% trans "Copy" %}</button>
+          </div>
+        </div>
+        <pre class="quiz-import-example__pre" data-import-pre data-import-target="quiz-import-example-json-scratch"></pre>
+        <div class="quiz-import-example__note">
+          {% trans "Fields:" %} <code>question_type</code>, <code>difficulty</code>, <code>scratchblocks_text</code>, <code>code_text</code>, <code>code_language</code>
+        </div>
+        <script type="text/plain" id="quiz-import-example-json-scratch">
+{
+  "questions": [
+    {
+      "prompt": "Scratch: What does this script do?",
+      "question_type": "scratch",
+      "difficulty": "easy",
+      "scratchblocks_text": "when green flag clicked\\nrepeat (5)\\n  move (10) steps\\nend",
+      "explanation": "It repeats 5 times, moving 10 steps each time (total 50 steps).",
+      "choices": [
+        { "text": "Moves 50 steps", "is_correct": true },
+        { "text": "Moves 10 steps", "is_correct": false }
+      ]
+    },
+    {
+      "prompt": "Python: What is the output?",
+      "question_type": "code",
+      "difficulty": "easy",
+      "code_language": "python",
+      "code_text": "x = 2\\nprint(x * 5)",
+      "explanation": "2 * 5 = 10.",
+      "choices": [
+        { "text": "10", "is_correct": true },
+        { "text": "25", "is_correct": false }
+      ]
+    }
+  ]
+}
+        </script>
+      </div>
+    </div>
+  </div>
+{% endblock %}

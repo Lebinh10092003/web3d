@@ -22,6 +22,12 @@ def site_meta(request):
         "SITE_NAME": site_name,
         "SITE_URL": base_url,
         "LEGO_THREE_BASE_URL": getattr(settings, "LEGO_THREE_BASE_URL", ""),
+        "BLOCKLY_QUIZ_BLOCKLY_JS_URL": getattr(settings, "BLOCKLY_QUIZ_BLOCKLY_JS_URL", ""),
+        "BLOCKLY_QUIZ_BLOCKLY_JS_URLS": getattr(settings, "BLOCKLY_QUIZ_BLOCKLY_JS_URLS", []),
+        "BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL": getattr(settings, "BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL", ""),
+        "BLOCKLY_QUIZ_SCRATCHBLOCKS_JS_URL": getattr(
+            settings, "BLOCKLY_QUIZ_SCRATCHBLOCKS_JS_URL", ""
+        ),
         "DEFAULT_META_TITLE": _("%(site)s | V for tech, V for future")
         % {"site": site_name},
         "DEFAULT_META_DESCRIPTION": _(

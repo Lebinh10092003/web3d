@@ -1,0 +1,12 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block object-tools-items %}
+  {{ block.super }}
+  {% if change and not is_popup %}
+    <li>
+      <a href="{% url 'admin:blockly_quiz_quiz_import_questions' original.id %}">{% trans "Import questions" %}</a>
+    </li>
+  {% endif %}
+{% endblock %}
+

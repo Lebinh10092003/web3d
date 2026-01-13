@@ -1,0 +1,10 @@
+[data-scratch-tool] #scratchblocks-preview {
+  min-height: 420px;
+  max-height: min(70vh, 720px);
+  overflow: auto;
+}
+
+[data-scratch-tool] textarea.form-control.font-monospace {
+  font-size: 0.9rem;
+}
+

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Blockly - {{ SITE_NAME }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/bootstrap_layered.css' %}">
+  <link rel="stylesheet" href="{% static 'css/blockly_quiz.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="container py-4" data-blockly-quiz>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+      <div>
+        <h1 class="h3 mb-1">Giới thiệu Blockly (mã nguồn mở, kéo‑thả)</h1>
+        <div class="text-muted small">Tổng quan, cách tích hợp, và cách quiz này load thư viện để hiển thị khối lệnh.</div>
+      </div>
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:list' %}">&larr; Quizzes</a>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h2 class="h5 mb-2">Blockly là gì?</h2>
+        <p class="mb-0">
+          Blockly là một thư viện mã nguồn mở giúp thêm môi trường lập trình trực quan bằng cách “kéo‑thả” các khối lệnh vào ứng dụng web (hoặc di động).
+          Thay vì gõ mã, người dùng ghép các khối lại để tạo chương trình; đằng sau, Blockly có thể sinh mã văn bản tương ứng (ví dụ JavaScript hoặc Python).
+          Blockly ban đầu được Google phát triển và đến tháng 11/2025 thì dự án được chuyển giao cho Raspberry Pi Foundation tiếp tục duy trì.
+          Hiện nay Blockly là nền tảng của nhiều môi trường lập trình bằng khối và được dùng rộng rãi trong giáo dục lập trình trực quan.
+        </p>
+        <div class="text-muted small mt-2">
+          Mã nguồn: <a href="https://github.com/RaspberryPiFoundation/blockly" target="_blank" rel="noopener">RaspberryPiFoundation/blockly</a>
+          • License: Apache‑2.0
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h2 class="h5 mb-2">Cài đặt (khuyến nghị cho dự án)</h2>
+        <p class="text-muted mb-2">Dùng NPM/Yarn giúp dễ cập nhật phiên bản và tận dụng hệ sinh thái plugin.</p>
+        <pre class="code-preview mb-0"><code>npm install blockly</code></pre>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h2 class="h5 mb-2">Tích hợp Blockly bằng thẻ script (nhanh)</h2>
+        <p class="mb-2">Nếu chỉ thử nghiệm nhanh (không dùng bundler), có thể nhúng trực tiếp các file JS đã build sẵn.</p>
+        <ul class="mb-3">
+          <li><code>blockly_compressed.js</code> — core của Blockly</li>
+          <li><code>blocks_compressed.js</code> — các block chuẩn (Logic/Loops/Math/Text…)</li>
+          <li><code>javascript_compressed.js</code> / <code>python_compressed.js</code> — bộ sinh mã (tuỳ chọn)</li>
+          <li><code>msg/&lt;ngôn_ngữ&gt;.js</code> — file ngôn ngữ (ví dụ <code>msg/en.js</code>)</li>
+          <li><code>media/</code> — tài nguyên icon/âm thanh (trashcan/zoom…)</li>
+        </ul>
+        <p class="text-muted mb-2">Ví dụ tối giản:</p>
+        <pre class="code-preview"><code>&lt;div id="blocklyDiv" style="height: 480px; width: 100%;"&gt;&lt;/div&gt;
+&lt;xml id="toolbox" style="display:none"&gt;
+  &lt;category name="Loops"&gt;
+    &lt;block type="controls_repeat_ext"&gt;&lt;/block&gt;
+  &lt;/category&gt;
+&lt;/xml&gt;</code></pre>
+        <p class="text-muted mb-2">Khởi tạo workspace:</p>
+        <pre class="code-preview mb-0"><code>const workspace = Blockly.inject("blocklyDiv", {
+  toolbox: document.getElementById("toolbox"),
+  media: "media/",
+  trashcan: true,
+  zoom: { controls: true, wheel: true }
+});</code></pre>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-2">Trong dự án quiz này: làm sao để hiển thị đúng “câu lệnh/khối”?</h2>
+        <p class="mb-2">
+          Quiz render Blockly hoàn toàn trên client. Nếu câu hỏi dùng block type tuỳ biến (robotics kit, custom blocks, v.v.)
+          thì bạn phải load đúng file JS định nghĩa các block đó (giống editor), nếu không Blockly sẽ báo thiếu block type.
+        </p>
+        <p class="text-muted mb-2">Cấu hình trong <code>.env_local</code> (ví dụ):</p>
+        <pre class="code-preview"><code>BLOCKLY_QUIZ_BLOCKLY_JS_URLS=https://unpkg.com/blockly/blockly.min.js,https://unpkg.com/blockly/msg/en.js
+BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL=https://unpkg.com/blockly/media/</code></pre>
+        <p class="text-muted mb-0">
+          Gợi ý: thêm các file JS custom blocks của bạn vào cuối <code>BLOCKLY_QUIZ_BLOCKLY_JS_URLS</code> (sau core Blockly),
+          sau đó restart server.
+        </p>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

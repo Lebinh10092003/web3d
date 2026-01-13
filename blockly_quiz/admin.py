@@ -1,0 +1,160 @@
+from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.forms import Textarea
+from django.http import Http404
+from django.shortcuts import redirect
+from django.template.response import TemplateResponse
+from django.urls import path, reverse
+
+from .forms import BulkQuestionImportForm
+from .importer import import_questions_into_quiz, parse_bulk_questions
+from .models import Attempt, AttemptAnswer, Choice, Question, Quiz
+
+
+class ChoiceInline(admin.TabularInline):
+    model = Choice
+    extra = 2
+
+
+@admin.register(Quiz)
+class QuizAdmin(admin.ModelAdmin):
+    list_display = ("title", "slug", "is_published", "created_at", "updated_at")
+    list_filter = ("is_published",)
+    search_fields = ("title", "slug")
+    prepopulated_fields = {"slug": ("title",)}
+    change_form_template = "admin/blockly_quiz/quiz/change_form.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "<int:quiz_id>/import-questions/",
+                self.admin_site.admin_view(self.import_questions_view),
+                name="blockly_quiz_quiz_import_questions",
+            ),
+        ]
+        return custom_urls + urls
+
+    def import_questions_view(self, request, quiz_id: int):
+        quiz = self.get_object(request, quiz_id)
+        if not quiz:
+            raise Http404
+        if not self.has_change_permission(request, obj=quiz):
+            raise Http404
+
+        if request.method == "POST":
+            form = BulkQuestionImportForm(request.POST)
+            if form.is_valid():
+                try:
+                    questions = parse_bulk_questions(form.cleaned_data["data"])
+                    created_questions, created_choices = import_questions_into_quiz(
+                        quiz=quiz,
+                        questions=questions,
+                        replace_existing=form.cleaned_data.get("replace_existing", False),
+                    )
+                except ValidationError as exc:
+                    form.add_error("data", "; ".join(exc.messages) if exc.messages else str(exc))
+                else:
+                    self.message_user(
+                        request,
+                        f"Imported {created_questions} questions ({created_choices} choices).",
+                        level=messages.SUCCESS,
+                    )
+                    return redirect(
+                        reverse("admin:blockly_quiz_quiz_change", args=(quiz.id,))
+                    )
+        else:
+            form = BulkQuestionImportForm()
+
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "quiz": quiz,
+            "title": f"Import questions: {quiz.title}",
+            "form": form,
+        }
+        return TemplateResponse(
+            request,
+            "admin/blockly_quiz/quiz/import_questions.html",
+            context,
+        )
+
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ("quiz", "sort_order", "question_type", "difficulty", "short_prompt")
+    list_filter = ("quiz", "question_type", "difficulty")
+    search_fields = ("prompt",)
+    ordering = ("quiz", "sort_order", "id")
+    inlines = [ChoiceInline]
+    fieldsets = (
+        (None, {"fields": ("quiz", "sort_order", "question_type", "difficulty", "prompt")}),
+        ("Blockly", {"fields": ("blockly_state", "blockly_xml")}),
+        ("Scratch", {"fields": ("scratchblocks_text",)}),
+        ("Code", {"fields": ("code_language", "code_text")}),
+        ("Review", {"fields": ("explanation",)}),
+    )
+    formfield_overrides = {
+        models.TextField: {"widget": Textarea(attrs={"rows": 6})},
+    }
+
+    @admin.display(description="Prompt")
+    def short_prompt(self, obj):
+        prompt = (obj.prompt or "").strip()
+        return prompt if len(prompt) <= 80 else f"{prompt[:77]}..."
+
+
+class AttemptAnswerInline(admin.TabularInline):
+    model = AttemptAnswer
+    extra = 0
+    readonly_fields = ("question", "selected_choice", "is_correct", "answered_at")
+    can_delete = False
+
+
+@admin.register(Attempt)
+class AttemptAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "quiz",
+        "user",
+        "participant_name",
+        "participant_campus",
+        "started_at",
+        "completed_at",
+        "score_percent",
+        "correct_count",
+        "total_questions",
+        "sheets_sent_at",
+    )
+    list_filter = ("quiz", "completed_at")
+    search_fields = (
+        "id",
+        "participant_name",
+        "participant_campus",
+        "user__username",
+        "user__email",
+        "session_key",
+    )
+    readonly_fields = (
+        "quiz",
+        "user",
+        "session_key",
+        "started_at",
+        "completed_at",
+        "total_questions",
+        "correct_count",
+        "score_percent",
+        "sheets_queued_at",
+        "sheets_sent_at",
+        "sheets_error",
+    )
+    inlines = [AttemptAnswerInline]
+
+
+@admin.register(AttemptAnswer)
+class AttemptAnswerAdmin(admin.ModelAdmin):
+    list_display = ("attempt", "question", "selected_choice", "is_correct", "answered_at")
+    list_filter = ("is_correct", "attempt__quiz")
+    search_fields = ("attempt__id", "question__prompt", "selected_choice__text")
+    readonly_fields = ("attempt", "question", "selected_choice", "is_correct", "answered_at")

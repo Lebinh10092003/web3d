@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "gating",
     "contributions",
     "analytics",
+    "blockly_quiz",
 ]
 
 MIDDLEWARE = [
@@ -140,6 +141,36 @@ X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
 LEGO_THREE_BASE_URL = os.environ.get(
     "LEGO_THREE_BASE_URL", "https://cdn.jsdelivr.net/npm/three@0.160.0"
 )
+
+BLOCKLY_QUIZ_BLOCKLY_JS_URL = (
+    os.environ.get(
+        "BLOCKLY_QUIZ_BLOCKLY_JS_URL", "https://unpkg.com/blockly/blockly.min.js"
+    )
+    .strip()
+    or "https://unpkg.com/blockly/blockly.min.js"
+)
+BLOCKLY_QUIZ_BLOCKLY_JS_URLS = [
+    url.strip()
+    for url in os.environ.get("BLOCKLY_QUIZ_BLOCKLY_JS_URLS", "").split(",")
+    if url.strip()
+]
+if not BLOCKLY_QUIZ_BLOCKLY_JS_URLS:
+    BLOCKLY_QUIZ_BLOCKLY_JS_URLS = [BLOCKLY_QUIZ_BLOCKLY_JS_URL]
+BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL = (
+    os.environ.get("BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL", "https://unpkg.com/blockly/media/")
+    .strip()
+    or "https://unpkg.com/blockly/media/"
+)
+BLOCKLY_QUIZ_SCRATCHBLOCKS_JS_URL = (
+    os.environ.get(
+        "BLOCKLY_QUIZ_SCRATCHBLOCKS_JS_URL",
+        "https://scratchblocks.github.io/js/scratchblocks-v3.6.1-min.js",
+    )
+    .strip()
+    or "https://scratchblocks.github.io/js/scratchblocks-v3.6.1-min.js"
+)
+BLOCKLY_QUIZ_GSHEET_URL = os.environ.get("BLOCKLY_QUIZ_GSHEET_URL", "").strip()
+BLOCKLY_QUIZ_GSHEET_TIMEOUT = int(os.environ.get("BLOCKLY_QUIZ_GSHEET_TIMEOUT", "10"))
 
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
 

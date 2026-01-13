@@ -1,0 +1,14 @@
+[data-blockly-tool] .blockly-editor {
+  width: 100%;
+  height: min(70vh, 720px);
+  min-height: 460px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+[data-blockly-tool] textarea.form-control.font-monospace {
+  font-size: 0.9rem;
+}
+

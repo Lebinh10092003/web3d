@@ -44,6 +44,7 @@ urlpatterns = [
     path("interactions/", include("interactions.urls")),
     path("contributions/", include("contributions.urls")),
     path("payments/", include("gating.urls")),
+    path("quizzes/", include("blockly_quiz.urls")),
     path("", include("library.urls")),
 ]
 

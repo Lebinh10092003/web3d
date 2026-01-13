@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Quiz review" %} - {{ quiz.title }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/bootstrap_layered.css' %}">
+  <link rel="stylesheet" href="{% static 'css/blockly_quiz.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="container py-4" data-blockly-quiz>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+      <div>
+        <h1 class="h3 mb-1">{% trans "Review" %}: {{ quiz.title }}</h1>
+        <div class="text-muted small">
+          {% if attempt.completed_at %}
+            {% blocktrans with date=attempt.completed_at %}Completed at {{ date }}{% endblocktrans %}
+          {% else %}
+            {% trans "In progress" %}
+          {% endif %}
+        </div>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:detail' quiz.slug %}">
+          {% trans "Back to quiz" %}
+        </a>
+        <form method="post" action="{% url 'blockly_quiz:start' quiz.slug %}">
+          {% csrf_token %}
+          <button class="btn btn-primary btn-sm" type="submit">{% trans "Try again" %}</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <div class="row g-3 align-items-center">
+          <div class="col-12 col-md">
+            <div class="fw-semibold">{% trans "Score" %}</div>
+            <div class="display-6 mb-0">{{ attempt.score_percent }}%</div>
+          </div>
+          <div class="col-12 col-md">
+            <div class="fw-semibold">{% trans "Correct answers" %}</div>
+            <div class="fs-4 mb-0">{{ attempt.correct_count }} / {{ attempt.total_questions }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% for question in questions %}
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+            <div class="text-muted small">
+              {% blocktrans with n=forloop.counter total=questions|length %}Question {{ n }} / {{ total }}{% endblocktrans %}
+            </div>
+            {% if question.answer %}
+              {% if question.answer.is_correct %}
+                <span class="badge text-bg-success">{% trans "Correct" %}</span>
+              {% else %}
+                <span class="badge text-bg-danger">{% trans "Incorrect" %}</span>
+              {% endif %}
+            {% else %}
+              <span class="badge text-bg-secondary">{% trans "Unanswered" %}</span>
+            {% endif %}
+          </div>
+
+          <div class="mb-3 blockly-quiz-prompt">
+            {{ question.prompt|linebreaksbr }}
+          </div>
+
+          {% with qid=question.id|stringformat:"s" %}
+            {% if question.blockly_state or question.blockly_xml %}
+              {% with script_id="blockly-xml-review-"|add:qid %}
+                {% if question.blockly_state %}
+                  {{ question.blockly_state|json_script:script_id }}
+                {% else %}
+                  {{ question.blockly_xml|json_script:script_id }}
+                {% endif %}
+                <div class="mb-3">
+                  <div
+                    class="blockly-preview border rounded"
+                    data-blockly-preview
+                    data-blockly-script-id="{{ script_id }}"
+                    aria-label="{% trans 'Blockly preview' %}"
+                  ></div>
+                </div>
+              {% endwith %}
+            {% endif %}
+
+            {% if question.scratchblocks_text %}
+              {% with script_id="scratchblocks-review-"|add:qid %}
+                {{ question.scratchblocks_text|json_script:script_id }}
+                <div class="mb-3">
+                  <div
+                    class="scratchblocks-preview border rounded"
+                    data-scratchblocks-preview
+                    data-scratchblocks-script-id="{{ script_id }}"
+                    aria-label="{% trans 'Scratch blocks preview' %}"
+                  ></div>
+                </div>
+              {% endwith %}
+            {% endif %}
+          {% endwith %}
+
+          {% if question.code_text %}
+            <div class="mb-3">
+              <pre class="code-preview"><code class="language-{{ question.code_language|default:'python' }}">{{ question.code_text }}</code></pre>
+            </div>
+          {% endif %}
+
+          <div class="list-group mb-3">
+            {% for choice in question.choices.all %}
+              {% if choice.is_correct %}
+                <div class="list-group-item list-group-item-success">
+                  <span class="me-2">✓</span>{{ choice.text }}
+                  <span class="badge text-bg-success float-end">{% trans "Correct answer" %}</span>
+                </div>
+              {% elif question.answer and question.answer.selected_choice_id == choice.id %}
+                <div class="list-group-item list-group-item-danger">
+                  <span class="me-2">✗</span>{{ choice.text }}
+                  <span class="badge text-bg-danger float-end">{% trans "Your choice" %}</span>
+                </div>
+              {% else %}
+                <div class="list-group-item">
+                  {{ choice.text }}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          {% if question.explanation %}
+            <div class="alert alert-secondary mb-0">
+              <div class="fw-semibold mb-1">{% trans "Explanation" %}</div>
+              <div>{{ question.explanation|linebreaksbr }}</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="alert alert-info">{% trans "This quiz has no questions yet." %}</div>
+    {% endfor %}
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% for src in BLOCKLY_QUIZ_BLOCKLY_JS_URLS %}
+    <script src="{{ src }}"></script>
+  {% endfor %}
+  <script>
+    window.BLOCKLY_QUIZ_MEDIA_URL = "{{ BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL|escapejs }}";
+  </script>
+  <script src="{{ BLOCKLY_QUIZ_SCRATCHBLOCKS_JS_URL }}"></script>
+  <script src="{% static 'js/blockly_quiz.js' %}"></script>
+  <script src="{% static 'js/scratchblocks_quiz.js' %}"></script>
+{% endblock %}

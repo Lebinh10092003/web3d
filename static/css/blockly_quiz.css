@@ -1,0 +1,262 @@
+body {
+  background: radial-gradient(circle at top left, #dff8d7 0%, transparent 40%),
+    radial-gradient(circle at 20% 80%, #d4f2e5 0%, transparent 55%),
+    var(--bg);
+  color: var(--ink);
+  font-family: "Be Vietnam Pro", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+[data-blockly-quiz] {
+  --quiz-surface: rgba(255, 255, 255, 0.88);
+  --quiz-border: rgba(0, 0, 0, 0.08);
+  --quiz-radius: 18px;
+
+  --bs-primary: var(--accent-strong);
+  --bs-primary-rgb: 37, 197, 86;
+  --bs-success: var(--accent-strong);
+  --bs-success-rgb: 37, 197, 86;
+  --bs-danger: #e03a3a;
+  --bs-danger-rgb: 224, 58, 58;
+  --bs-border-color: var(--quiz-border);
+  --bs-link-color: var(--accent-strong);
+  --bs-link-hover-color: var(--accent-strong);
+  --bs-body-color: var(--ink);
+  --bs-body-bg: transparent;
+}
+
+[data-blockly-quiz] .card {
+  border: 1px solid var(--quiz-border);
+  border-radius: var(--quiz-radius);
+  background: var(--quiz-surface);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 36px var(--shadow);
+}
+
+[data-blockly-quiz] .card.shadow-sm {
+  box-shadow: 0 16px 36px var(--shadow) !important;
+}
+
+[data-blockly-quiz] .btn {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+[data-blockly-quiz] .btn-primary {
+  border: 0;
+  background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+  box-shadow: 0 12px 28px rgba(37, 197, 86, 0.25);
+}
+
+[data-blockly-quiz] .btn-primary:focus-visible,
+[data-blockly-quiz] .btn-outline-secondary:focus-visible {
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+[data-blockly-quiz] .progress {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-blockly-quiz] .progress-bar {
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-strong), var(--secondary));
+}
+
+.blockly-quiz-prompt {
+  font-size: 1.08rem;
+  line-height: 1.6;
+}
+
+[data-blockly-quiz] .form-label {
+  font-weight: 600;
+}
+
+[data-blockly-quiz] .form-control {
+  border-radius: 14px;
+  border-color: var(--quiz-border);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+[data-blockly-quiz] .form-select {
+  border-radius: 14px;
+  border-color: var(--quiz-border);
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+[data-blockly-quiz] .form-control:focus {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+[data-blockly-quiz] .form-select:focus {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+[data-blockly-quiz] .list-group {
+  border: 0;
+  display: grid;
+  gap: 12px;
+}
+
+[data-blockly-quiz] [data-quiz-intro].is-hidden {
+  display: none;
+}
+
+[data-blockly-quiz] .quiz-choice-list {
+  counter-reset: quiz-choice;
+}
+
+[data-blockly-quiz] .list-group-item {
+  border: 1px solid var(--quiz-border);
+  border-radius: 16px !important;
+  padding: 14px 14px;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease,
+    background 120ms ease;
+}
+
+[data-blockly-quiz] .list-group-item:not(.list-group-item-success):not(.list-group-item-danger) {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+[data-blockly-quiz] label.list-group-item {
+  cursor: pointer;
+}
+
+[data-blockly-quiz] label.list-group-item {
+  position: relative;
+  padding-left: 56px;
+}
+
+[data-blockly-quiz] label.list-group-item::before {
+  counter-increment: quiz-choice;
+  content: counter(quiz-choice, upper-alpha);
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--quiz-border);
+  color: var(--ink);
+}
+
+[data-blockly-quiz] label.list-group-item:focus-within {
+  border-color: rgba(37, 197, 86, 0.55);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+[data-blockly-quiz] label.list-group-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 30px var(--shadow);
+  border-color: rgba(37, 197, 86, 0.35);
+}
+
+[data-blockly-quiz] label.list-group-item:hover::before {
+  border-color: rgba(37, 197, 86, 0.35);
+}
+
+[data-blockly-quiz] label.list-group-item:has(input:checked) {
+  background: rgba(69, 224, 107, 0.12);
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+[data-blockly-quiz] label.list-group-item:has(input:checked)::before {
+  background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+  border-color: rgba(37, 197, 86, 0.35);
+  color: #fff;
+}
+
+[data-blockly-quiz] .list-group-item-success {
+  background: rgba(37, 197, 86, 0.12);
+  border-color: rgba(37, 197, 86, 0.35);
+  color: var(--ink);
+}
+
+[data-blockly-quiz] .list-group-item-danger {
+  background: rgba(224, 58, 58, 0.12);
+  border-color: rgba(224, 58, 58, 0.35);
+  color: var(--ink);
+}
+
+[data-blockly-quiz] .form-check-input {
+  width: 1.15em;
+  height: 1.15em;
+}
+
+[data-blockly-quiz] label.list-group-item .form-check-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+[data-blockly-quiz] .quiz-snippet-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+[data-blockly-quiz] .quiz-snippet-toolbar .btn {
+  padding: 6px 14px;
+  font-size: 0.9rem;
+}
+
+.blockly-preview {
+  width: 100%;
+  height: clamp(220px, 32vh, 360px);
+  background: rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+  border-radius: 16px !important;
+}
+
+.blockly-preview .blocklyMainBackground {
+  stroke: rgba(0, 0, 0, 0.06);
+}
+
+.scratchblocks-preview {
+  width: 100%;
+  max-height: clamp(220px, 32vh, 360px);
+  background: rgba(255, 255, 255, 0.72);
+  overflow: auto;
+  border-radius: 16px !important;
+  padding: 12px;
+}
+
+.scratchblocks-preview svg {
+  display: block;
+}
+
+.code-preview {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--quiz-border);
+  border-radius: 16px;
+  padding: 14px;
+  overflow-x: auto;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.code-preview code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-blockly-quiz] .list-group-item,
+  [data-blockly-quiz] .btn-primary {
+    transition: none;
+  }
+  [data-blockly-quiz] .list-group-item:hover {
+    transform: none;
+  }
+}
