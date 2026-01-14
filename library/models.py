@@ -2,6 +2,7 @@ import re
 from urllib.parse import parse_qs, urlparse, urlunparse
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector
@@ -117,6 +118,12 @@ class ContentItem(models.Model):
     external_links = models.URLField(blank=True, max_length=500)
     content_type = models.CharField(max_length=20, choices=ContentType.choices)
     categories = models.ManyToManyField(Category, blank=True, related_name="items")
+    allowed_groups = models.ManyToManyField(
+        Group,
+        blank=True,
+        related_name="library_contents",
+        help_text=_("Optional: only members of these groups can access this content."),
+    )
     download_cost_points = models.PositiveIntegerField(default=0)
     price_vnd = models.PositiveIntegerField(default=0)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PUBLISHED)

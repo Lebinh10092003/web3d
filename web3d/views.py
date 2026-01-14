@@ -320,9 +320,11 @@ def sitemap_xml(request):
         {"loc": f"{base_url}{reverse('recaps')}", "lastmod": now},
     ]
 
-    items = ContentItem.objects.filter(
-        is_public=True, status=ContentItem.Status.PUBLISHED
-    ).only("id", "updated_at")
+    items = (
+        ContentItem.objects.filter(is_public=True, status=ContentItem.Status.PUBLISHED)
+        .filter(allowed_groups__isnull=True)
+        .only("id", "updated_at")
+    )
     for item in items:
         urls.append(
             {

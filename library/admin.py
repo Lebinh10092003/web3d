@@ -38,7 +38,7 @@ class ContentItemAdmin(admin.ModelAdmin):
     )
     list_filter = ("content_type", "status", "is_public")
     search_fields = ("title", "slug", "description")
-    filter_horizontal = ("categories",)
+    filter_horizontal = ("categories", "allowed_groups")
     prepopulated_fields = {"slug": ("title",)}
     exclude = ("price_vnd",)
 

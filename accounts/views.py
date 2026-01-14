@@ -23,6 +23,7 @@ from library.models import (
 )
 
 from .forms import ProfileForm, UserRegistrationForm
+from .groups import sync_user_role_from_groups
 
 
 def _is_modal_request(request):
@@ -174,6 +175,7 @@ def register(request):
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            sync_user_role_from_groups(user)
             login(request, user)
             messages.success(request, _("Welcome to V+ STEAM LAB Library."))
             if request.headers.get("HX-Request") == "true":

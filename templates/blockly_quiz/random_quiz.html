@@ -16,61 +16,463 @@
       </a>
     </div>
 
-    <div class="card shadow-sm">
-      <div class="card-body">
+    <div class="quiz-hero mb-4">
+      <div class="quiz-hero-text">
         <h1 class="h3 mb-1">{% trans "Random quiz" %}</h1>
-        <p class="text-muted mb-4">
-          {% trans "Generate a temporary quiz from the question bank." %}
-        </p>
+        <p class="text-muted mb-0">{% trans "Generate a temporary quiz from the question bank." %}</p>
+      </div>
+      <div class="quiz-brand-icons quiz-brand-icons--hero" aria-hidden="true">
+        <img class="quiz-brand-icon" src="{% static 'img/brands/blockly.svg' %}" alt="">
+        <img class="quiz-brand-icon" src="{% static 'img/brands/scratch.svg' %}" alt="">
+        <img class="quiz-brand-icon" src="{% static 'img/brands/python.svg' %}" alt="">
+      </div>
+    </div>
 
-        <form method="post" action="{% url 'blockly_quiz:random-start' %}">
-          {% csrf_token %}
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-4">
-              <label class="form-label" for="random-count">{% trans "Number of questions" %}</label>
-              <input
-                class="form-control"
-                id="random-count"
-                name="count"
-                type="number"
-                min="1"
-                value="{{ default_count }}"
-              >
+    {{ availability_by_type|json_script:"randomAvailabilityByType" }}
+    <form
+      method="post"
+      action="{% url 'blockly_quiz:random-start' %}"
+      data-random-quiz-form
+      data-max-total="{{ max_total }}"
+      data-preset-easy="{{ preset_easy_count }}"
+      data-preset-medium="{{ preset_medium_count }}"
+      data-preset-hard="{{ preset_hard_count }}"
+    >
+      {% csrf_token %}
+      <div class="card shadow-sm">
+        <div class="card-body">
+
+          <div class="d-flex flex-column flex-lg-row gap-3 justify-content-between">
+            <div>
+              <div class="form-label mb-2">{% trans "Type" %}</div>
+              <div class="d-flex flex-wrap gap-2">
+                <input
+                  class="btn-check"
+                  type="radio"
+                  name="type"
+                  id="random-type-blockly"
+                  value="blockly"
+                  data-random-type
+                  {% if default_type == 'blockly' %}checked{% endif %}
+                >
+                <label class="quiz-chip" for="random-type-blockly">
+                  <img class="quiz-chip-icon" src="{% static 'img/brands/blockly.svg' %}" alt="">
+                  Blockly
+                </label>
+
+                <input
+                  class="btn-check"
+                  type="radio"
+                  name="type"
+                  id="random-type-scratch"
+                  value="scratch"
+                  data-random-type
+                  {% if default_type == 'scratch' %}checked{% endif %}
+                >
+                <label class="quiz-chip" for="random-type-scratch">
+                  <img class="quiz-chip-icon" src="{% static 'img/brands/scratch.svg' %}" alt="">
+                  Scratch
+                </label>
+
+                <input
+                  class="btn-check"
+                  type="radio"
+                  name="type"
+                  id="random-type-code"
+                  value="code"
+                  data-random-type
+                  {% if default_type == 'code' %}checked{% endif %}
+                >
+                <label class="quiz-chip" for="random-type-code">
+                  <img class="quiz-chip-icon" src="{% static 'img/brands/python.svg' %}" alt="">
+                  {% trans "Code" %}
+                </label>
+              </div>
+              <div class="form-text text-muted">
+                {% trans "Choose one type (no mixing)." %}
+              </div>
             </div>
-            <div class="col-6 col-md-4">
-              <label class="form-label" for="random-type">{% trans "Type" %}</label>
-              <select class="form-select" id="random-type" name="type">
-                <option value="" {% if default_type == '' %}selected{% endif %}>{% trans "All" %}</option>
-                <option value="blockly" {% if default_type == 'blockly' %}selected{% endif %}>Blockly</option>
-                <option value="scratch" {% if default_type == 'scratch' %}selected{% endif %}>Scratch</option>
-                <option value="code" {% if default_type == 'code' %}selected{% endif %}>{% trans "Code" %}</option>
-              </select>
-            </div>
-            <div class="col-6 col-md-4">
-              <label class="form-label" for="random-difficulty">{% trans "Difficulty" %}</label>
-              <select class="form-select" id="random-difficulty" name="difficulty">
-                <option value="" {% if default_difficulty == '' %}selected{% endif %}>{% trans "All" %}</option>
-                <option value="easy" {% if default_difficulty == 'easy' %}selected{% endif %}>{% trans "Easy" %}</option>
-                <option value="medium" {% if default_difficulty == 'medium' %}selected{% endif %}>{% trans "Medium" %}</option>
-                <option value="hard" {% if default_difficulty == 'hard' %}selected{% endif %}>{% trans "Hard" %}</option>
-              </select>
+
+            <div class="d-flex flex-column gap-2 align-items-lg-end">
+              <label class="quiz-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  name="mix"
+                  value="1"
+                  data-random-mix
+                  {% if default_mix %}checked{% endif %}
+                >
+                <span>
+                  <span class="fw-semibold">{% trans "Mix question order" %}</span>
+                  <span class="d-block small text-muted">
+                    {% trans "Shuffle questions so easy/medium/hard are interleaved." %}
+                  </span>
+                </span>
+              </label>
+              <div class="text-muted small">
+                {% trans "Available" %}:
+                {% trans "Easy" %} <span class="fw-semibold" data-available-easy>{{ available_easy }}</span>
+                &middot; {% trans "Medium" %} <span class="fw-semibold" data-available-medium>{{ available_medium }}</span>
+                &middot; {% trans "Hard" %} <span class="fw-semibold" data-available-hard>{{ available_hard }}</span>
+              </div>
             </div>
           </div>
 
-          <button class="btn btn-primary" type="submit">
-            {% trans "Start random quiz" %}
-          </button>
-        </form>
+          <hr class="my-4">
 
-        <div class="text-muted small mt-3">
-          {% trans "This quiz is temporary and will be deleted after you finish." %}
+          <div>
+            <div class="form-label mb-2">{% trans "Mode" %}</div>
+            <div class="row g-2">
+              <div class="col-12 col-lg-6">
+                <input
+                  class="btn-check"
+                  type="radio"
+                  name="mode"
+                  id="random-mode-preset"
+                  value="preset"
+                  data-random-mode
+                  {% if default_mode != 'custom' %}checked{% endif %}
+                >
+                <label class="quiz-option h-100" for="random-mode-preset">
+                  <div class="d-flex align-items-start justify-content-between gap-3">
+                    <div>
+                      <div class="fw-semibold">{% trans "Default random" %}</div>
+                      <div class="small text-muted">
+                        {{ preset_easy_count }} {% trans "Easy" %} ·
+                        {{ preset_medium_count }} {% trans "Medium" %} ·
+                        {{ preset_hard_count }} {% trans "Hard" %}
+                      </div>
+                    </div>
+                    <span class="badge rounded-pill text-bg-success">{% trans "Recommended" %}</span>
+                  </div>
+                  <div class="mt-3 d-flex flex-wrap gap-2">
+                    <span class="badge text-bg-light border">
+                      {% trans "Total" %}: {{ preset_total }}
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <input
+                  class="btn-check"
+                  type="radio"
+                  name="mode"
+                  id="random-mode-custom"
+                  value="custom"
+                  data-random-mode
+                  {% if default_mode == 'custom' %}checked{% endif %}
+                >
+                <label class="quiz-option h-100" for="random-mode-custom">
+                  <div class="fw-semibold">{% trans "Custom random" %}</div>
+                  <div class="small text-muted">
+                    {% trans "Pick how many easy / medium / hard questions you want." %}
+                  </div>
+                  <div class="mt-3 d-flex flex-wrap gap-2">
+                    <span class="badge text-bg-light border">
+                      {% trans "Easy" %}: <span class="fw-semibold" data-custom-easy>{{ default_easy_count }}</span>
+                    </span>
+                    <span class="badge text-bg-light border">
+                      {% trans "Medium" %}: <span class="fw-semibold" data-custom-medium>{{ default_medium_count }}</span>
+                    </span>
+                    <span class="badge text-bg-light border">
+                      {% trans "Hard" %}: <span class="fw-semibold" data-custom-hard>{{ default_hard_count }}</span>
+                    </span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="mt-3 d-grid gap-2 d-sm-flex align-items-sm-center">
+              <button class="btn btn-primary" type="submit" data-random-submit>
+                {% trans "Start random quiz" %}
+              </button>
+              <button
+                class="btn btn-outline-secondary d-none"
+                type="button"
+                data-random-edit-custom
+                data-bs-toggle="modal"
+                data-bs-target="#customRandomModal"
+              >
+                {% trans "Edit custom counts" %}
+              </button>
+              <a class="btn btn-outline-secondary" href="{% url 'blockly_quiz:random' %}">
+                {% trans "Reset" %}
+              </a>
+              <div class="ms-sm-auto text-muted small">
+                {% trans "Total" %}: <span class="fw-semibold" data-random-total>0</span> / {{ max_total }}
+                <span class="text-danger d-none" data-random-total-warning>
+                  &middot; {% trans "Will be limited to" %} {{ max_total }}
+                </span>
+              </div>
+            </div>
+
+            <div class="text-muted small mt-3">
+              {% trans "If there are not enough questions in a level, the quiz will use the maximum available." %}
+              <span class="d-block">{% trans "This quiz is temporary and will be deleted after you finish." %}</span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      <div
+        class="modal fade"
+        id="customRandomModal"
+        tabindex="-1"
+        aria-labelledby="customRandomModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2 class="h5 modal-title" id="customRandomModalLabel">{% trans "Custom random" %}</h2>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+            </div>
+            <div class="modal-body">
+              <div class="text-muted small mb-3">
+                {% trans "Available" %}:
+                {% trans "Easy" %} <span class="fw-semibold" data-available-easy-modal>{{ available_easy }}</span>
+                &middot; {% trans "Medium" %} <span class="fw-semibold" data-available-medium-modal>{{ available_medium }}</span>
+                &middot; {% trans "Hard" %} <span class="fw-semibold" data-available-hard-modal>{{ available_hard }}</span>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-12 col-md-4">
+                  <label class="form-label" for="random-easy">
+                    {% trans "Easy" %}
+                    <span class="text-muted small">
+                      &middot; {% trans "Available" %}: <span data-available-easy-label>{{ available_easy }}</span>
+                    </span>
+                  </label>
+                  <input
+                    class="form-control"
+                    id="random-easy"
+                    name="easy_count"
+                    type="number"
+                    min="0"
+                    max="{{ max_total }}"
+                    value="{{ default_easy_count }}"
+                    data-random-count="easy"
+                  >
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label" for="random-medium">
+                    {% trans "Medium" %}
+                    <span class="text-muted small">
+                      &middot; {% trans "Available" %}: <span data-available-medium-label>{{ available_medium }}</span>
+                    </span>
+                  </label>
+                  <input
+                    class="form-control"
+                    id="random-medium"
+                    name="medium_count"
+                    type="number"
+                    min="0"
+                    max="{{ max_total }}"
+                    value="{{ default_medium_count }}"
+                    data-random-count="medium"
+                  >
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label" for="random-hard">
+                    {% trans "Hard" %}
+                    <span class="text-muted small">
+                      &middot; {% trans "Available" %}: <span data-available-hard-label>{{ available_hard }}</span>
+                    </span>
+                  </label>
+                  <input
+                    class="form-control"
+                    id="random-hard"
+                    name="hard_count"
+                    type="number"
+                    min="0"
+                    max="{{ max_total }}"
+                    value="{{ default_hard_count }}"
+                    data-random-count="hard"
+                  >
+                </div>
+              </div>
+
+              <div class="mt-3 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
+                <div class="text-muted small">
+                  {% trans "Total" %}: <span class="fw-semibold" data-random-custom-total>0</span> / {{ max_total }}
+                  <span class="text-danger d-none" data-random-custom-warning>
+                    &middot; {% trans "Will be limited to" %} {{ max_total }}
+                  </span>
+                </div>
+                <div class="d-grid d-sm-flex gap-2">
+                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    {% trans "Done" %}
+                  </button>
+                  <button type="submit" class="btn btn-primary" name="mode" value="custom" data-random-submit-custom>
+                    {% trans "Start custom random" %}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
   </div>
 {% endblock %}
 
 {% block extra_scripts %}
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-{% endblock %}
+  <script>
+    (() => {
+      document.body.classList.add("random-quiz-page");
 
+      const root = document.querySelector("[data-blockly-quiz]");
+      if (!root) return;
+
+      const form = root.querySelector("[data-random-quiz-form]");
+      if (!form) return;
+
+      const maxTotal = Number(form.dataset.maxTotal) || 200;
+      const presetEasy = Number(form.dataset.presetEasy) || 0;
+      const presetMedium = Number(form.dataset.presetMedium) || 0;
+      const presetHard = Number(form.dataset.presetHard) || 0;
+      const presetTotal = presetEasy + presetMedium + presetHard;
+
+      let availabilityByType = {};
+      try {
+        const availabilityScript = document.getElementById("randomAvailabilityByType");
+        availabilityByType = availabilityScript ? JSON.parse(availabilityScript.textContent) : {};
+      } catch (e) {
+        availabilityByType = {};
+      }
+
+      const modeInputs = Array.from(form.querySelectorAll("[data-random-mode]"));
+      const typeInputs = Array.from(form.querySelectorAll("[data-random-type]"));
+      const countInputs = Array.from(form.querySelectorAll("[data-random-count]"));
+
+      const totalEl = form.querySelector("[data-random-total]");
+      const warningEl = form.querySelector("[data-random-total-warning]");
+      const submitBtn = form.querySelector("[data-random-submit]");
+      const editCustomBtn = form.querySelector("[data-random-edit-custom]");
+
+      const customEasyEl = form.querySelector("[data-custom-easy]");
+      const customMediumEl = form.querySelector("[data-custom-medium]");
+      const customHardEl = form.querySelector("[data-custom-hard]");
+
+      const customTotalEl = form.querySelector("[data-random-custom-total]");
+      const customWarningEl = form.querySelector("[data-random-custom-warning]");
+      const customSubmitBtn = form.querySelector("[data-random-submit-custom]");
+
+      const availableEasyEls = Array.from(
+        form.querySelectorAll(
+          "[data-available-easy], [data-available-easy-modal], [data-available-easy-label]"
+        )
+      );
+      const availableMediumEls = Array.from(
+        form.querySelectorAll(
+          "[data-available-medium], [data-available-medium-modal], [data-available-medium-label]"
+        )
+      );
+      const availableHardEls = Array.from(
+        form.querySelectorAll(
+          "[data-available-hard], [data-available-hard-modal], [data-available-hard-label]"
+        )
+      );
+
+      const modalEl = form.querySelector("#customRandomModal");
+      const modalInstance = modalEl ? bootstrap.Modal.getOrCreateInstance(modalEl) : null;
+
+      function getMode() {
+        return modeInputs.find((radio) => radio.checked)?.value || "preset";
+      }
+
+      function getType() {
+        return typeInputs.find((radio) => radio.checked)?.value || "blockly";
+      }
+
+      function readNumber(input) {
+        if (!input) return 0;
+        const value = Number(input.value);
+        return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+      }
+
+      function customCounts() {
+        const easy = form.querySelector("[data-random-count='easy']");
+        const medium = form.querySelector("[data-random-count='medium']");
+        const hard = form.querySelector("[data-random-count='hard']");
+        return {
+          easy: readNumber(easy),
+          medium: readNumber(medium),
+          hard: readNumber(hard),
+        };
+      }
+
+      function setText(elements, text) {
+        elements.forEach((el) => {
+          if (el) el.textContent = text;
+        });
+      }
+
+      function updateAvailability() {
+        const type = getType();
+        const data = availabilityByType[type] || { easy: 0, medium: 0, hard: 0 };
+        setText(availableEasyEls, String(data.easy ?? 0));
+        setText(availableMediumEls, String(data.medium ?? 0));
+        setText(availableHardEls, String(data.hard ?? 0));
+      }
+
+      function updateCustomSummary() {
+        const counts = customCounts();
+        if (customEasyEl) customEasyEl.textContent = String(counts.easy);
+        if (customMediumEl) customMediumEl.textContent = String(counts.medium);
+        if (customHardEl) customHardEl.textContent = String(counts.hard);
+      }
+
+      function updateTotals() {
+        const mode = getMode();
+        const counts = customCounts();
+        const customTotal = counts.easy + counts.medium + counts.hard;
+        const total = mode === "custom" ? customTotal : presetTotal;
+
+        if (totalEl) totalEl.textContent = String(total);
+        if (warningEl) warningEl.classList.toggle("d-none", total <= maxTotal);
+
+        if (customTotalEl) customTotalEl.textContent = String(customTotal);
+        if (customWarningEl) customWarningEl.classList.toggle("d-none", customTotal <= maxTotal);
+
+        const invalid = mode === "custom" && customTotal <= 0;
+        if (submitBtn) submitBtn.disabled = invalid;
+        if (customSubmitBtn) customSubmitBtn.disabled = invalid;
+
+        if (editCustomBtn) editCustomBtn.classList.toggle("d-none", mode !== "custom");
+      }
+
+      function handleModeChange() {
+        updateTotals();
+        if (getMode() === "custom" && modalInstance) {
+          modalInstance.show();
+        }
+      }
+
+      typeInputs.forEach((input) => input.addEventListener("change", updateAvailability));
+      modeInputs.forEach((input) => input.addEventListener("change", handleModeChange));
+      countInputs.forEach((input) => input.addEventListener("input", () => {
+        updateCustomSummary();
+        updateTotals();
+      }));
+
+      updateAvailability();
+      updateCustomSummary();
+      updateTotals();
+
+      const initialMode = getMode();
+      const initialCustomTotal = (() => {
+        const counts = customCounts();
+        return counts.easy + counts.medium + counts.hard;
+      })();
+      if (initialMode === "custom" && initialCustomTotal <= 0 && modalInstance) {
+        modalInstance.show();
+      }
+    })();
+  </script>
+{% endblock %}

@@ -55,12 +55,27 @@
           <a class="btn btn-primary" href="{% url 'blockly_quiz:play' quiz.slug %}">
             {% trans "Start quiz" %}
           </a>
-          <a class="btn btn-outline-primary" href="{% url 'blockly_quiz:random' %}">
-            {% trans "Random quiz" %}
-          </a>
+          {% if can_use_random_quiz %}
+            <a class="btn btn-outline-primary" href="{% url 'blockly_quiz:random' %}">
+              {% trans "Random quiz" %}
+            </a>
+          {% else %}
+            {% url 'blockly_quiz:random' as random_quiz_url %}
+            {% url 'accounts:login' as login_url %}
+            <button
+              class="btn btn-outline-primary opacity-75"
+              type="button"
+              aria-disabled="true"
+              title="{% trans 'Only for Student V group' %}"
+              data-random-quiz-locked="{% if request.user.is_authenticated %}group{% else %}login{% endif %}"
+              data-random-quiz-login-url="{{ login_url }}?next={{ random_quiz_url|urlencode }}"
+            >
+              {% trans "Random quiz" %}
+            </button>
+          {% endif %}
         </div>
         <div class="text-muted small mt-3">
-          {% trans "Default: 30 questions, no shuffle." %}
+          {% trans "Default random: 5 Easy, 15 Medium, 10 Hard." %}
         </div>
       </div>
     </div>

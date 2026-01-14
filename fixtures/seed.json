@@ -82,7 +82,7 @@
       "is_staff": false,
       "is_active": true,
       "date_joined": "2025-01-04T11:00:00Z",
-      "role": "COMMUNITY",
+      "role": "PARENT",
       "display_name": "Minh Do",
       "bio": "Makerspace mentor.",
       "avatar_path": "avatars/minh.jpg",

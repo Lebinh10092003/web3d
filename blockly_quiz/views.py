@@ -5,8 +5,9 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.contrib import messages
+from django.core import signing
 from django.db import transaction
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -16,6 +17,11 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import Attempt, AttemptAnswer, Choice, Question, Quiz
+
+SELECTION_TOKEN_MAX_AGE_SECONDS = 2 * 60 * 60
+RANDOM_QUIZ_REQUIRED_GROUP_NAME = "Student V"
+RANDOM_QUIZ_PRESET_COUNTS = {"easy": 5, "medium": 15, "hard": 10}
+RANDOM_QUIZ_DEFAULT_TYPE = "blockly"
 
 
 def _with_quiz_type_flags(quizzes):
@@ -29,6 +35,39 @@ def _with_quiz_type_flags(quizzes):
     )
 
 
+def _user_can_use_random_quiz(user) -> bool:
+    if user.is_authenticated and (user.is_staff or user.is_superuser):
+        return True
+    if not user.is_authenticated:
+        return False
+    return user.groups.filter(name=RANDOM_QUIZ_REQUIRED_GROUP_NAME).exists()
+
+
+def _filter_quiz_queryset_for_user(quizzes, user):
+    if user.is_authenticated and (user.is_staff or user.is_superuser):
+        return quizzes
+    if user.is_authenticated:
+        group_ids = list(user.groups.values_list("id", flat=True))
+        if group_ids:
+            return quizzes.filter(
+                Q(allowed_groups__isnull=True) | Q(allowed_groups__in=group_ids)
+            ).distinct()
+        return quizzes.filter(allowed_groups__isnull=True)
+    return quizzes.filter(allowed_groups__isnull=True)
+
+
+def _user_can_access_quiz(user, quiz: Quiz) -> bool:
+    if not quiz:
+        return False
+    if user.is_authenticated and (user.is_staff or user.is_superuser):
+        return True
+    if not quiz.allowed_groups.exists():
+        return True
+    if not user.is_authenticated:
+        return False
+    return user.groups.filter(id__in=quiz.allowed_groups.values("id")).exists()
+
+
 def _ensure_session_key(request) -> str:
     session_key = request.session.session_key
     if session_key:
@@ -37,8 +76,62 @@ def _ensure_session_key(request) -> str:
     return request.session.session_key or ""
 
 
+def _parse_int(raw, *, default: int, min_value: int | None = None, max_value: int | None = None) -> int:
+    try:
+        value = int((raw or "").strip())
+    except (TypeError, ValueError):
+        value = default
+    if min_value is not None and value < min_value:
+        value = min_value
+    if max_value is not None and value > max_value:
+        value = max_value
+    return value
+
+
+def _split_total_into_difficulties(total: int) -> tuple[int, int, int]:
+    total = max(total, 0)
+    base, remainder = divmod(total, 3)
+    easy = base
+    medium = base
+    hard = base
+    if remainder >= 1:
+        medium += 1
+    if remainder >= 2:
+        easy += 1
+    return easy, medium, hard
+
+
+def _clamp_total_questions(*, easy: int, medium: int, hard: int, max_total: int) -> tuple[int, int, int]:
+    easy = max(easy, 0)
+    medium = max(medium, 0)
+    hard = max(hard, 0)
+    total = easy + medium + hard
+    if total <= max_total:
+        return easy, medium, hard
+
+    overflow = total - max_total
+    reduce_hard = min(hard, overflow)
+    hard -= reduce_hard
+    overflow -= reduce_hard
+
+    reduce_medium = min(medium, overflow)
+    medium -= reduce_medium
+    overflow -= reduce_medium
+
+    reduce_easy = min(easy, overflow)
+    easy -= reduce_easy
+    overflow -= reduce_easy
+
+    return easy, medium, hard
+
+
+def _question_bank_queryset_for_request(request):
+    quizzes = _filter_quiz_queryset_for_user(Quiz.objects.filter(is_published=True), request.user)
+    return Question.objects.filter(quiz__in=quizzes)
+
+
 def _get_playable_quiz_or_404(request, slug: str, *, include_type_flags: bool = False):
-    quizzes = Quiz.objects.all()
+    quizzes = _filter_quiz_queryset_for_user(Quiz.objects.all(), request.user)
     if include_type_flags:
         quizzes = _with_quiz_type_flags(quizzes)
     quiz = get_object_or_404(quizzes, slug=slug)
@@ -59,10 +152,14 @@ def _get_attempt_or_404(request, attempt_id: int) -> Attempt:
     if attempt.user_id:
         if not request.user.is_authenticated or attempt.user_id != request.user.id:
             raise Http404
+        if not _user_can_access_quiz(request.user, attempt.quiz):
+            raise Http404
         return attempt
 
     session_key = _ensure_session_key(request)
     if not attempt.session_key or attempt.session_key != session_key:
+        raise Http404
+    if not _user_can_access_quiz(request.user, attempt.quiz):
         raise Http404
     return attempt
 
@@ -136,7 +233,9 @@ def _render_question_partial(request, *, attempt: Attempt, question: Question):
 
 @require_GET
 def quiz_list(request):
-    quizzes = Quiz.objects.filter(is_published=True).order_by("title", "id")
+    quizzes = _filter_quiz_queryset_for_user(
+        Quiz.objects.filter(is_published=True), request.user
+    ).order_by("title", "id")
 
     query = (request.GET.get("q") or "").strip()
     if query:
@@ -163,80 +262,324 @@ def quiz_list(request):
             "q": query,
             "filter_type": question_type,
             "filter_difficulty": difficulty,
+            "can_use_random_quiz": _user_can_use_random_quiz(request.user),
         },
     )
 
 
 @require_GET
 def random_quiz(request):
-    count_raw = (request.GET.get("count") or "").strip()
-    try:
-        default_count = int(count_raw)
-    except (TypeError, ValueError):
-        default_count = 30
-    if default_count <= 0:
-        default_count = 30
+    max_total = 200
 
-    question_type = (request.GET.get("type") or "").strip().lower()
-    if question_type not in {"", "blockly", "scratch", "code"}:
-        question_type = ""
+    if not _user_can_use_random_quiz(request.user):
+        if not request.user.is_authenticated:
+            login_url = reverse("accounts:login")
+            next_url = reverse("blockly_quiz:random")
+            return redirect(f"{login_url}?{urlencode({'next': next_url})}")
+        messages.error(
+            request,
+            _("Random quiz is only available for %(group)s.") % {"group": RANDOM_QUIZ_REQUIRED_GROUP_NAME},
+        )
+        return redirect("blockly_quiz:list")
 
-    difficulty = (request.GET.get("difficulty") or "").strip().lower()
-    if difficulty not in {"", "easy", "medium", "hard"}:
-        difficulty = ""
+    question_type = (request.GET.get("type") or RANDOM_QUIZ_DEFAULT_TYPE).strip().lower()
+    if question_type not in {"blockly", "scratch", "code"}:
+        question_type = RANDOM_QUIZ_DEFAULT_TYPE
+
+    mix_raw = (request.GET.get("mix") or "").strip().lower()
+    mix = True
+    if mix_raw in {"0", "false", "off", "no"}:
+        mix = False
+    elif mix_raw in {"1", "true", "on", "yes"}:
+        mix = True
+
+    mode_raw = (request.GET.get("mode") or "").strip().lower()
+    if mode_raw in {"preset", "default"}:
+        mode = "preset"
+    elif mode_raw == "custom":
+        mode = "custom"
+    else:
+        mode = (
+            "custom"
+            if any(
+                key in request.GET
+                for key in ("easy_count", "medium_count", "hard_count", "count", "difficulty")
+            )
+            else "preset"
+        )
+
+    preset_easy = int(RANDOM_QUIZ_PRESET_COUNTS["easy"])
+    preset_medium = int(RANDOM_QUIZ_PRESET_COUNTS["medium"])
+    preset_hard = int(RANDOM_QUIZ_PRESET_COUNTS["hard"])
+
+    if mode == "preset":
+        default_easy, default_medium, default_hard = preset_easy, preset_medium, preset_hard
+    else:
+        has_difficulty_counts = any(
+            key in request.GET for key in ("easy_count", "medium_count", "hard_count")
+        )
+        if has_difficulty_counts:
+            default_easy = _parse_int(
+                request.GET.get("easy_count"),
+                default=preset_easy,
+                min_value=0,
+                max_value=max_total,
+            )
+            default_medium = _parse_int(
+                request.GET.get("medium_count"),
+                default=preset_medium,
+                min_value=0,
+                max_value=max_total,
+            )
+            default_hard = _parse_int(
+                request.GET.get("hard_count"),
+                default=preset_hard,
+                min_value=0,
+                max_value=max_total,
+            )
+        elif request.GET.get("count") is None and request.GET.get("difficulty") is None:
+            default_easy, default_medium, default_hard = preset_easy, preset_medium, preset_hard
+        else:
+            default_count = _parse_int(
+                request.GET.get("count"),
+                default=preset_easy + preset_medium + preset_hard,
+                min_value=1,
+                max_value=max_total,
+            )
+            legacy_difficulty = (request.GET.get("difficulty") or "").strip().lower()
+            if legacy_difficulty in {"easy", "medium", "hard"}:
+                default_easy = default_count if legacy_difficulty == "easy" else 0
+                default_medium = default_count if legacy_difficulty == "medium" else 0
+                default_hard = default_count if legacy_difficulty == "hard" else 0
+            else:
+                default_easy, default_medium, default_hard = _split_total_into_difficulties(
+                    default_count
+                )
+
+    default_easy, default_medium, default_hard = _clamp_total_questions(
+        easy=default_easy, medium=default_medium, hard=default_hard, max_total=max_total
+    )
+
+    questions_qs = _question_bank_queryset_for_request(request)
+    availability_by_type: dict[str, dict[str, int]] = {
+        "blockly": {"easy": 0, "medium": 0, "hard": 0},
+        "scratch": {"easy": 0, "medium": 0, "hard": 0},
+        "code": {"easy": 0, "medium": 0, "hard": 0},
+    }
+    for row in questions_qs.values("question_type", "difficulty").annotate(total=Count("id")):
+        row_type = (row.get("question_type") or "").strip().lower() or "blockly"
+        if row_type not in availability_by_type:
+            continue
+        difficulty = (row.get("difficulty") or "").strip().lower()
+        count = int(row.get("total") or 0)
+        if difficulty == "easy":
+            availability_by_type[row_type]["easy"] += count
+        elif difficulty == "hard":
+            availability_by_type[row_type]["hard"] += count
+        else:
+            availability_by_type[row_type]["medium"] += count
+
+    availability = availability_by_type.get(question_type, availability_by_type[RANDOM_QUIZ_DEFAULT_TYPE])
 
     return render(
         request,
         "blockly_quiz/random_quiz.html",
         {
-            "default_count": default_count,
+            "default_mode": mode,
             "default_type": question_type,
-            "default_difficulty": difficulty,
+            "default_easy_count": default_easy,
+            "default_medium_count": default_medium,
+            "default_hard_count": default_hard,
+            "default_mix": mix,
+            "preset_easy_count": preset_easy,
+            "preset_medium_count": preset_medium,
+            "preset_hard_count": preset_hard,
+            "preset_total": preset_easy + preset_medium + preset_hard,
+            "availability_by_type": availability_by_type,
+            "available_easy": availability["easy"],
+            "available_medium": availability["medium"],
+            "available_hard": availability["hard"],
+            "max_total": max_total,
         },
     )
 
 
 @require_POST
 def random_quiz_start(request):
-    count_raw = (request.POST.get("count") or "").strip()
-    try:
-        desired_count = int(count_raw)
-    except (TypeError, ValueError):
-        desired_count = 30
-    if desired_count <= 0:
-        desired_count = 30
-    desired_count = min(desired_count, 200)
+    max_total = 200
 
-    question_type = (request.POST.get("type") or "").strip().lower()
-    if question_type not in {"", "blockly", "scratch", "code"}:
-        question_type = ""
+    if not _user_can_use_random_quiz(request.user):
+        if not request.user.is_authenticated:
+            login_url = reverse("accounts:login")
+            next_url = reverse("blockly_quiz:random")
+            return redirect(f"{login_url}?{urlencode({'next': next_url})}")
+        messages.error(
+            request,
+            _("Random quiz is only available for %(group)s.") % {"group": RANDOM_QUIZ_REQUIRED_GROUP_NAME},
+        )
+        return redirect("blockly_quiz:list")
 
-    difficulty = (request.POST.get("difficulty") or "").strip().lower()
-    if difficulty not in {"", "easy", "medium", "hard"}:
-        difficulty = ""
+    question_type = (request.POST.get("type") or RANDOM_QUIZ_DEFAULT_TYPE).strip().lower()
+    if question_type not in {"blockly", "scratch", "code"}:
+        question_type = RANDOM_QUIZ_DEFAULT_TYPE
 
-    questions_qs = Question.objects.filter(quiz__is_published=True)
-    if question_type:
-        questions_qs = questions_qs.filter(question_type=question_type)
-    if difficulty:
-        questions_qs = questions_qs.filter(difficulty=difficulty)
+    mix = (request.POST.get("mix") or "").strip().lower() in {"1", "true", "on", "yes"}
 
-    candidate_ids = list(questions_qs.values_list("id", flat=True))
-    if not candidate_ids:
-        messages.error(request, _("No questions match your filters."))
-        query = {"count": str(desired_count)}
-        if question_type:
-            query["type"] = question_type
-        if difficulty:
-            query["difficulty"] = difficulty
+    mode_raw = (request.POST.get("mode") or "").strip().lower()
+    if mode_raw in {"preset", "default"}:
+        mode = "preset"
+    elif mode_raw == "custom":
+        mode = "custom"
+    else:
+        mode = (
+            "custom"
+            if any(
+                key in request.POST
+                for key in ("easy_count", "medium_count", "hard_count", "count", "difficulty")
+            )
+            else "preset"
+        )
+
+    if mode == "preset":
+        desired_easy = int(RANDOM_QUIZ_PRESET_COUNTS["easy"])
+        desired_medium = int(RANDOM_QUIZ_PRESET_COUNTS["medium"])
+        desired_hard = int(RANDOM_QUIZ_PRESET_COUNTS["hard"])
+    else:
+        has_difficulty_counts = any(
+            key in request.POST for key in ("easy_count", "medium_count", "hard_count")
+        )
+        if has_difficulty_counts:
+            desired_easy = _parse_int(
+                request.POST.get("easy_count"),
+                default=int(RANDOM_QUIZ_PRESET_COUNTS["easy"]),
+                min_value=0,
+                max_value=max_total,
+            )
+            desired_medium = _parse_int(
+                request.POST.get("medium_count"),
+                default=int(RANDOM_QUIZ_PRESET_COUNTS["medium"]),
+                min_value=0,
+                max_value=max_total,
+            )
+            desired_hard = _parse_int(
+                request.POST.get("hard_count"),
+                default=int(RANDOM_QUIZ_PRESET_COUNTS["hard"]),
+                min_value=0,
+                max_value=max_total,
+            )
+        else:
+            legacy_total = _parse_int(
+                request.POST.get("count"),
+                default=int(sum(RANDOM_QUIZ_PRESET_COUNTS.values())),
+                min_value=1,
+                max_value=max_total,
+            )
+            legacy_difficulty = (request.POST.get("difficulty") or "").strip().lower()
+            if legacy_difficulty in {"easy", "medium", "hard"}:
+                desired_easy = legacy_total if legacy_difficulty == "easy" else 0
+                desired_medium = legacy_total if legacy_difficulty == "medium" else 0
+                desired_hard = legacy_total if legacy_difficulty == "hard" else 0
+            else:
+                desired_easy, desired_medium, desired_hard = _split_total_into_difficulties(
+                    legacy_total
+                )
+
+    before_clamp_total = desired_easy + desired_medium + desired_hard
+    desired_easy, desired_medium, desired_hard = _clamp_total_questions(
+        easy=desired_easy, medium=desired_medium, hard=desired_hard, max_total=max_total
+    )
+    if before_clamp_total > (desired_easy + desired_medium + desired_hard):
+        messages.warning(request, _("Random quiz is limited to %(max)s questions.") % {"max": str(max_total)})
+
+    desired_total = desired_easy + desired_medium + desired_hard
+    if desired_total <= 0:
+        messages.error(request, _("Please choose at least one question."))
+        query = {
+            "mode": "custom",
+            "easy_count": "0",
+            "medium_count": "0",
+            "hard_count": "0",
+            "type": question_type,
+            "mix": "1" if mix else "0",
+        }
         url = reverse("blockly_quiz:random")
         return redirect(f"{url}?{urlencode(query)}")
 
-    selected_count = min(desired_count, len(candidate_ids))
-    if selected_count < len(candidate_ids):
-        selected_ids = random.sample(candidate_ids, selected_count)
-    else:
-        selected_ids = candidate_ids
+    questions_qs = _question_bank_queryset_for_request(request).filter(question_type=question_type)
+
+    candidate_pairs = list(questions_qs.values_list("id", "difficulty"))
+    if not candidate_pairs:
+        messages.error(request, _("No questions match your filters."))
+        query = {
+            "mode": mode,
+            "easy_count": str(desired_easy),
+            "medium_count": str(desired_medium),
+            "hard_count": str(desired_hard),
+            "type": question_type,
+            "mix": "1" if mix else "0",
+        }
+        url = reverse("blockly_quiz:random")
+        return redirect(f"{url}?{urlencode(query)}")
+
+    candidate_by_difficulty: dict[str, list[int]] = {"easy": [], "medium": [], "hard": []}
+    for question_id, difficulty in candidate_pairs:
+        difficulty_value = (difficulty or "").strip().lower()
+        if difficulty_value == "easy":
+            candidate_by_difficulty["easy"].append(question_id)
+        elif difficulty_value == "hard":
+            candidate_by_difficulty["hard"].append(question_id)
+        else:
+            candidate_by_difficulty["medium"].append(question_id)
+
+    def _pick(question_ids: list[int], desired: int) -> list[int]:
+        if desired <= 0 or not question_ids:
+            return []
+        return random.sample(question_ids, min(desired, len(question_ids)))
+
+    selected_easy = _pick(candidate_by_difficulty["easy"], desired_easy)
+    selected_medium = _pick(candidate_by_difficulty["medium"], desired_medium)
+    selected_hard = _pick(candidate_by_difficulty["hard"], desired_hard)
+
+    selected_ids = [*selected_easy, *selected_medium, *selected_hard]
+    if mix and len(selected_ids) > 1:
+        random.shuffle(selected_ids)
+
+    actual_easy = len(selected_easy)
+    actual_medium = len(selected_medium)
+    actual_hard = len(selected_hard)
+    actual_total = len(selected_ids)
+
+    if actual_total <= 0:
+        messages.error(request, _("No questions match your filters."))
+        query = {
+            "mode": mode,
+            "easy_count": str(desired_easy),
+            "medium_count": str(desired_medium),
+            "hard_count": str(desired_hard),
+            "type": question_type,
+            "mix": "1" if mix else "0",
+        }
+        url = reverse("blockly_quiz:random")
+        return redirect(f"{url}?{urlencode(query)}")
+
+    difficulty_label = {
+        "easy": _("Easy"),
+        "medium": _("Medium"),
+        "hard": _("Hard"),
+    }
+    shortages: list[str] = []
+    if desired_easy and actual_easy < desired_easy:
+        shortages.append(str(difficulty_label["easy"]))
+    if desired_medium and actual_medium < desired_medium:
+        shortages.append(str(difficulty_label["medium"]))
+    if desired_hard and actual_hard < desired_hard:
+        shortages.append(str(difficulty_label["hard"]))
+    if shortages:
+        messages.warning(
+            request,
+            _("Not enough questions for: %(levels)s. Using what is available.")
+            % {"levels": ", ".join(shortages)},
+        )
 
     selected_questions = list(
         Question.objects.filter(id__in=selected_ids).prefetch_related("choices")
@@ -258,17 +601,18 @@ def random_quiz_start(request):
         raise Http404
 
     type_label = {"blockly": "Blockly", "scratch": "Scratch", "code": _("Code")}
-    difficulty_label = {
-        "easy": _("Easy"),
-        "medium": _("Medium"),
-        "hard": _("Hard"),
-    }
     title_parts: list[str] = [_("Random quiz")]
-    if question_type:
-        title_parts.append(str(type_label.get(question_type, question_type)))
-    if difficulty:
-        title_parts.append(str(difficulty_label.get(difficulty, difficulty)))
-    title_parts.append(_("%(count)s questions") % {"count": str(len(ordered_questions))})
+    title_parts.append(str(type_label.get(question_type, question_type)))
+    distribution_parts: list[str] = []
+    if actual_easy:
+        distribution_parts.append(f"{difficulty_label['easy']} {actual_easy}")
+    if actual_medium:
+        distribution_parts.append(f"{difficulty_label['medium']} {actual_medium}")
+    if actual_hard:
+        distribution_parts.append(f"{difficulty_label['hard']} {actual_hard}")
+    if distribution_parts:
+        title_parts.append(" / ".join(distribution_parts))
+    title_parts.append(_("%(count)s questions") % {"count": str(actual_total)})
     quiz_title = " - ".join(title_parts)
 
     with transaction.atomic():
@@ -335,10 +679,8 @@ def blockly_guide(request):
 
 @require_GET
 def quiz_detail(request, slug):
-    quiz = get_object_or_404(
-        _with_quiz_type_flags(Quiz.objects.filter(is_published=True)),
-        slug=slug,
-    )
+    quizzes = _filter_quiz_queryset_for_user(Quiz.objects.filter(is_published=True), request.user)
+    quiz = get_object_or_404(_with_quiz_type_flags(quizzes), slug=slug)
     question_count = quiz.questions.count()
     return render(
         request,
@@ -346,6 +688,7 @@ def quiz_detail(request, slug):
         {
             "quiz": quiz,
             "question_count": question_count,
+            "can_use_random_quiz": _user_can_use_random_quiz(request.user),
         },
     )
 
@@ -368,7 +711,10 @@ def quiz_play(request, slug):
 
 @require_POST
 def quiz_start(request, slug):
-    quiz = get_object_or_404(Quiz, slug=slug, is_published=True)
+    quiz = get_object_or_404(
+        _filter_quiz_queryset_for_user(Quiz.objects.filter(is_published=True), request.user),
+        slug=slug,
+    )
     session_key = _ensure_session_key(request)
     participant_name = (request.POST.get("name") or "").strip()
     participant_dob = (request.POST.get("dob") or "").strip()
@@ -529,16 +875,63 @@ def _parse_json_request(request):
     return payload
 
 
+def _is_truthy_param(value) -> bool:
+    normalized = str(value or "").strip().lower()
+    return normalized in {"1", "true", "yes", "on"}
+
+
+def _parse_count_param(request):
+    DEFAULT_QUESTION_COUNT = 30
+    if "count" not in request.GET:
+        return DEFAULT_QUESTION_COUNT
+    raw = str(request.GET.get("count") or "").strip()
+    try:
+        count = int(raw)
+    except (TypeError, ValueError):
+        return None
+    if count <= 0:
+        return None
+    return min(count, 200)
+
+
+def _select_questions_for_api(request, quiz: Quiz):
+    question_type = (request.GET.get("type") or "").strip().lower()
+    if question_type not in {"", "blockly", "scratch", "code"}:
+        question_type = ""
+
+    difficulty = (request.GET.get("difficulty") or "").strip().lower()
+    if difficulty not in {"", "easy", "medium", "hard"}:
+        difficulty = ""
+
+    count = _parse_count_param(request)
+    shuffle_mode = _is_truthy_param(request.GET.get("random")) or _is_truthy_param(
+        request.GET.get("shuffle")
+    )
+
+    questions_qs = Question.objects.filter(quiz=quiz)
+    if question_type:
+        questions_qs = questions_qs.filter(question_type=question_type)
+    if difficulty:
+        questions_qs = questions_qs.filter(difficulty=difficulty)
+    questions = list(questions_qs.prefetch_related("choices").order_by("sort_order", "id"))
+
+    if shuffle_mode:
+        random.shuffle(questions)
+
+    if count is not None:
+        questions = questions[:count]
+
+    return questions
+
+
 @require_GET
 def api_quiz_payload(request, slug):
     quiz = _get_playable_quiz_or_404(request, slug)
-    questions_qs = (
-        Question.objects.filter(quiz=quiz)
-        .prefetch_related("choices")
-        .order_by("sort_order", "id")
-    )
+    selected_questions = _select_questions_for_api(request, quiz)
     questions = []
-    for question in questions_qs:
+    question_ids: list[int] = []
+    for question in selected_questions:
+        question_ids.append(int(question.id))
         choices = list(question.choices.all().order_by("sort_order", "id"))
         state = (question.blockly_state or "").strip()
         xml = (question.blockly_xml or "").strip()
@@ -565,6 +958,10 @@ def api_quiz_payload(request, slug):
                 "choices": [{"id": choice.id, "text": choice.text} for choice in choices],
             }
         )
+    selection_token = signing.dumps(
+        {"quiz_id": int(quiz.id), "question_ids": question_ids},
+        salt="blockly_quiz:selection",
+    )
     return JsonResponse(
         {
             "quiz": {
@@ -573,6 +970,7 @@ def api_quiz_payload(request, slug):
                 "description": quiz.description,
             },
             "questions": questions,
+            "selection_token": selection_token,
         }
     )
 
@@ -583,6 +981,32 @@ def api_quiz_submit(request, slug):
     payload = _parse_json_request(request)
     if payload is None:
         return JsonResponse({"error": "invalid_json"}, status=400)
+
+    selection_token = str(payload.get("selection_token") or "").strip()
+    if not selection_token:
+        return JsonResponse({"error": "selection_token_required"}, status=400)
+    try:
+        selection = signing.loads(
+            selection_token,
+            salt="blockly_quiz:selection",
+            max_age=SELECTION_TOKEN_MAX_AGE_SECONDS,
+        )
+    except signing.BadSignature:
+        return JsonResponse({"error": "invalid_selection_token"}, status=400)
+    if not isinstance(selection, dict):
+        return JsonResponse({"error": "invalid_selection_token"}, status=400)
+    if int(selection.get("quiz_id") or 0) != int(quiz.id):
+        return JsonResponse({"error": "invalid_selection_token"}, status=400)
+    expected_question_ids = selection.get("question_ids")
+    if not isinstance(expected_question_ids, list) or not expected_question_ids:
+        return JsonResponse({"error": "invalid_selection_token"}, status=400)
+    try:
+        expected_question_ids = [int(qid) for qid in expected_question_ids]
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "invalid_selection_token"}, status=400)
+    expected_question_ids = [qid for qid in expected_question_ids if qid > 0]
+    if not expected_question_ids:
+        return JsonResponse({"error": "invalid_selection_token"}, status=400)
 
     answers_payload = payload.get("answers")
     if not isinstance(answers_payload, list):
@@ -601,12 +1025,7 @@ def api_quiz_submit(request, slug):
         participant_campus=str(participant_campus or "").strip(),
     )
 
-    question_map = {
-        question.id: question
-        for question in Question.objects.filter(quiz=quiz).only("id")
-    }
-
-    valid_question_ids: set[int] = set()
+    answer_map: dict[int, int] = {}
     for entry in answers_payload:
         if not isinstance(entry, dict):
             continue
@@ -619,25 +1038,33 @@ def api_quiz_submit(request, slug):
             choice_id = int(choice_id)
         except (TypeError, ValueError):
             continue
-        question = question_map.get(question_id)
-        if not question:
+        answer_map[question_id] = choice_id
+
+    expected_set = set(expected_question_ids)
+    choice_ids = [cid for qid, cid in answer_map.items() if qid in expected_set and cid]
+    choice_rows = Choice.objects.filter(
+        id__in=choice_ids,
+        question_id__in=expected_set,
+    ).values("id", "question_id", "is_correct")
+    choice_by_id = {row["id"]: row for row in choice_rows}
+
+    for question_id in expected_question_ids:
+        choice_id = answer_map.get(question_id)
+        if not choice_id:
             continue
-        choice = Choice.objects.filter(id=choice_id, question_id=question.id).only(
-            "id", "is_correct"
-        ).first()
-        if not choice:
+        row = choice_by_id.get(choice_id)
+        if not row or int(row["question_id"]) != int(question_id):
             continue
         AttemptAnswer.objects.update_or_create(
             attempt=attempt,
-            question_id=question.id,
+            question_id=question_id,
             defaults={
-                "selected_choice_id": choice.id,
-                "is_correct": bool(choice.is_correct),
+                "selected_choice_id": choice_id,
+                "is_correct": bool(row["is_correct"]),
             },
         )
-        valid_question_ids.add(question.id)
 
-    _finalize_attempt(attempt, total_questions_override=len(valid_question_ids))
+    _finalize_attempt(attempt, total_questions_override=len(expected_question_ids))
     return JsonResponse(
         {
             "attempt_id": attempt.id,

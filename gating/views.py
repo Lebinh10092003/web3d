@@ -19,6 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from library.models import ContentItem
+from library.access import filter_content_queryset_for_user
 
 from .models import PaymentTransaction, PointLedger, PointPackage, PointTopupTransaction, Unlock
 
@@ -63,7 +64,11 @@ def _post_zalopay_create(payload):
 @require_POST
 def zalopay_buy(request, content_id):
     content = get_object_or_404(
-        ContentItem, pk=content_id, is_public=True, status=ContentItem.Status.PUBLISHED
+        filter_content_queryset_for_user(
+            ContentItem.objects.filter(is_public=True, status=ContentItem.Status.PUBLISHED),
+            request.user,
+        ),
+        pk=content_id,
     )
     if content.price_vnd <= 0:
         messages.error(request, "This content is not for sale.")

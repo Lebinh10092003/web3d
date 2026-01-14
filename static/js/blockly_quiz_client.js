@@ -187,6 +187,15 @@ function copyToClipboard(rawText) {
   });
 }
 
+function buildApiUrlWithPageQuery(rawUrl) {
+  const url = new URL(String(rawUrl || ""), window.location.origin);
+  const current = new URLSearchParams(window.location.search);
+  for (const [key, value] of current.entries()) {
+    url.searchParams.set(key, value);
+  }
+  return url.toString();
+}
+
 function renderQuestionStage(container, question, meta) {
   const i18n = getQuizI18n();
   const payloadId = `blockly-client-${question.id}`;
@@ -528,17 +537,25 @@ document.addEventListener("DOMContentLoaded", () => {
     renderLoading();
 
     try {
-      const payload = await fetchJson(apiQuizUrl);
-      const allQuestions = Array.isArray(payload?.questions) ? payload.questions : [];
-      const questions = selectQuestions(allQuestions);
+      const payload = await fetchJson(buildApiUrlWithPageQuery(apiQuizUrl));
+      const selectionToken = String(payload?.selection_token || "");
+      const questions = Array.isArray(payload?.questions) ? payload.questions : [];
       if (!questions.length) {
         const i18n = getQuizI18n();
+        const params = new URLSearchParams(window.location.search);
+        const hasFilters = Boolean(params.get("type") || params.get("difficulty"));
         showError(
           stage,
-          allQuestions.length
+          hasFilters
             ? i18n.noQuestionsMatch || "No questions match your filters."
             : i18n.quizHasNoQuestions || "This quiz has no questions yet."
         );
+        started = false;
+        startButton?.removeAttribute("disabled");
+        return;
+      }
+      if (!selectionToken) {
+        showError(stage, "Failed to start quiz. Please refresh and try again.");
         started = false;
         startButton?.removeAttribute("disabled");
         return;
@@ -592,6 +609,7 @@ document.addEventListener("DOMContentLoaded", () => {
             name: participant.name,
             dob: participant.dob,
             campus: participant.campus,
+            selection_token: selectionToken,
             answers: Array.from(answers.entries()).map(([question_id, choice_id]) => ({
               question_id,
               choice_id

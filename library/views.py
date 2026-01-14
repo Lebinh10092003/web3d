@@ -34,6 +34,7 @@ from .lego_ldraw import (
     find_cached_ldraw_model_path,
     get_cached_ldraw_model_path,
 )
+from .access import filter_content_queryset_for_user
 from .models import Category, ContentFile, ContentItem, LibrarySideBanner
 from .tasks import enqueue_ldraw_prebuild
 
@@ -329,11 +330,10 @@ def home(request):
     else:
         content_grid_html = ""
 
-    items = (
-        ContentItem.objects.filter(is_public=True, status=ContentItem.Status.PUBLISHED)
-        .select_related("owner")
-        .prefetch_related("categories", "files")
-    )
+    items = filter_content_queryset_for_user(
+        ContentItem.objects.filter(is_public=True, status=ContentItem.Status.PUBLISHED),
+        request.user,
+    ).select_related("owner").prefetch_related("categories", "files")
 
     query = request.GET.get("q", "").strip()
     search_ranked = False
@@ -465,13 +465,13 @@ def home(request):
 
 
 def content_detail(request, slug):
-    content = ContentItem.objects.filter(
-        slug=slug, is_public=True, status=ContentItem.Status.PUBLISHED
-    ).first()
+    content_qs = filter_content_queryset_for_user(
+        ContentItem.objects.filter(is_public=True, status=ContentItem.Status.PUBLISHED),
+        request.user,
+    )
+    content = content_qs.filter(slug=slug).first()
     if not content and str(slug).isdigit():
-        content = get_object_or_404(
-            ContentItem, pk=int(slug), is_public=True, status=ContentItem.Status.PUBLISHED
-        )
+        content = get_object_or_404(content_qs, pk=int(slug))
         if not content.slug:
             content.save(update_fields=["slug"])
         if content.slug and content.slug != slug:
@@ -594,7 +594,11 @@ def content_detail(request, slug):
 )
 def content_preview_image(request, pk):
     content = get_object_or_404(
-        ContentItem, pk=pk, is_public=True, status=ContentItem.Status.PUBLISHED
+        filter_content_queryset_for_user(
+            ContentItem.objects.filter(is_public=True, status=ContentItem.Status.PUBLISHED),
+            request.user,
+        ),
+        pk=pk,
     )
     preview_file = content.files.filter(kind=ContentFile.FileKind.PREVIEW).first()
     source_file = content.files.filter(kind=ContentFile.FileKind.SOURCE).first()
@@ -893,7 +897,11 @@ def ldraw_asset(request, relative_path):
 )
 def content_lego_model(request, pk):
     content = get_object_or_404(
-        ContentItem, pk=pk, is_public=True, status=ContentItem.Status.PUBLISHED
+        filter_content_queryset_for_user(
+            ContentItem.objects.filter(is_public=True, status=ContentItem.Status.PUBLISHED),
+            request.user,
+        ),
+        pk=pk,
     )
     source_file = content.files.filter(kind=ContentFile.FileKind.SOURCE).first()
     if not source_file:
@@ -984,7 +992,11 @@ def content_lego_model(request, pk):
 )
 def content_download(request, pk):
     content = get_object_or_404(
-        ContentItem, pk=pk, is_public=True, status=ContentItem.Status.PUBLISHED
+        filter_content_queryset_for_user(
+            ContentItem.objects.filter(is_public=True, status=ContentItem.Status.PUBLISHED),
+            request.user,
+        ),
+        pk=pk,
     )
     is_htmx = request.headers.get("HX-Request") == "true"
     is_owner = content.owner_id == request.user.id

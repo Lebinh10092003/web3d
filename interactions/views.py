@@ -7,9 +7,20 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from library.models import ContentItem
+from library.access import filter_content_queryset_for_user
 
 from .forms import CommentForm, RatingForm
 from .models import Comment, Favorite, Rating
+
+
+def _get_visible_content_or_404(request, pk):
+    return get_object_or_404(
+        filter_content_queryset_for_user(
+            ContentItem.objects.filter(is_public=True, status=ContentItem.Status.PUBLISHED),
+            request.user,
+        ),
+        pk=pk,
+    )
 
 
 def _get_comments(content):
@@ -39,7 +50,7 @@ def _can_manage_comment(user, comment):
 @require_POST
 @login_required
 def add_comment(request, pk):
-    content = get_object_or_404(ContentItem, pk=pk, is_public=True)
+    content = _get_visible_content_or_404(request, pk)
     form = CommentForm(request.POST)
     if form.is_valid():
         parent = None
@@ -61,7 +72,7 @@ def add_comment(request, pk):
 
 @login_required
 def edit_comment(request, pk, comment_id):
-    content = get_object_or_404(ContentItem, pk=pk, is_public=True)
+    content = _get_visible_content_or_404(request, pk)
     comment = get_object_or_404(Comment, pk=comment_id, content=content)
     if not _can_manage_comment(request.user, comment) or comment.is_deleted:
         return HttpResponse(status=403)
@@ -94,7 +105,7 @@ def edit_comment(request, pk, comment_id):
 @require_POST
 @login_required
 def delete_comment(request, pk, comment_id):
-    content = get_object_or_404(ContentItem, pk=pk, is_public=True)
+    content = _get_visible_content_or_404(request, pk)
     comment = get_object_or_404(Comment, pk=comment_id, content=content)
     if not _can_manage_comment(request.user, comment) or comment.is_deleted:
         return HttpResponse(status=403)
@@ -108,7 +119,7 @@ def delete_comment(request, pk, comment_id):
 @require_POST
 @login_required
 def rate_content(request, pk):
-    content = get_object_or_404(ContentItem, pk=pk, is_public=True)
+    content = _get_visible_content_or_404(request, pk)
     form = RatingForm(request.POST)
     if form.is_valid():
         Rating.objects.update_or_create(
@@ -139,7 +150,7 @@ def rate_content(request, pk):
 @require_POST
 @login_required
 def toggle_favorite(request, pk):
-    content = get_object_or_404(ContentItem, pk=pk, is_public=True)
+    content = _get_visible_content_or_404(request, pk)
     favorite = Favorite.objects.filter(content=content, user=request.user).first()
     if favorite:
         favorite.delete()

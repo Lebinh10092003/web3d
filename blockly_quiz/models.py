@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -18,6 +19,12 @@ class Quiz(models.Model):
         blank=True,
         default="",
         help_text=_("Owner session key for temporary quizzes."),
+    )
+    allowed_groups = models.ManyToManyField(
+        Group,
+        blank=True,
+        related_name="blockly_quizzes",
+        help_text=_("Optional: only members of these groups can access this quiz."),
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

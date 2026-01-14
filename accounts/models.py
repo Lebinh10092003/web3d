@@ -5,9 +5,9 @@ from django.utils.translation import gettext_lazy as _
 
 class User(AbstractUser):
     class Role(models.TextChoices):
-        TEACHER = "TEACHER", _("Teacher")
         STUDENT = "STUDENT", _("Student")
-        COMMUNITY = "COMMUNITY", _("Community")
+        TEACHER = "TEACHER", _("Teacher")
+        PARENT = "PARENT", _("Parent")
 
     role = models.CharField(max_length=20, choices=Role.choices, blank=True)
     display_name = models.CharField(max_length=120, blank=True)

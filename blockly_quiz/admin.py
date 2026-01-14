@@ -23,6 +23,7 @@ class QuizAdmin(admin.ModelAdmin):
     list_filter = ("is_published",)
     search_fields = ("title", "slug")
     prepopulated_fields = {"slug": ("title",)}
+    filter_horizontal = ("allowed_groups",)
     change_form_template = "admin/blockly_quiz/quiz/change_form.html"
 
     def get_urls(self):

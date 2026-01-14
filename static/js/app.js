@@ -1039,6 +1039,59 @@ document.addEventListener("click", (event) => {
   closeOwnerModal();
 });
 
+function showRandomQuizLockedAlert(reason, loginUrl) {
+  const normalized = String(reason || "").trim().toLowerCase() || "group";
+  const resolvedLoginUrl = String(loginUrl || "").trim();
+
+  if (!window.Swal) {
+    if (normalized === "login" && resolvedLoginUrl) {
+      window.location.href = resolvedLoginUrl;
+      return;
+    }
+    window.alert(
+      normalized === "login"
+        ? "Bạn cần đăng nhập để dùng Random quiz."
+        : "Bạn chưa có quyền dùng Random quiz (chỉ dành cho nhóm Student V)."
+    );
+    return;
+  }
+
+  if (normalized === "login") {
+    window.Swal.fire({
+      icon: "info",
+      title: "Cần đăng nhập",
+      text: "Bạn cần đăng nhập để dùng Random quiz.",
+      showCancelButton: true,
+      confirmButtonText: "Đăng nhập",
+      cancelButtonText: "Đóng"
+    }).then((result) => {
+      if (result.isConfirmed && resolvedLoginUrl) {
+        window.location.href = resolvedLoginUrl;
+      }
+    });
+    return;
+  }
+
+  window.Swal.fire({
+    icon: "warning",
+    title: "Không có quyền",
+    text: "Tính năng Random quiz chỉ dành cho nhóm Student V. Liên hệ admin để được cấp quyền.",
+    confirmButtonText: "Đóng"
+  });
+}
+
+document.addEventListener("click", (event) => {
+  const locked = event.target.closest("[data-random-quiz-locked]");
+  if (!locked) {
+    return;
+  }
+  event.preventDefault();
+  showRandomQuizLockedAlert(
+    locked.dataset.randomQuizLocked,
+    locked.dataset.randomQuizLoginUrl
+  );
+});
+
 window.addEventListener("popstate", () => {
   cancelOwnerModalOpen();
   closeOwnerModal();

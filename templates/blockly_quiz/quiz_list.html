@@ -53,10 +53,25 @@
               <option value="hard" {% if filter_difficulty == 'hard' %}selected{% endif %}>{% trans "Hard" %}</option>
             </select>
           </div>
+           {% url 'blockly_quiz:random' as random_quiz_url %}
+           {% url 'accounts:login' as login_url %}
            <div class="col-12 d-flex flex-wrap gap-2">
              <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
              <a class="btn btn-outline-secondary" href="{% url 'blockly_quiz:list' %}">{% trans "Reset" %}</a>
-            <a class="btn btn-outline-primary ms-auto" href="{% url 'blockly_quiz:random' %}">{% trans "Random quiz" %}</a>
+            {% if can_use_random_quiz %}
+              <a class="btn btn-outline-primary ms-auto" href="{% url 'blockly_quiz:random' %}">{% trans "Random quiz" %}</a>
+            {% else %}
+              <button
+                class="btn btn-outline-primary ms-auto opacity-75"
+                type="button"
+                aria-disabled="true"
+                title="{% trans 'Only for Student V group' %}"
+                data-random-quiz-locked="{% if request.user.is_authenticated %}group{% else %}login{% endif %}"
+                data-random-quiz-login-url="{{ login_url }}?next={{ random_quiz_url|urlencode }}"
+              >
+                {% trans "Random quiz" %}
+              </button>
+            {% endif %}
            </div>
          </form>
        </div>
