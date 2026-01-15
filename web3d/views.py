@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
+from django.views.decorators.http import require_POST
 
 from library.models import (
     ContentItem,
@@ -157,6 +158,7 @@ def course_detail(request, slug):
 
 
 @login_required
+@require_POST
 def course_lesson_toggle(request, slug, lesson_id):
     course = get_object_or_404(Course, slug=slug, is_published=True)
     lesson = get_object_or_404(CourseLesson, pk=lesson_id, course=course)
@@ -172,6 +174,7 @@ def course_lesson_toggle(request, slug, lesson_id):
 
 
 @login_required
+@require_POST
 def course_favorite_toggle(request, slug):
     course = get_object_or_404(Course, slug=slug, is_published=True)
     favorite = CourseFavorite.objects.filter(user=request.user, course=course).first()

@@ -14,6 +14,7 @@
       </div>
     </div>
 
+<<<<<<< HEAD
     <div class="quiz-question-prompt">
       {{ question.prompt|linebreaksbr }}
     </div>
@@ -37,10 +38,16 @@
               data-blockly-script-id="{{ script_id }}"
               aria-label="{% trans 'Blockly preview' %}"
             ></div>
+=======
+    {% with has_previews=question.blockly_state or question.blockly_xml or question.scratchblocks_text or question.code_text %}
+      <div class="quiz-stage-grid{% if has_previews %} has-preview{% endif %}">
+        <div class="quiz-stage-left">
+          <div class="mb-3 blockly-quiz-prompt">
+            {{ question.prompt|linebreaksbr }}
+>>>>>>> 7a69204b (WIP: update quiz/views/templates/css/js)
           </div>
-        {% endwith %}
-      {% endif %}
 
+<<<<<<< HEAD
       {% if question.scratchblocks_text %}
         {% with script_id="scratchblocks-"|add:qid %}
           {{ question.scratchblocks_text|json_script:script_id }}
@@ -58,10 +65,85 @@
               data-scratchblocks-script-id="{{ script_id }}"
               aria-label="{% trans 'Scratch blocks preview' %}"
             ></div>
+=======
+          <form
+            method="post"
+            action="{% url 'blockly_quiz:answer' attempt.id %}"
+            hx-post="{% url 'blockly_quiz:answer' attempt.id %}"
+            hx-target="#quiz-stage"
+            hx-swap="innerHTML"
+          >
+            {% csrf_token %}
+            <input type="hidden" name="question_id" value="{{ question.id }}">
+
+            <div class="list-group quiz-choice-list mb-3">
+              {% for choice in choices %}
+                <label class="list-group-item d-flex gap-2 align-items-start">
+                  <input class="form-check-input mt-1" type="radio" name="choice_id" value="{{ choice.id }}" required>
+                  <span>{{ choice.text }}</span>
+                </label>
+              {% endfor %}
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-end gap-2">
+              <button type="submit" class="btn btn-primary">
+                {% if question_number >= total_questions %}
+                  {% trans "Finish" %}
+                {% else %}
+                  {% trans "Next" %}
+                {% endif %}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {% if has_previews %}
+          <div class="quiz-stage-right">
+            {% with qid=question.id|stringformat:"s" %}
+              {% if question.blockly_state or question.blockly_xml %}
+                {% with script_id="blockly-xml-"|add:qid %}
+                  {% if question.blockly_state %}
+                    {{ question.blockly_state|json_script:script_id }}
+                  {% else %}
+                    {{ question.blockly_xml|json_script:script_id }}
+                  {% endif %}
+                  <div class="quiz-preview-panel">
+                    <div
+                      class="blockly-preview border rounded"
+                      data-blockly-preview
+                      data-blockly-script-id="{{ script_id }}"
+                      aria-label="{% trans 'Blockly preview' %}"
+                    ></div>
+                  </div>
+                {% endwith %}
+              {% endif %}
+
+              {% if question.scratchblocks_text %}
+                {% with script_id="scratchblocks-"|add:qid %}
+                  {{ question.scratchblocks_text|json_script:script_id }}
+                  <div class="quiz-preview-panel">
+                    <div
+                      class="scratchblocks-preview border rounded"
+                      data-scratchblocks-preview
+                      data-scratchblocks-script-id="{{ script_id }}"
+                      aria-label="{% trans 'Scratch blocks preview' %}"
+                    ></div>
+                  </div>
+                {% endwith %}
+              {% endif %}
+            {% endwith %}
+
+            {% if question.code_text %}
+              <div class="quiz-preview-panel">
+                <pre class="code-preview"><code class="language-{{ question.code_language|default:'python' }}">{{ question.code_text }}</code></pre>
+              </div>
+            {% endif %}
+>>>>>>> 7a69204b (WIP: update quiz/views/templates/css/js)
           </div>
-        {% endwith %}
-      {% endif %}
+        {% endif %}
+      </div>
     {% endwith %}
+<<<<<<< HEAD
 
     {% if question.code_text %}
       <div class="quiz-snippet-card quiz-snippet-code">
@@ -105,5 +187,7 @@
         </button>
       </div>
     </form>
+=======
+>>>>>>> 7a69204b (WIP: update quiz/views/templates/css/js)
   </div>
 </div>

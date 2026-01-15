@@ -1,5 +1,6 @@
 import json
 import random
+import secrets
 from urllib.parse import urlencode
 from uuid import uuid4
 
@@ -130,6 +131,15 @@ def _question_bank_queryset_for_request(request):
     return Question.objects.filter(quiz__in=quizzes)
 
 
+def _shuffle_choices(choices, *, seed: str):
+    ordered = list(choices)
+    if len(ordered) <= 1:
+        return ordered
+    rng = random.Random(str(seed))
+    rng.shuffle(ordered)
+    return ordered
+
+
 def _get_playable_quiz_or_404(request, slug: str, *, include_type_flags: bool = False):
     quizzes = _filter_quiz_queryset_for_user(Quiz.objects.all(), request.user)
     if include_type_flags:
@@ -211,7 +221,10 @@ def _finalize_attempt(attempt: Attempt, *, total_questions_override: int | None 
 def _build_question_context(*, attempt: Attempt, question: Question):
     total_questions = Question.objects.filter(quiz=attempt.quiz).count()
     answered_count = AttemptAnswer.objects.filter(attempt=attempt).count()
-    choices = list(Choice.objects.filter(question=question).order_by("sort_order", "id"))
+    choices = _shuffle_choices(
+        Choice.objects.filter(question=question).order_by("sort_order", "id"),
+        seed=f"attempt:{attempt.id}:question:{question.id}",
+    )
     return {
         "attempt": attempt,
         "quiz": attempt.quiz,
@@ -930,9 +943,13 @@ def api_quiz_payload(request, slug):
     selected_questions = _select_questions_for_api(request, quiz)
     questions = []
     question_ids: list[int] = []
+    choice_seed = secrets.token_hex(8)
     for question in selected_questions:
         question_ids.append(int(question.id))
-        choices = list(question.choices.all().order_by("sort_order", "id"))
+        choices = _shuffle_choices(
+            question.choices.all().order_by("sort_order", "id"),
+            seed=f"{choice_seed}:{question.id}",
+        )
         state = (question.blockly_state or "").strip()
         xml = (question.blockly_xml or "").strip()
         payload = state or xml
@@ -959,7 +976,7 @@ def api_quiz_payload(request, slug):
             }
         )
     selection_token = signing.dumps(
-        {"quiz_id": int(quiz.id), "question_ids": question_ids},
+        {"quiz_id": int(quiz.id), "question_ids": question_ids, "choice_seed": choice_seed},
         salt="blockly_quiz:selection",
     )
     return JsonResponse(

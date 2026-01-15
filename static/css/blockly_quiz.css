@@ -221,6 +221,45 @@ body.random-quiz-page .modal-backdrop {
   background: linear-gradient(90deg, var(--accent-strong), var(--secondary));
 }
 
+.quiz-stage-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.quiz-stage-grid.has-preview .quiz-stage-right {
+  align-self: start;
+}
+
+.quiz-stage-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quiz-stage-right {
+  display: grid;
+  gap: 12px;
+}
+
+.quiz-preview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 992px) {
+  .quiz-stage-grid.has-preview {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  }
+
+  .quiz-stage-right {
+    position: sticky;
+    top: 12px;
+  }
+}
+
 .blockly-quiz-prompt {
   font-size: 1.08rem;
   line-height: 1.6;

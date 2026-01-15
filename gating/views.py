@@ -70,21 +70,22 @@ def zalopay_buy(request, content_id):
         ),
         pk=content_id,
     )
+    redirect_kwargs = {"slug": content.slug or content_id}
     if content.price_vnd <= 0:
         messages.error(request, "This content is not for sale.")
-        return redirect("library:content-detail", pk=content_id)
+        return redirect("library:content-detail", **redirect_kwargs)
     if content.owner_id == request.user.id:
         messages.info(request, "You already own this content.")
-        return redirect("library:content-detail", pk=content_id)
+        return redirect("library:content-detail", **redirect_kwargs)
     if Unlock.objects.filter(
         content=content, user=request.user, method=Unlock.Method.PAYMENT
     ).exists():
         messages.info(request, "Content already unlocked.")
-        return redirect("library:content-detail", pk=content_id)
+        return redirect("library:content-detail", **redirect_kwargs)
 
     if not settings.ZALOPAY_APP_ID or not settings.ZALOPAY_KEY1:
         messages.error(request, "ZaloPay is not configured.")
-        return redirect("library:content-detail", pk=content_id)
+        return redirect("library:content-detail", **redirect_kwargs)
 
     callback_url = settings.ZALOPAY_CALLBACK_URL or request.build_absolute_uri(
         reverse("gating:zalopay-callback")
@@ -322,6 +323,18 @@ def zalopay_callback(request):
     if zp_trans_id:
         transaction.zp_trans_id = str(zp_trans_id)
 
+    amount_value = int(data_obj.get("amount") or 0)
+    if amount_value and amount_value != int(transaction.amount):
+        transaction.status = PaymentTransaction.Status.FAILED
+        transaction.save(update_fields=["status", "zp_trans_id", "raw_callback", "updated_at"])
+        logger.warning(
+            "ZaloPay payment amount mismatch for %s: %s != %s",
+            app_trans_id,
+            amount_value,
+            transaction.amount,
+        )
+        return JsonResponse({"return_code": 0, "return_message": "Invalid amount"})
+
     status_value = str(
         data_obj.get("status")
         or data_obj.get("return_code")
@@ -462,7 +475,12 @@ def zalopay_return(request):
     else:
         messages.info(request, "Payment is processing. Please refresh later.")
 
-    return redirect("library:content-detail", pk=transaction.content_id)
+    if transaction.content:
+        return redirect(
+            "library:content-detail",
+            slug=getattr(transaction.content, "slug", "") or transaction.content_id,
+        )
+    return redirect("library:home")
 
 
 @require_GET

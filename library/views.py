@@ -1,3 +1,4 @@
+# pyright: reportAttributeAccessIssue=false
 import logging
 import mimetypes
 import os
@@ -697,7 +698,9 @@ def _get_ldraw_root():
     ldconfig_path = finders.find("ldraw/LDConfig.ldr")
     if not ldconfig_path:
         raise Http404
-    return Path(ldconfig_path).resolve().parent
+    if isinstance(ldconfig_path, (list, tuple)):
+        ldconfig_path = ldconfig_path[0]
+    return Path(str(ldconfig_path)).resolve().parent
 
 
 def _clean_ldraw_path(relative_path):

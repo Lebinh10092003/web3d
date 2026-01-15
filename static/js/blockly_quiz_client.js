@@ -209,6 +209,7 @@ function renderQuestionStage(container, question, meta) {
   const hasScratch = Boolean(question.scratchblocks_text);
   const hasCode = Boolean(question.code_text);
   const codeLanguage = sanitizeLanguage(question.code_language);
+  const hasPreview = hasBlockly || hasScratch || hasCode;
 
   const questionCounter = i18n.questionCounterTemplate
     ? formatTemplate(i18n.questionCounterTemplate, {
@@ -219,6 +220,7 @@ function renderQuestionStage(container, question, meta) {
   const copyLabel = i18n.copy || "Copy";
   const submitLabel =
     meta.index + 1 >= meta.total ? i18n.finish || "Finish" : i18n.next || "Next";
+  const gridClass = `quiz-stage-grid${hasPreview ? " has-preview" : ""}`;
 
   container.innerHTML = `
     <div class="card shadow-sm">
@@ -228,62 +230,71 @@ function renderQuestionStage(container, question, meta) {
             ${escapeHtml(questionCounter)}
           </div>
         </div>
-        <div class="mb-3 blockly-quiz-prompt">${promptHtml}</div>
-
-        ${hasBlockly ? `<script id="${payloadId}" type="application/json"></script>` : ""}
-        ${
-          hasBlockly
-            ? `
-              <div class="mb-3">
-                <div class="blockly-preview border rounded" data-blockly-preview data-blockly-script-id="${payloadId}"></div>
+        <div class="${gridClass}">
+          <div class="quiz-stage-left">
+            <div class="mb-3 blockly-quiz-prompt">${promptHtml}</div>
+            <form data-quiz-answer-form>
+              <div class="list-group quiz-choice-list mb-3">
+                ${buildChoiceList(question.choices || [], meta.selectedChoiceId)}
               </div>
-            `
-            : ""
-        }
+              <div class="d-flex flex-wrap justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                  ${escapeHtml(submitLabel)}
+                </button>
+              </div>
+            </form>
+          </div>
 
-        ${hasScratch ? `<script id="${scratchId}" type="application/json"></script>` : ""}
-        ${
-           hasScratch
-             ? `
-               <div class="mb-3 quiz-snippet">
-                 <div class="quiz-snippet-toolbar">
-                   <button type="button" class="btn btn-outline-secondary btn-sm" data-quiz-copy="scratch">
-                     ${escapeHtml(copyLabel)}
-                   </button>
-                 </div>
-                 <div class="scratchblocks-preview border rounded" data-scratchblocks-preview data-scratchblocks-script-id="${scratchId}"></div>
-               </div>
-             `
-            : ""
-        }
-
-        ${
-          hasCode
-            ? `
-              <div class="mb-3 quiz-snippet">
-                <div class="quiz-snippet-toolbar">
-                  <button type="button" class="btn btn-outline-secondary btn-sm" data-quiz-copy="code">
-                    ${escapeHtml(copyLabel)}
-                  </button>
+          ${
+            hasPreview
+              ? `
+                <div class="quiz-stage-right">
+                  ${
+                    hasBlockly
+                      ? `
+                        <script id="${payloadId}" type="application/json"></script>
+                        <div class="quiz-preview-panel">
+                          <div class="blockly-preview border rounded" data-blockly-preview data-blockly-script-id="${payloadId}"></div>
+                        </div>
+                      `
+                      : ""
+                  }
+                  ${
+                    hasScratch
+                      ? `
+                        <script id="${scratchId}" type="application/json"></script>
+                        <div class="quiz-preview-panel quiz-snippet">
+                          <div class="quiz-snippet-toolbar">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-quiz-copy="scratch">
+                              ${escapeHtml(copyLabel)}
+                            </button>
+                          </div>
+                          <div class="scratchblocks-preview border rounded" data-scratchblocks-preview data-scratchblocks-script-id="${scratchId}"></div>
+                        </div>
+                      `
+                      : ""
+                  }
+                  ${
+                    hasCode
+                      ? `
+                        <div class="quiz-preview-panel quiz-snippet">
+                          <div class="quiz-snippet-toolbar">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-quiz-copy="code">
+                              ${escapeHtml(copyLabel)}
+                            </button>
+                          </div>
+                          <pre class="code-preview"><code class="language-${codeLanguage}">${escapeHtml(
+                            question.code_text || ""
+                          )}</code></pre>
+                        </div>
+                      `
+                      : ""
+                  }
                 </div>
-                <pre class="code-preview"><code class="language-${codeLanguage}">${escapeHtml(
-                  question.code_text || ""
-                )}</code></pre>
-              </div>
-            `
-            : ""
-        }
-
-        <form data-quiz-answer-form>
-          <div class="list-group quiz-choice-list mb-3">
-            ${buildChoiceList(question.choices || [], meta.selectedChoiceId)}
-          </div>
-          <div class="d-flex flex-wrap justify-content-end gap-2">
-            <button type="submit" class="btn btn-primary">
-              ${escapeHtml(submitLabel)}
-            </button>
-          </div>
-        </form>
+              `
+              : ""
+          }
+        </div>
       </div>
     </div>
   `;
