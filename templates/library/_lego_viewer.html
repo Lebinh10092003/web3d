@@ -7,6 +7,17 @@
   data-model-url="{{ model_url }}"
   data-parts-path="{% url 'library:ldraw-index' %}"
   data-zoom-enabled="{{ zoom_enabled|yesno:'true,false' }}"
+  data-lego-fit-offset="0.9"
+  data-lego-zoom-speed="1.8"
+  data-lego-rotate-speed="1.1"
+  data-lego-pan-speed="1.2"
+  data-lego-camera-fov="60"
+  data-lego-camera-near="0.05"
+  data-lego-camera-far="8000"
+  data-lego-camera-x="220"
+  data-lego-camera-y="200"
+  data-lego-camera-z="220"
+  data-lego-max-steps="200"
   data-three-base="{{ LEGO_THREE_BASE_URL }}"
   data-msg-loading-viewer="{% if request.LANGUAGE_CODE == "vi" %}Đang tải trình xem 3D...{% else %}Loading 3D viewer...{% endif %}"
   data-msg-loading-colors="{% if request.LANGUAGE_CODE == "vi" %}Đang tải màu LEGO...{% else %}Loading LEGO colors...{% endif %}"
@@ -20,19 +31,58 @@
   data-msg-three-failed="{% if request.LANGUAGE_CODE == "vi" %}Không tải được thư viện Three.js (module). Kiểm tra mạng/CDN (cdn.jsdelivr.net) hoặc mở Console để xem lại.{% else %}Could not load Three.js (module). Check network/CDN (cdn.jsdelivr.net) or open the Console to see errors.{% endif %}"
   data-msg-unlock-note="{% if request.LANGUAGE_CODE == "vi" %}Mở khóa để xem chi tiết, thu phóng to nhỏ và điều chỉnh góc nhìn.{% else %}Unlock to zoom in, view details, and adjust the camera.{% endif %}"
   data-msg-viewer-missing="{% if request.LANGUAGE_CODE == "vi" %}Trình xem 3D chưa khởi động. Kiểm tra /static/js/lego_viewer.js và lỗi module trong Console.{% else %}3D viewer did not start. Check /static/js/lego_viewer.js and Console module errors.{% endif %}"
+  data-msg-step-label="{% if request.LANGUAGE_CODE == "vi" %}Bước {current}/{total}{% else %}Step {current}/{total}{% endif %}"
 >
   <div class="lego-viewer-toolbar">
-    <button class="button button-ghost" type="button" data-lego-flip>{% trans "Flip" %}</button>
-    <button class="button button-ghost" type="button" data-lego-fit>{% trans "Fit" %}</button>
-    <button class="button button-ghost" type="button" data-lego-reset>{% trans "Reset" %}</button>
+    <div class="lego-viewer-mode" role="tablist" aria-label="{% if request.LANGUAGE_CODE == "vi" %}Chế độ xem{% else %}View mode{% endif %}">
+      <button class="button button-ghost is-active" type="button" data-lego-mode="full">
+        {% if request.LANGUAGE_CODE == "vi" %}Xem đầy đủ{% else %}Full view{% endif %}
+      </button>
+      <button class="button button-ghost" type="button" data-lego-mode="step">
+        {% if request.LANGUAGE_CODE == "vi" %}Xem từng bước{% else %}Step by step{% endif %}
+      </button>
+    </div>
+    <div class="lego-viewer-actions">
+      <button class="button button-ghost" type="button" data-lego-flip>{% trans "Flip" %}</button>
+      <button class="button button-ghost" type="button" data-lego-fit>{% trans "Fit" %}</button>
+      <button class="button button-ghost" type="button" data-lego-reset>{% trans "Reset" %}</button>
+    </div>
   </div>
+  <div class="lego-viewer-steps" data-lego-steps hidden>
+    <button class="button button-ghost" type="button" data-lego-step-prev>
+      {% if request.LANGUAGE_CODE == "vi" %}Trước{% else %}Prev{% endif %}
+    </button>
+    <input
+      class="lego-viewer-step-range"
+      type="range"
+      min="1"
+      max="1"
+      step="1"
+      value="1"
+      aria-label="{% if request.LANGUAGE_CODE == "vi" %}Bước lắp ráp{% else %}Building step{% endif %}"
+      data-lego-step-range
+    >
+    <button class="button button-ghost" type="button" data-lego-step-next>
+      {% if request.LANGUAGE_CODE == "vi" %}Sau{% else %}Next{% endif %}
+    </button>
+    <span class="lego-viewer-step-label" data-lego-step-label>
+      {% if request.LANGUAGE_CODE == "vi" %}Bước 1/1{% else %}Step 1/1{% endif %}
+    </span>
+  </div>
+  <p class="lego-viewer-fallback-note" data-lego-fallback-note hidden>
+    {% if request.LANGUAGE_CODE == "vi" %}
+      Mô hình không có STEP, các bước được chia tự động.
+    {% else %}
+      No STEP metadata; steps are auto-generated.
+    {% endif %}
+  </p>
   <div class="lego-viewer-stage">
     <canvas class="lego-viewer-canvas" data-lego-canvas></canvas>
     <div class="lego-viewer-start" data-lego-start-wrap>
       <button class="button" type="button" data-lego-start>{% if request.LANGUAGE_CODE == "vi" %}Tải mô hình 3D{% else %}Load 3D model{% endif %}</button>
       <p class="lego-viewer-start-note">{% if request.LANGUAGE_CODE == "vi" %}Nhấn để tải mô hình, có thể mất vài giây.{% else %}Click to load the model. This may take a few seconds.{% endif %}</p>
     </div>
-    <div class="lego-viewer-status" data-lego-status data-level="" data-visible="false">
+    <div class="lego-viewer-status" data-lego-status data-level="" data-visible="false" role="status" aria-live="polite">
       <div class="lego-viewer-status-card">
         <span class="lego-viewer-status-label" data-lego-status-text>{% if request.LANGUAGE_CODE == "vi" %}Đang tải mô hình 3D...{% else %}Loading 3D model...{% endif %}</span>
       </div>
@@ -44,6 +94,18 @@
   <noscript>
     <p class="field-hint">{% trans "Enable JavaScript to view this 3D model." %}</p>
   </noscript>
+
+  <div class="lego-viewer-modal" data-lego-mode-modal hidden>
+    <div class="lego-viewer-modal-card">
+      <h3 class="lego-viewer-modal-title">{% if request.LANGUAGE_CODE == "vi" %}Chọn chế độ xem{% else %}Choose view mode{% endif %}</h3>
+      <p class="lego-viewer-modal-note">{% if request.LANGUAGE_CODE == "vi" %}Bạn có thể xem toàn bộ hoặc xem từng bước lắp ráp.{% else %}View the whole model or step-by-step assembly.{% endif %}</p>
+      <div class="lego-viewer-modal-actions">
+        <button class="button" type="button" data-lego-modal-mode="full">{% if request.LANGUAGE_CODE == "vi" %}Xem đầy đủ{% else %}Full view{% endif %}</button>
+        <button class="button button-ghost" type="button" data-lego-modal-mode="step">{% if request.LANGUAGE_CODE == "vi" %}Xem từng bước{% else %}Step by step{% endif %}</button>
+      </div>
+      <button class="lego-viewer-modal-close" type="button" data-lego-modal-close>&times;</button>
+    </div>
+  </div>
 </div>
 
 <script type="importmap">
@@ -112,10 +174,79 @@
     roots.forEach(function (root) {
       var startButton = root.querySelector("[data-lego-start]");
       var startWrap = root.querySelector("[data-lego-start-wrap]");
+      var modeModal = root.querySelector("[data-lego-mode-modal]");
+      var modeButtons = modeModal ? modeModal.querySelectorAll("[data-lego-modal-mode]") : [];
+      var closeModalBtn = modeModal ? modeModal.querySelector("[data-lego-modal-close]") : null;
+      var closeModal = function () {
+        if (modeModal) {
+          modeModal.hidden = true;
+        }
+      };
+      modeButtons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var mode = btn.dataset.legoModalMode || "full";
+          root.dataset.legoStartMode = mode;
+          if (window.sessionStorage) {
+            try {
+              sessionStorage.setItem("legoStartMode", mode);
+            } catch (err) {}
+          }
+          closeModal();
+          root.dataset.legoAutoload = "true";
+          root.dataset.legoStarted = "true";
+          if (startWrap) {
+            startWrap.hidden = true;
+          }
+          setStatus(
+            root,
+            root.dataset.msgLoadingViewer || "Loading 3D viewer...",
+            "loading"
+          );
+          ensureViewer(function () {
+            if (typeof window.startLegoViewer === "function") {
+              window.startLegoViewer(root);
+            }
+          });
+        });
+      });
+      if (closeModalBtn) {
+        closeModalBtn.addEventListener("click", closeModal);
+      }
+
       if (!startButton) {
         return;
       }
       startButton.addEventListener("click", function () {
+        var savedMode = null;
+        if (window.sessionStorage) {
+          try {
+            savedMode = sessionStorage.getItem("legoStartMode");
+          } catch (err) {}
+        }
+        if (modeModal) {
+          if (savedMode) {
+            root.dataset.legoStartMode = savedMode;
+            root.dataset.legoAutoload = "true";
+            root.dataset.legoStarted = "true";
+            if (startWrap) {
+              startWrap.hidden = true;
+            }
+            setStatus(
+              root,
+              root.dataset.msgLoadingViewer || "Loading 3D viewer...",
+              "loading"
+            );
+            ensureViewer(function () {
+              if (typeof window.startLegoViewer === "function") {
+                window.startLegoViewer(root, savedMode);
+              }
+            });
+            return;
+          }
+          modeModal.hidden = false;
+          modeModal.focus();
+          return;
+        }
         root.dataset.legoStarted = "true";
         if (startWrap) {
           startWrap.hidden = true;

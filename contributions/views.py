@@ -32,6 +32,20 @@ def submit(request):
             if not content_type:
                 messages.error(request, _("Could not determine file type."))
                 return render(request, "contributions/submit.html", {"form": form})
+            # Enforce competition relevance: must match robotics/programming competitions
+            competition = form.cleaned_data.get("competition") or ""
+            allowed_competitions = {
+                choice[0] for choice in ContributionSubmission.Competition.choices
+            }
+            if competition and competition not in allowed_competitions:
+                messages.error(request, _("Invalid competition selection."))
+                return render(request, "contributions/submit.html", {"form": form})
+            if not competition:
+                messages.warning(
+                    request,
+                    _("Please select a competition (WRO, FLL, Enjoy AI, Whalebot) or programming contest (HKICO, Python, Blockly, Scratch)."),
+                )
+                return render(request, "contributions/submit.html", {"form": form})
             storage_path = _build_storage_path(request.user.id, upload.name)
             preview_path = ""
             if preview_upload:

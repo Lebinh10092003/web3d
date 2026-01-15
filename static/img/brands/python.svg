@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Python">
-  <rect x="10" y="10" width="30" height="26" rx="12" fill="#3776AB"/>
-  <circle cx="22" cy="22" r="2.3" fill="#fff" opacity="0.95"/>
-  <rect x="24" y="28" width="30" height="26" rx="12" fill="#FFD343"/>
-  <circle cx="42" cy="42" r="2.3" fill="#fff" opacity="0.95"/>
-  <path d="M24 28h16c5 0 9-4 9-9V16" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="2" stroke-linecap="round"/>
-  <path d="M40 36H24c-5 0-9 4-9 9v3" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="2" stroke-linecap="round"/>
-</svg>

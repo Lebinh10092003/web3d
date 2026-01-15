@@ -158,30 +158,26 @@
           </div>
         </div>
       {% else %}
-        <a class="nav-link"
-          href="{% url 'accounts:login' %}"
-          hx-get="{% url 'accounts:login' %}?modal=1"
-          hx-target="#auth-modal-body"
-          hx-swap="innerHTML"
-        >
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M8 17l-5-5 5-5M3 12h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M15 21h4a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>{% trans "Login" %}</span>
-        </a>
-        <a
-          class="button button-ghost nav-link"
-          href="{% url 'accounts:register' %}"
-          hx-get="{% url 'accounts:register' %}?modal=1"
-          hx-target="#auth-modal-body"
-          hx-swap="innerHTML"
-        >
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <span>{% trans "Create account" %}</span>
-        </a>
+        <div class="auth-cta">
+          <a
+            class="btn btn-primary btn-auth"
+            href="{% url 'accounts:register' %}"
+            hx-get="{% url 'accounts:register' %}?modal=1"
+            hx-target="#auth-modal-body"
+            hx-swap="innerHTML"
+          >
+            {% trans "Sign up" %}
+          </a>
+          <a
+            class="btn-auth btn-outline-secondary"
+            href="{% url 'accounts:login' %}"
+            hx-get="{% url 'accounts:login' %}?modal=1"
+            hx-target="#auth-modal-body"
+            hx-swap="innerHTML"
+          >
+            {% trans "Login" %}
+          </a>
+        </div>
       {% endif %}
       <form class="lang-switcher" action="{% url 'set_language' %}" method="post">
         {% csrf_token %}

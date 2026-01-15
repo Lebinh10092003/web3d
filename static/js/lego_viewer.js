@@ -6,6 +6,7 @@ globalThis.__legoViewerLoaded = true;
 let threeDepsPromise = null;
 let threeDepsBase = null;
 const legoStates = new WeakMap();
+const legoStartModes = new WeakMap();
 
 function buildModuleUrls(baseUrl) {
   const base = (baseUrl || THREE_CDN).replace(/\/+$/, "");
@@ -47,6 +48,11 @@ function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+function parseNumber(value, fallback) {
+  const num = Number.parseFloat(value);
+  return Number.isFinite(num) ? num : fallback;
 }
 
 async function waitForModelReady(url, status, messages, signal, attempts = 8) {
@@ -272,12 +278,21 @@ async function initViewer(root) {
   const flipButton = root.querySelector("[data-lego-flip]");
   const fitButton = root.querySelector("[data-lego-fit]");
   const resetButton = root.querySelector("[data-lego-reset]");
+  const modeButtons = root.querySelectorAll("[data-lego-mode]");
+  const stepsContainer = root.querySelector("[data-lego-steps]");
+  const stepRange = root.querySelector("[data-lego-step-range]");
+  const stepLabel = root.querySelector("[data-lego-step-label]");
+  const stepPrev = root.querySelector("[data-lego-step-prev]");
+  const stepNext = root.querySelector("[data-lego-step-next]");
 
   const modelUrl = root.dataset.modelUrl;
   const partsPath = ensureTrailingSlash(root.dataset.partsPath);
   const zoomEnabled = root.dataset.zoomEnabled !== "false";
   const threeBase = root.dataset.threeBase;
-  const fitOffset = zoomEnabled ? 1.25 : 2.85;
+  const fitOffset = Math.max(
+    0.4,
+    parseNumber(root.dataset.legoFitOffset, zoomEnabled ? 0.9 : 2.2)
+  );
   const messages = {
     loadingViewer: getMessage(root, "msgLoadingViewer", "Loading 3D viewer..."),
     loadingColors: getMessage(root, "msgLoadingColors", "Loading LEGO colors..."),
@@ -348,14 +363,24 @@ async function initViewer(root) {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const scene = buildScene(THREE);
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 5000);
-    camera.position.set(320, 260, 320);
+  const cameraFov = Math.max(40, Math.min(80, parseNumber(root.dataset.legoCameraFov, 60)));
+  const cameraNear = Math.max(0.01, parseNumber(root.dataset.legoCameraNear, 0.05));
+  const cameraFar = Math.max(cameraNear + 100, parseNumber(root.dataset.legoCameraFar, 8000));
+  const camera = new THREE.PerspectiveCamera(cameraFov, 1, cameraNear, cameraFar);
+  const camPosX = parseNumber(root.dataset.legoCameraX, 220);
+  const camPosY = parseNumber(root.dataset.legoCameraY, 200);
+  const camPosZ = parseNumber(root.dataset.legoCameraZ, 220);
+  camera.position.set(camPosX, camPosY, camPosZ);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.rotateSpeed = 0.7;
-    controls.enableZoom = zoomEnabled;
+  controls.dampingFactor = parseNumber(root.dataset.legoDamping, 0.04);
+  controls.rotateSpeed = parseNumber(root.dataset.legoRotateSpeed, 1.1);
+  controls.enableZoom = zoomEnabled;
+  controls.zoomSpeed = parseNumber(root.dataset.legoZoomSpeed, 1.8);
+  controls.panSpeed = parseNumber(root.dataset.legoPanSpeed, 1.2);
+  controls.minDistance = parseNumber(root.dataset.legoMinDistance, 10);
+  controls.maxDistance = parseNumber(root.dataset.legoMaxDistance, 6000);
 
     setRendererSize(renderer, canvas, camera);
 
@@ -384,6 +409,72 @@ async function initViewer(root) {
 
     let modelGroup = null;
     let initialCamera = null;
+    let numSteps = 1;
+    let currentStep = 1;
+    let viewMode = legoStartModes.get(root) || (root.dataset.legoStartMode === "step" ? "step" : "full");
+
+    const stepTemplate = root.dataset.msgStepLabel || "Step {current}/{total}";
+
+    const formatStepLabel = (current, total) =>
+      stepTemplate.replace("{current}", String(current)).replace("{total}", String(total));
+
+    const updateStepUI = () => {
+      if (!stepsContainer || !stepRange || !stepLabel) {
+        return;
+      }
+      const usable = numSteps >= 1;
+      stepsContainer.hidden = viewMode !== "step";
+      stepRange.disabled = !usable || viewMode !== "step";
+      if (stepPrev) {
+        stepPrev.disabled = !usable || viewMode !== "step" || currentStep <= 1;
+      }
+      if (stepNext) {
+        stepNext.disabled = !usable || viewMode !== "step" || currentStep >= numSteps;
+      }
+      stepRange.min = "1";
+      stepRange.max = String(numSteps);
+      stepRange.value = String(currentStep);
+      stepLabel.textContent = formatStepLabel(currentStep, numSteps);
+    };
+
+    const setModeButtons = () => {
+      modeButtons.forEach((btn) => {
+        if (!btn.dataset.legoMode) {
+          return;
+        }
+        const isActive = btn.dataset.legoMode === viewMode;
+        if (isActive) {
+          btn.classList.add("is-active");
+          btn.setAttribute("aria-pressed", "true");
+        } else {
+          btn.classList.remove("is-active");
+          btn.setAttribute("aria-pressed", "false");
+        }
+      });
+    };
+
+    const applyVisibilityForStep = (step) => {
+      if (!modelGroup) {
+        return;
+      }
+      const isStepMode = viewMode === "step" && numSteps >= 1;
+      modelGroup.traverse((node) => {
+        if (node === modelGroup) {
+          return;
+        }
+        const stepId =
+          typeof node.userData?._legoStep === "number"
+            ? node.userData._legoStep
+            : typeof node.userData?.buildingStep === "number"
+            ? node.userData.buildingStep
+            : 0;
+        if (!isStepMode) {
+          node.visible = true;
+          return;
+        }
+        node.visible = stepId <= step;
+      });
+    };
 
     const loader = new LDrawLoader();
     loader.setPartsLibraryPath(partsPath);
@@ -419,6 +510,80 @@ async function initViewer(root) {
           return;
         }
         modelGroup = group;
+        numSteps = Math.max(
+          1,
+          Number.isFinite(group?.userData?.numBuildingSteps)
+            ? Number(group.userData.numBuildingSteps)
+            : Number.parseInt(group?.userData?.numBuildingSteps || "1", 10)
+        );
+
+        const annotateStepMetadata = () => {
+          let maxStep = 0;
+          if (!modelGroup) {
+            return 1;
+          }
+          modelGroup.traverse((node) => {
+            const parentStep =
+              typeof node.parent?.userData?._legoStep === "number"
+                ? node.parent.userData._legoStep
+                : 0;
+            const selfStep =
+              typeof node.userData?.buildingStep === "number" ? node.userData.buildingStep : null;
+            const effectiveStep =
+              typeof selfStep === "number"
+                ? selfStep
+                : typeof parentStep === "number"
+                ? parentStep
+                : 0;
+            maxStep = Math.max(maxStep, effectiveStep);
+            node.userData._legoStep = effectiveStep;
+          });
+          return maxStep + 1;
+        };
+
+        numSteps = Math.max(numSteps, annotateStepMetadata());
+
+        // If the model lacks STEP metadata, derive steps:
+        // 1) Use top-level child groups as assembly units (keeps motors/subassemblies together).
+        // 2) If flat, fall back to chunked meshes.
+        let usedFallback = false;
+        if (numSteps <= 1) {
+          usedFallback = true;
+          let stepCounter = 0;
+          if (modelGroup.children && modelGroup.children.length) {
+            modelGroup.children.forEach((unit) => {
+              stepCounter += 1;
+              unit.traverse((node) => {
+                if (node === modelGroup) {
+                  return;
+                }
+                node.userData._legoStep = stepCounter;
+              });
+            });
+          }
+          if (stepCounter === 0) {
+            const meshes = [];
+            modelGroup.traverse((node) => {
+              if (node !== modelGroup && (node.isMesh || node.isLine || node.isPoints)) {
+                meshes.push(node);
+              }
+            });
+            const maxSteps = Math.max(1, parseInt(root.dataset.legoMaxSteps || "200", 10));
+            const chunkSize = Math.max(1, Math.ceil(meshes.length / maxSteps));
+            meshes.forEach((node, idx) => {
+              const stepId = Math.floor(idx / chunkSize) + 1;
+              node.userData._legoStep = stepId;
+              stepCounter = Math.max(stepCounter, stepId);
+            });
+          }
+          numSteps = Math.max(numSteps, stepCounter);
+        }
+
+        currentStep = viewMode === "step" ? 1 : numSteps;
+        const fallbackNote = root.querySelector("[data-lego-fallback-note]");
+        if (fallbackNote) {
+          fallbackNote.hidden = !usedFallback;
+        }
 
         const baseTransform = {
           position: group.position.clone(),
@@ -448,6 +613,8 @@ async function initViewer(root) {
           target: controls.target.clone(),
         };
         setStatus(status, "", "");
+        updateStepUI();
+        setModeButtons();
 
         if (flipButton) {
           flipButton.addEventListener("click", () => {
@@ -463,6 +630,81 @@ async function initViewer(root) {
             };
           });
         }
+
+        if (modeButtons.length) {
+          modeButtons.forEach((btn) => {
+            const mode = btn.dataset.legoMode;
+            btn.addEventListener("click", () => {
+              if (!mode || viewMode === mode) {
+                return;
+              }
+              viewMode = mode === "step" ? "step" : "full";
+              legoStartModes.set(root, viewMode);
+              if (!modelGroup) {
+                setModeButtons();
+                updateStepUI();
+                return;
+              }
+              if (viewMode === "step") {
+                currentStep = Math.min(Math.max(currentStep, 1), numSteps);
+                applyVisibilityForStep(currentStep);
+                fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+              } else {
+                applyVisibilityForStep(numSteps);
+                fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+              }
+              setModeButtons();
+              updateStepUI();
+            });
+          });
+        }
+
+        const clampStep = (value) => Math.min(Math.max(value, 1), numSteps);
+
+        if (stepRange) {
+          stepRange.addEventListener("input", (event) => {
+            if (!modelGroup || viewMode !== "step") {
+              return;
+            }
+            const value = Number(event.target.value);
+            currentStep = clampStep(value);
+            applyVisibilityForStep(currentStep);
+            updateStepUI();
+            fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+          });
+        }
+
+        if (stepPrev) {
+          stepPrev.addEventListener("click", () => {
+            if (!modelGroup || viewMode !== "step") {
+              return;
+            }
+            currentStep = clampStep(currentStep - 1);
+            applyVisibilityForStep(currentStep);
+            updateStepUI();
+            fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+          });
+        }
+
+        if (stepNext) {
+          stepNext.addEventListener("click", () => {
+            if (!modelGroup || viewMode !== "step") {
+              return;
+            }
+            currentStep = clampStep(currentStep + 1);
+            applyVisibilityForStep(currentStep);
+            updateStepUI();
+            fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+          });
+        }
+
+        // Default visibility depends on start mode.
+        applyVisibilityForStep(viewMode === "step" ? currentStep : numSteps);
+        if (viewMode === "step" && modelGroup) {
+          fitCamera(THREE, camera, controls, modelGroup, fitOffset * 1.02);
+        }
+        updateStepUI();
+        setModeButtons();
       },
       (event) => {
         if (state.canceled) {
@@ -531,9 +773,14 @@ async function initViewer(root) {
   }
 }
 
-function startViewer(root) {
+function startViewer(root, startMode) {
   if (!root) {
     return;
+  }
+  const mode = startMode || root.dataset.legoStartMode;
+  if (mode) {
+    root.dataset.legoStartMode = mode;
+    legoStartModes.set(root, mode === "step" ? "step" : "full");
   }
   root.dataset.legoAutoload = "true";
   root.dataset.legoStarted = "true";

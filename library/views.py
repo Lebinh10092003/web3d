@@ -926,6 +926,11 @@ def content_lego_model(request, pk):
     cache_path = find_cached_ldraw_model_path(
         content_id=content.id, source_path=source_path
     )
+    # Manual fallback: if a prebuilt LDraw file already exists in derived storage, use it.
+    if not cache_path:
+        manual_candidate = f"derived/lego/{content.id}/model.ldr"
+        if default_storage.exists(manual_candidate):
+            cache_path = manual_candidate
     if not cache_path and getattr(settings, "USE_BACKGROUND_JOBS", True):
         enqueue_ldraw_prebuild(content.id, source_path)
         return HttpResponse(
@@ -940,23 +945,37 @@ def content_lego_model(request, pk):
                 content_id=content.id, source_path=source_path
             )
         except UnsupportedLegoModel as exc:
-            if settings.DEBUG:
-                return HttpResponse(
-                    f"LDraw conversion failed: {exc}",
-                    status=400,
-                    content_type="text/plain; charset=utf-8",
-                )
-            logger.warning("LDraw conversion failed for content %s: %s", content.id, exc)
-            raise Http404
+            # Try manual fallback before failing hard.
+            fallback_manual = f"derived/lego/{content.id}/model.ldr"
+            if default_storage.exists(fallback_manual):
+                cache_path = fallback_manual
+            else:
+                if settings.DEBUG:
+                    return HttpResponse(
+                        f"LDraw conversion failed: {exc}",
+                        status=400,
+                        content_type="text/plain; charset=utf-8",
+                    )
+                logger.warning("LDraw conversion failed for content %s: %s", content.id, exc)
+                raise Http404
         except Exception:
-            logger.exception("Unexpected LDraw conversion error for content %s", content.id)
-            if settings.DEBUG:
-                return HttpResponse(
-                    "Unexpected LDraw conversion error. Check server logs.",
-                    status=500,
-                    content_type="text/plain; charset=utf-8",
-                )
-            raise Http404
+            # Unexpected error; try manual fallback as a last resort.
+            fallback_manual = f"derived/lego/{content.id}/model.ldr"
+            if default_storage.exists(fallback_manual):
+                cache_path = fallback_manual
+            else:
+                logger.exception("Unexpected LDraw conversion error for content %s", content.id)
+                if settings.DEBUG:
+                    return HttpResponse(
+                        "Unexpected LDraw conversion error. Check server logs.",
+                        status=500,
+                        content_type="text/plain; charset=utf-8",
+                    )
+                raise Http404
+
+    if not cache_path:
+        logger.warning("LDraw cache path missing for content %s", content.id)
+        raise Http404
 
     try:
         file_handle = default_storage.open(cache_path, "rb")

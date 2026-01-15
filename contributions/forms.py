@@ -22,6 +22,11 @@ class ContributionSubmissionForm(forms.ModelForm):
         "vex v5",
         "vex",
         "lego",
+        "hkico",
+        "python",
+        "blockly",
+        "scratch",
+        "whalebot",
     )
     competition = forms.ChoiceField(
         choices=ContributionSubmission.Competition.choices,
@@ -95,10 +100,10 @@ class ContributionSubmissionForm(forms.ModelForm):
         ext = os.path.splitext(upload.name)[1].lower().lstrip(".")
         if not ext:
             raise forms.ValidationError(_("File extension is required."))
-        allowed_ext = {"pdf", "io", "lxf", "ldr", "mpd"}
+        allowed_ext = {"pdf", "io", "lxf", "ldr", "mpd", "stl"}
         if ext not in allowed_ext:
             raise forms.ValidationError(
-                _("Allowed formats: pdf, io, lxf, ldr, mpd.")
+                _("Allowed formats: pdf, io, lxf, ldr, mpd, stl.")
             )
         if ext == "pdf":
             if not self._looks_like_pdf(upload):

@@ -327,3 +327,44 @@ document.addEventListener("htmx:afterSwap", (event) => {
       : event.target;
   syncChoiceSelection(target);
 });
+
+function handleScratchExpand(event) {
+  const btn = event.target.closest("[data-scratch-expand]");
+  if (!btn) return;
+  const card = btn.closest(".quiz-snippet-card");
+  const preview = card ? card.querySelector(".scratchblocks-preview") : null;
+  if (!preview) return;
+  const expanded = preview.dataset.expanded === "1";
+  preview.dataset.expanded = expanded ? "" : "1";
+  if (!expanded) {
+    preview.style.maxHeight = "unset";
+  } else {
+    preview.style.maxHeight = "";
+  }
+  btn.textContent = expanded ? getBlocklyQuizI18nString("expand", "Expand") : getBlocklyQuizI18nString("collapse", "Collapse");
+}
+
+function handleCopyCode(event) {
+  const btn = event.target.closest("[data-copy-code]");
+  if (!btn) return;
+  const card = btn.closest(".quiz-snippet-card");
+  const pre = card ? card.querySelector("[data-code-source]") : null;
+  if (!pre) return;
+  const text = pre.innerText || pre.textContent || "";
+  navigator.clipboard.writeText(text).then(() => {
+    const original = btn.textContent;
+    btn.textContent = getBlocklyQuizI18nString("copied", "Copied!");
+    btn.setAttribute("aria-label", btn.textContent);
+    btn.disabled = true;
+    window.setTimeout(() => {
+      btn.textContent = original;
+      btn.setAttribute("aria-label", original);
+      btn.disabled = false;
+    }, 1400);
+  }).catch(() => {});
+}
+
+document.addEventListener("click", (event) => {
+  handleScratchExpand(event);
+  handleCopyCode(event);
+});

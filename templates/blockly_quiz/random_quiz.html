@@ -22,9 +22,9 @@
         <p class="text-muted mb-0">{% trans "Generate a temporary quiz from the question bank." %}</p>
       </div>
       <div class="quiz-brand-icons quiz-brand-icons--hero" aria-hidden="true">
-        <img class="quiz-brand-icon" src="{% static 'img/brands/blockly.svg' %}" alt="">
-        <img class="quiz-brand-icon" src="{% static 'img/brands/scratch.svg' %}" alt="">
-        <img class="quiz-brand-icon" src="{% static 'img/brands/python.svg' %}" alt="">
+        <img class="quiz-brand-icon" src="{% static 'img/logo_Blockly.png' %}" alt="Blockly">
+        <img class="quiz-brand-icon" src="{% static 'img/logo_Scratch.png' %}" alt="Scratch">
+        <img class="quiz-brand-icon" src="{% static 'img/logo_Python.png' %}" alt="Python">
       </div>
     </div>
 
@@ -56,7 +56,7 @@
                   {% if default_type == 'blockly' %}checked{% endif %}
                 >
                 <label class="quiz-chip" for="random-type-blockly">
-                  <img class="quiz-chip-icon" src="{% static 'img/brands/blockly.svg' %}" alt="">
+                  <img class="quiz-chip-icon" src="{% static 'img/logo_Blockly.png' %}" alt="">
                   Blockly
                 </label>
 
@@ -70,7 +70,7 @@
                   {% if default_type == 'scratch' %}checked{% endif %}
                 >
                 <label class="quiz-chip" for="random-type-scratch">
-                  <img class="quiz-chip-icon" src="{% static 'img/brands/scratch.svg' %}" alt="">
+                  <img class="quiz-chip-icon" src="{% static 'img/logo_Scratch.png' %}" alt="">
                   Scratch
                 </label>
 
@@ -84,7 +84,7 @@
                   {% if default_type == 'code' %}checked{% endif %}
                 >
                 <label class="quiz-chip" for="random-type-code">
-                  <img class="quiz-chip-icon" src="{% static 'img/brands/python.svg' %}" alt="">
+                  <img class="quiz-chip-icon" src="{% static 'img/logo_Python.png' %}" alt="">
                   {% trans "Code" %}
                 </label>
               </div>

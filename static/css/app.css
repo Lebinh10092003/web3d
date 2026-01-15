@@ -81,6 +81,33 @@ img {
   font-size: 14px;
 }
 
+.auth-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 6px;
+}
+
+.btn-auth {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  min-width: 88px;
+  text-align: center;
+}
+
+.btn-auth.btn-primary {
+  background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+  color: #0f2b1d;
+  border: none;
+  box-shadow: 0 12px 26px rgba(37, 197, 86, 0.22);
+}
+
+.btn-auth.btn-outline-secondary {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+}
+
 .nav-toggle {
   display: none;
   align-items: center;
@@ -1821,15 +1848,101 @@ textarea:focus {
 
   .lego-viewer-toolbar {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .lego-viewer-mode {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .lego-viewer-mode .button {
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+  }
+
+  .lego-viewer-mode .is-active {
+    background: #143624;
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 6px 16px rgba(20, 54, 36, 0.25);
+    transform: translateY(-1px);
+  }
+
+  .lego-viewer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
   }
 
   .lego-viewer-stage {
     position: relative;
     border-radius: 12px;
     overflow: hidden;
+  }
+
+  .lego-viewer-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: grid;
+    place-items: center;
+    z-index: 999;
+    padding: 16px;
+  }
+
+  .lego-viewer-modal[hidden] {
+    display: none;
+  }
+
+  .lego-viewer-modal-card {
+    position: relative;
+    max-width: 360px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.16);
+    padding: 18px 18px 20px;
+    display: grid;
+    gap: 10px;
+  }
+
+  .lego-viewer-modal-title {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  .lego-viewer-modal-note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .lego-viewer-modal-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .lego-viewer-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #fff;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
   }
 
   .lego-viewer-start {
@@ -1864,6 +1977,29 @@ textarea:focus {
     background: radial-gradient(circle at 20% 15%, rgba(69, 224, 107, 0.16), transparent 55%),
       rgba(18, 61, 42, 0.06);
     display: block;
+  }
+
+  .lego-viewer-steps {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .lego-viewer-steps[hidden] {
+    display: none;
+  }
+
+  .lego-viewer-step-range {
+    width: min(260px, 55vw);
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .lego-viewer-step-label {
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
   }
 
   .lego-viewer-status {

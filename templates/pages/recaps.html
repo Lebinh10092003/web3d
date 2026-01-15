@@ -11,10 +11,20 @@
 {% block content %}
 <section class="recap-hero{% if recap_banner and recap_banner.background_image %} recap-hero--with-banner{% endif %}"{% if recap_banner and recap_banner.background_image %} style="--recap-hero-image: url('{{ recap_banner.background_image.url }}');"{% endif %}>
   <div class="recap-hero-text">
-    <p class="recap-eyebrow">{{ recap_intro_eyebrow }}</p>
-    <h1>{{ recap_intro_title }}</h1>
-    <p>{{ recap_intro_body }}</p>
-  </div>
+      <p class="recap-eyebrow">{{ recap_intro_eyebrow }}</p>
+      <h1>{{ recap_intro_title }}</h1>
+      <p>{{ recap_intro_body }}</p>
+    </div>
+    <div class="recap-hero-card">
+      <div class="recap-hero-item">
+        <div class="recap-hero-label">{% trans "Total recaps" %}</div>
+        <div class="hero-title">{{ recaps|length }}</div>
+      </div>
+      <div class="recap-hero-item">
+        <div class="recap-hero-label">{% trans "Watch" %}</div>
+        <div class="hero-meta">{% trans "YouTube / TikTok" %}</div>
+      </div>
+    </div>
 </section>
 
 {% include "partials/_adsense_slot.html" with slot=ADSENSE_SLOT_PAGE class_name="ad-slot-wide" %}
@@ -61,11 +71,16 @@
           target="_blank"
           rel="noopener noreferrer"
         >
-          {% if initial_recap and initial_recap.video_provider == "TIKTOK" %}
-            {% trans "Watch on TikTok" %}
-          {% else %}
-            {% trans "Watch on YouTube" %}
-          {% endif %}
+          <span class="recap-watch-icon" aria-hidden="true">
+            {% if initial_recap and initial_recap.video_provider == "TIKTOK" %}🎵{% else %}▶{% endif %}
+          </span>
+          <span data-recap-watch-label>
+            {% if initial_recap and initial_recap.video_provider == "TIKTOK" %}
+              {% trans "Watch on TikTok" %}
+            {% else %}
+              {% trans "Watch on YouTube" %}
+            {% endif %}
+          </span>
         </a>
       </p>
     </div>
@@ -75,6 +90,7 @@
       <div class="recap-control">
         <label for="recap-competition">{% trans "Competition" %}</label>
         <select id="recap-competition" data-recap-competition>
+          <option value="__all__">{% trans "All" %}</option>
           {% for comp in competitions %}
             <option value="{{ comp.slug }}" {% if forloop.first %}selected{% endif %}>{{ comp.label }}</option>
           {% endfor %}
@@ -83,6 +99,7 @@
       <div class="recap-control">
         <label for="recap-year">{% trans "Year" %}</label>
         <select id="recap-year" data-recap-year>
+          <option value="__all__">{% trans "All" %}</option>
           {% for year in initial_years %}
             <option value="{{ year }}">{{ year }}</option>
           {% endfor %}

@@ -1,14 +1,20 @@
 {% load i18n %}
 
-<div class="card shadow-sm">
+<div class="card shadow-sm quiz-question-card">
   <div class="card-body">
-    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
-      <div class="text-muted small">
+    <div class="quiz-question-header">
+      <div class="quiz-step-label">
         {% blocktrans with n=question_number total=total_questions %}Question {{ n }} / {{ total }}{% endblocktrans %}
+      </div>
+      <div class="quiz-meta-chips">
+        <span class="quiz-chip-soft">{{ question.get_difficulty_display }}</span>
+        <span class="quiz-chip-soft">
+          {% if question.question_type == "blockly" %}Blockly{% elif question.question_type == "scratch" %}Scratch{% else %}Python{% endif %}
+        </span>
       </div>
     </div>
 
-    <div class="mb-3 blockly-quiz-prompt">
+    <div class="quiz-question-prompt">
       {{ question.prompt|linebreaksbr }}
     </div>
 
@@ -20,7 +26,11 @@
           {% else %}
             {{ question.blockly_xml|json_script:script_id }}
           {% endif %}
-          <div class="mb-3">
+          <div class="quiz-snippet-card quiz-snippet-blockly">
+            <div class="quiz-snippet-title d-flex align-items-center gap-2">
+              <span>{% trans "Blockly preview" %}</span>
+              <span class="quiz-chip-soft">{% trans "Zoom + scroll" %}</span>
+            </div>
             <div
               class="blockly-preview border rounded"
               data-blockly-preview
@@ -34,7 +44,14 @@
       {% if question.scratchblocks_text %}
         {% with script_id="scratchblocks-"|add:qid %}
           {{ question.scratchblocks_text|json_script:script_id }}
-          <div class="mb-3">
+          <div class="quiz-snippet-card quiz-snippet-scratch">
+            <div class="quiz-snippet-title d-flex align-items-center gap-2">
+              <span>{% trans "Scratch blocks" %}</span>
+              <span class="quiz-chip-soft">{% trans "Drag to view all blocks" %}</span>
+          <button class="btn btn-light btn-sm quiz-inline-btn" type="button" data-scratch-expand aria-label="{% trans 'Expand Scratch preview' %}">
+            {% trans "Expand" %}
+          </button>
+            </div>
             <div
               class="scratchblocks-preview border rounded"
               data-scratchblocks-preview
@@ -47,8 +64,15 @@
     {% endwith %}
 
     {% if question.code_text %}
-      <div class="mb-3">
-        <pre class="code-preview"><code class="language-{{ question.code_language|default:'python' }}">{{ question.code_text }}</code></pre>
+      <div class="quiz-snippet-card quiz-snippet-code">
+        <div class="quiz-snippet-title d-flex align-items-center gap-2">
+          <span>{% trans "Code" %}</span>
+          <span class="quiz-chip-soft">{{ question.code_language|default:'Python'|title }}</span>
+          <button class="btn btn-light btn-sm quiz-inline-btn" type="button" data-copy-code aria-label="{% trans 'Copy code' %}">
+            {% trans "Copy" %}
+          </button>
+        </div>
+        <pre class="code-preview" data-code-source><code class="language-{{ question.code_language|default:'python' }}">{{ question.code_text }}</code></pre>
       </div>
     {% endif %}
 

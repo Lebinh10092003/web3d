@@ -16,9 +16,9 @@
         <p class="text-muted mb-0">{% trans "Practice multiple-choice questions with Blockly, Scratch, and code snippets." %}</p>
       </div>
       <div class="quiz-brand-icons quiz-brand-icons--hero" aria-hidden="true">
-        <img class="quiz-brand-icon" src="{% static 'img/brands/blockly.svg' %}" alt="">
-        <img class="quiz-brand-icon" src="{% static 'img/brands/scratch.svg' %}" alt="">
-        <img class="quiz-brand-icon" src="{% static 'img/brands/python.svg' %}" alt="">
+        <img class="quiz-brand-icon" src="{% static 'img/logo_Blockly.png' %}" alt="Blockly">
+        <img class="quiz-brand-icon" src="{% static 'img/logo_Scratch.png' %}" alt="Scratch">
+        <img class="quiz-brand-icon" src="{% static 'img/logo_Python.png' %}" alt="Python">
       </div>
     </div>
 
@@ -86,13 +86,13 @@
                 <div class="quiz-card-meta">
                   <div class="quiz-brand-icons">
                     {% if quiz.has_blockly %}
-                      <img class="quiz-brand-icon" src="{% static 'img/brands/blockly.svg' %}" alt="Blockly">
+                      <img class="quiz-brand-icon" src="{% static 'img/logo_Blockly.png' %}" alt="Blockly">
                     {% endif %}
                     {% if quiz.has_scratch %}
-                      <img class="quiz-brand-icon" src="{% static 'img/brands/scratch.svg' %}" alt="Scratch">
+                      <img class="quiz-brand-icon" src="{% static 'img/logo_Scratch.png' %}" alt="Scratch">
                     {% endif %}
                     {% if quiz.has_code %}
-                      <img class="quiz-brand-icon" src="{% static 'img/brands/python.svg' %}" alt="Python">
+                      <img class="quiz-brand-icon" src="{% static 'img/logo_Python.png' %}" alt="Python">
                     {% endif %}
                   </div>
                 </div>

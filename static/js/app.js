@@ -647,33 +647,41 @@ function bindRecapLibrary() {
   }
 
   const findRecap = (competition, year) =>
-    recaps.find(
-      (item) =>
-        item.competition === competition && String(item.year) === String(year)
-    );
+    recaps.find((item) => {
+      const compMatch = competition === "__all__" || item.competition === competition;
+      const yearMatch = year === "__all__" || String(item.year) === String(year);
+      return compMatch && yearMatch;
+    });
 
   const setActiveCard = (competition, year) => {
     cards.forEach((card) => {
-      const match = card.dataset.competition === competition;
-      card.hidden = !match;
-      const isActive = match && card.dataset.year === String(year);
+      const compMatch = competition === "__all__" || card.dataset.competition === competition;
+      const yearMatch = year === "__all__" || card.dataset.year === String(year);
+      const isActive = compMatch && yearMatch && !card.hidden;
+      card.hidden = !compMatch || !yearMatch;
       card.classList.toggle("is-active", isActive);
     });
   };
 
   const setYearOptions = (competition, year) => {
     const years = yearsByCompetition[competition] || [];
-    yearSelect.innerHTML = years
-      .map((value) => `<option value="${value}">${value}</option>`)
-      .join("");
-    if (year && years.includes(Number(year))) {
+    const options = [`<option value="__all__">All</option>`].concat(
+      years.map((value) => `<option value="${value}">${value}</option>`)
+    );
+    yearSelect.innerHTML = options.join("");
+    if (year && (years.includes(Number(year)) || year === "__all__")) {
       yearSelect.value = String(year);
     } else if (years.length) {
       yearSelect.value = String(years[0]);
+    } else {
+      yearSelect.value = "__all__";
     }
   };
 
   const updatePlayer = (recap) => {
+    if (videoWrap) {
+      videoWrap.setAttribute("aria-busy", recap ? "true" : "false");
+    }
     if (!recap) {
       if (frame) {
         frame.hidden = true;
@@ -739,8 +747,19 @@ function bindRecapLibrary() {
       watchLink.href = recap.video_watch_url;
       watchLink.textContent =
         recap.video_provider === "TIKTOK" ? watchTikTok : watchYouTube;
+      const icon = watchLink.querySelector(".recap-watch-icon");
+      const label = watchLink.querySelector("[data-recap-watch-label]");
+      if (icon) {
+        icon.textContent = recap.video_provider === "TIKTOK" ? "🎵" : "▶";
+      }
+      if (label) {
+        label.textContent = recap.video_provider === "TIKTOK" ? watchTikTok : watchYouTube;
+      }
     } else if (watchWrapper) {
       watchWrapper.hidden = true;
+    }
+    if (videoWrap) {
+      window.setTimeout(() => videoWrap.setAttribute("aria-busy", "false"), 300);
     }
   };
 
