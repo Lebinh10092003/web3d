@@ -6,7 +6,9 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core import signing
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
 from django.http import Http404, HttpResponse, JsonResponse
@@ -23,6 +25,13 @@ SELECTION_TOKEN_MAX_AGE_SECONDS = 2 * 60 * 60
 RANDOM_QUIZ_REQUIRED_GROUP_NAME = "Student V"
 RANDOM_QUIZ_PRESET_COUNTS = {"easy": 5, "medium": 15, "hard": 10}
 RANDOM_QUIZ_DEFAULT_TYPE = "blockly"
+
+
+def _build_page_query_prefix(request, param_name: str) -> str:
+    params = request.GET.copy()
+    params.pop(param_name, None)
+    base = params.urlencode()
+    return f"{base}&" if base else ""
 
 
 def _with_quiz_type_flags(quizzes):
@@ -267,15 +276,40 @@ def quiz_list(request):
         quizzes = quizzes.none()
 
     quizzes = _with_quiz_type_flags(quizzes)
+    paginator = Paginator(quizzes, getattr(settings, "QUIZ_PAGE_SIZE", 12))
+    page_obj = paginator.get_page(request.GET.get("page"))
     return render(
         request,
         "blockly_quiz/quiz_list.html",
         {
-            "quizzes": quizzes,
+            "quizzes": page_obj.object_list,
+            "page_obj": page_obj,
+            "page_query_prefix": _build_page_query_prefix(request, "page"),
             "q": query,
             "filter_type": question_type,
             "filter_difficulty": difficulty,
             "can_use_random_quiz": _user_can_use_random_quiz(request.user),
+        },
+    )
+
+
+@login_required
+@require_GET
+def attempt_list(request):
+    attempts = (
+        Attempt.objects.filter(user=request.user, completed_at__isnull=False)
+        .select_related("quiz")
+        .order_by("-completed_at", "-started_at", "-id")
+    )
+    paginator = Paginator(attempts, getattr(settings, "QUIZ_ATTEMPT_PAGE_SIZE", 10))
+    page_obj = paginator.get_page(request.GET.get("page"))
+    return render(
+        request,
+        "blockly_quiz/attempt_list.html",
+        {
+            "attempts": page_obj.object_list,
+            "page_obj": page_obj,
+            "page_query_prefix": _build_page_query_prefix(request, "page"),
         },
     )
 

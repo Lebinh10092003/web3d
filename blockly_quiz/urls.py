@@ -7,6 +7,7 @@ app_name = "blockly_quiz"
 
 urlpatterns = [
     path("", views.quiz_list, name="list"),
+    path("scores/", views.attempt_list, name="scores"),
     path("random/", views.random_quiz, name="random"),
     path("random/start/", views.random_quiz_start, name="random-start"),
     path("random/<slug:slug>/discard/", views.random_quiz_discard, name="random-discard"),

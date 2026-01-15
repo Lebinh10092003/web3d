@@ -4,6 +4,7 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.core.files.storage import default_storage
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.db.models import Count
@@ -28,6 +29,15 @@ from .groups import sync_user_role_from_groups
 
 def _is_modal_request(request):
     return request.headers.get("HX-Request") == "true" or request.GET.get("modal") == "1"
+
+
+def _build_page_query_prefix(request, param_name):
+    if not request:
+        return ""
+    params = request.GET.copy()
+    params.pop(param_name, None)
+    base = params.urlencode()
+    return f"{base}&" if base else ""
 
 
 def _upload_avatar(file_obj, user_id):
@@ -116,7 +126,7 @@ def _build_profile_lists(user):
     }
 
 
-def _build_course_overview(user):
+def _build_course_overview(user, *, request=None, per_page=8, page_param="lesson_page"):
     course_favorites = (
         CourseFavorite.objects.filter(user=user, course__is_published=True)
         .select_related("course")
@@ -130,7 +140,10 @@ def _build_course_overview(user):
         .select_related("lesson__course")
         .order_by("-last_watched_at")
     )
-    recent_lessons = list(recent_lessons_qs[:8])
+    paginator = Paginator(recent_lessons_qs, per_page)
+    page_number = request.GET.get(page_param) if request else 1
+    recent_lessons_page = paginator.get_page(page_number)
+    recent_lessons = list(recent_lessons_page)
 
     course_ids = {
         progress.lesson.course_id for progress in recent_lessons if progress.lesson_id
@@ -167,7 +180,13 @@ def _build_course_overview(user):
     for course in favorite_courses:
         course.progress = course_stats.get(course.id, {"total": 0, "completed": 0, "percent": 0})
 
-    return favorite_courses, recent_lessons, course_stats
+    return (
+        favorite_courses,
+        recent_lessons,
+        course_stats,
+        recent_lessons_page,
+        _build_page_query_prefix(request, page_param),
+    )
 
 
 def register(request):
@@ -211,13 +230,21 @@ def profile(request):
                         _("Avatar upload failed: %(error)s") % {"error": exc},
                     )
                     context = _build_profile_lists(request.user)
-                    favorite_courses, recent_lessons, course_stats = _build_course_overview(request.user)
+                    (
+                        favorite_courses,
+                        recent_lessons,
+                        course_stats,
+                        recent_lessons_page,
+                        lesson_page_query_prefix,
+                    ) = _build_course_overview(request.user, request=request)
                     context.update(
                         {
                             "form": form,
                             "section": section,
                             "favorite_courses": favorite_courses,
                             "recent_lessons": recent_lessons,
+                            "recent_lessons_page": recent_lessons_page,
+                            "lesson_page_query_prefix": lesson_page_query_prefix,
                             "course_stats": course_stats,
                         }
                     )
@@ -229,13 +256,21 @@ def profile(request):
         form = ProfileForm(instance=request.user)
 
     context = _build_profile_lists(request.user)
-    favorite_courses, recent_lessons, course_stats = _build_course_overview(request.user)
+    (
+        favorite_courses,
+        recent_lessons,
+        course_stats,
+        recent_lessons_page,
+        lesson_page_query_prefix,
+    ) = _build_course_overview(request.user, request=request)
     context.update(
         {
             "form": form,
             "section": section,
             "favorite_courses": favorite_courses,
             "recent_lessons": recent_lessons,
+            "recent_lessons_page": recent_lessons_page,
+            "lesson_page_query_prefix": lesson_page_query_prefix,
             "course_stats": course_stats,
         }
     )
@@ -279,7 +314,13 @@ def profile_section(request, section):
     if not is_htmx:
         return redirect(f"{reverse('accounts:profile')}?section={section}")
 
-    favorite_courses, recent_lessons, course_stats = _build_course_overview(request.user)
+    (
+        favorite_courses,
+        recent_lessons,
+        course_stats,
+        recent_lessons_page,
+        lesson_page_query_prefix,
+    ) = _build_course_overview(request.user, request=request)
     context = _build_profile_lists(request.user)
     context.update(
         {
@@ -287,6 +328,8 @@ def profile_section(request, section):
             "form": form,
             "favorite_courses": favorite_courses,
             "recent_lessons": recent_lessons,
+            "recent_lessons_page": recent_lessons_page,
+            "lesson_page_query_prefix": lesson_page_query_prefix,
             "course_stats": course_stats,
         }
     )
@@ -303,61 +346,19 @@ def my_library(request):
     favorite_contents = [favorite.content for favorite in favorites]
     _attach_previews(favorite_contents)
 
-    course_favorites = (
-        CourseFavorite.objects.filter(user=request.user, course__is_published=True)
-        .select_related("course")
-        .order_by("-created_at")
-    )
-    favorite_courses = [favorite.course for favorite in course_favorites]
-
-    recent_lessons_qs = (
-        CourseLessonProgress.objects.filter(
-            user=request.user, last_watched_at__isnull=False
-        )
-        .select_related("lesson__course")
-        .order_by("-last_watched_at")
-    )
-    recent_lessons = list(recent_lessons_qs[:10])
-
-    course_ids = {
-        progress.lesson.course_id for progress in recent_lessons if progress.lesson_id
-    }
-    course_ids.update(course.id for course in favorite_courses if course)
-    course_stats = {}
-    if course_ids:
-        totals = (
-            CourseLesson.objects.filter(course_id__in=course_ids)
-            .values("course_id")
-            .annotate(total=Count("id"))
-        )
-        completed = (
-            CourseLessonProgress.objects.filter(
-                user=request.user,
-                lesson__course_id__in=course_ids,
-                is_completed=True,
-            )
-            .values("lesson__course_id")
-            .annotate(total=Count("id"))
-        )
-        total_map = {row["course_id"]: row["total"] for row in totals}
-        completed_map = {row["lesson__course_id"]: row["total"] for row in completed}
-        for course_id in course_ids:
-            total = total_map.get(course_id, 0)
-            done = completed_map.get(course_id, 0)
-            percent = int((done / total) * 100) if total else 0
-            course_stats[course_id] = {
-                "total": total,
-                "completed": done,
-                "percent": percent,
-            }
-
-    for course in favorite_courses:
-        course.progress = course_stats.get(course.id, {"total": 0, "completed": 0, "percent": 0})
-
+    (
+        favorite_courses,
+        recent_lessons,
+        course_stats,
+        recent_lessons_page,
+        lesson_page_query_prefix,
+    ) = _build_course_overview(request.user, request=request, per_page=10)
     context = {
         "favorite_contents": favorite_contents,
         "favorite_courses": favorite_courses,
         "recent_lessons": recent_lessons,
+        "recent_lessons_page": recent_lessons_page,
+        "lesson_page_query_prefix": lesson_page_query_prefix,
         "course_stats": course_stats,
     }
     return render(request, "accounts/my_library.html", context)

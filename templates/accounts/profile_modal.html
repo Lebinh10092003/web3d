@@ -147,20 +147,56 @@
         <h3>{% trans "Continue watching" %}</h3>
         <span class="profile-section-note">{% trans "Recently watched lessons" %}</span>
       </div>
-      {% if recent_lessons %}
-        <ul class="course-lesson-history">
-          {% for progress in recent_lessons %}
-            <li>
-              <a href="{{ progress.lesson.course.get_absolute_url }}?v={{ progress.lesson.video_id }}">
-                {{ progress.lesson.title }}
-              </a>
-              <span class="course-lesson-meta">{{ progress.lesson.course.title }}</span>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="profile-empty">{% trans "No lessons watched yet." %}</p>
-      {% endif %}
+      {% with page=recent_lessons_page|default_if_none:None %}
+        {% if page %}
+          {% if page.object_list %}
+            <ul class="course-lesson-history">
+              {% for progress in page %}
+                <li>
+                  <a href="{{ progress.lesson.course.get_absolute_url }}?v={{ progress.lesson.video_id }}">
+                    {{ progress.lesson.title }}
+                  </a>
+                  <span class="course-lesson-meta">{{ progress.lesson.course.title }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+            {% if page.paginator.num_pages > 1 %}
+              <nav aria-label="{% trans 'Continue watching pagination' %}">
+                <ul class="pagination pagination-sm">
+                  <li class="page-item{% if not page.has_previous %} disabled{% endif %}">
+                    <a class="page-link" href="?{{ lesson_page_query_prefix }}lesson_page={{ page.previous_page_number }}" aria-label="{% trans 'Previous' %}">&laquo;</a>
+                  </li>
+                  <li class="page-item disabled">
+                    <span class="page-link">
+                      {{ page.number }} / {{ page.paginator.num_pages }}
+                    </span>
+                  </li>
+                  <li class="page-item{% if not page.has_next %} disabled{% endif %}">
+                    <a class="page-link" href="?{{ lesson_page_query_prefix }}lesson_page={{ page.next_page_number }}" aria-label="{% trans 'Next' %}">&raquo;</a>
+                  </li>
+                </ul>
+              </nav>
+            {% endif %}
+          {% else %}
+            <p class="profile-empty">{% trans "No lessons watched yet." %}</p>
+          {% endif %}
+        {% else %}
+          {% if recent_lessons %}
+            <ul class="course-lesson-history">
+              {% for progress in recent_lessons %}
+                <li>
+                  <a href="{{ progress.lesson.course.get_absolute_url }}?v={{ progress.lesson.video_id }}">
+                    {{ progress.lesson.title }}
+                  </a>
+                  <span class="course-lesson-meta">{{ progress.lesson.course.title }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="profile-empty">{% trans "No lessons watched yet." %}</p>
+          {% endif %}
+        {% endif %}
+      {% endwith %}
       <a class="button button-ghost" href="{% url 'accounts:my-library' %}">{% trans "Continue" %}</a>
     </div>
   {% else %}
