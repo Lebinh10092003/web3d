@@ -40,6 +40,50 @@ def _build_page_query_prefix(request, param_name):
     return f"{base}&" if base else ""
 
 
+def _build_pagination_context(page_obj, param_name, query_prefix=""):
+    if not page_obj:
+        return {}
+
+    def _url(page_number):
+        return f"?{query_prefix}{param_name}={page_number}"
+
+    total = page_obj.paginator.num_pages
+    current = page_obj.number
+    pages = []
+
+    def _add(num):
+        pages.append(
+            {
+                "number": num,
+                "url": _url(num),
+                "is_current": num == current,
+            }
+        )
+
+    # Cap at 3 numbered pages
+    if total <= 3:
+        for num in page_obj.paginator.page_range:
+            _add(num)
+    else:
+        start = max(1, current - 1)
+        end = min(total, start + 2)
+        start = max(1, end - 2)
+        if start > 1:
+            pages.append({"ellipsis": True})
+        for num in range(start, end + 1):
+            _add(num)
+        if end < total:
+            pages.append({"ellipsis": True})
+
+    return {
+        "has_prev": page_obj.has_previous(),
+        "has_next": page_obj.has_next(),
+        "prev_url": _url(page_obj.previous_page_number()) if page_obj.has_previous() else "",
+        "next_url": _url(page_obj.next_page_number()) if page_obj.has_next() else "",
+        "pages": pages,
+    }
+
+
 def _upload_avatar(file_obj, user_id):
     safe_name = os.path.basename(getattr(file_obj, "name", "avatar"))
     timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
@@ -126,7 +170,7 @@ def _build_profile_lists(user):
     }
 
 
-def _build_course_overview(user, *, request=None, per_page=8, page_param="lesson_page"):
+def _build_course_overview(user, *, request=None, per_page=5, page_param="lesson_page"):
     course_favorites = (
         CourseFavorite.objects.filter(user=user, course__is_published=True)
         .select_related("course")
@@ -180,12 +224,16 @@ def _build_course_overview(user, *, request=None, per_page=8, page_param="lesson
     for course in favorite_courses:
         course.progress = course_stats.get(course.id, {"total": 0, "completed": 0, "percent": 0})
 
+    page_query_prefix = _build_page_query_prefix(request, page_param)
+    pagination = _build_pagination_context(recent_lessons_page, page_param, page_query_prefix)
+
     return (
         favorite_courses,
         recent_lessons,
         course_stats,
         recent_lessons_page,
-        _build_page_query_prefix(request, page_param),
+        page_query_prefix,
+        pagination,
     )
 
 
@@ -236,6 +284,7 @@ def profile(request):
                         course_stats,
                         recent_lessons_page,
                         lesson_page_query_prefix,
+                        lesson_pagination,
                     ) = _build_course_overview(request.user, request=request)
                     context.update(
                         {
@@ -245,6 +294,7 @@ def profile(request):
                             "recent_lessons": recent_lessons,
                             "recent_lessons_page": recent_lessons_page,
                             "lesson_page_query_prefix": lesson_page_query_prefix,
+                            "lesson_pagination": lesson_pagination,
                             "course_stats": course_stats,
                         }
                     )
@@ -262,6 +312,7 @@ def profile(request):
         course_stats,
         recent_lessons_page,
         lesson_page_query_prefix,
+        lesson_pagination,
     ) = _build_course_overview(request.user, request=request)
     context.update(
         {
@@ -271,6 +322,7 @@ def profile(request):
             "recent_lessons": recent_lessons,
             "recent_lessons_page": recent_lessons_page,
             "lesson_page_query_prefix": lesson_page_query_prefix,
+            "lesson_pagination": lesson_pagination,
             "course_stats": course_stats,
         }
     )
@@ -320,6 +372,7 @@ def profile_section(request, section):
         course_stats,
         recent_lessons_page,
         lesson_page_query_prefix,
+        lesson_pagination,
     ) = _build_course_overview(request.user, request=request)
     context = _build_profile_lists(request.user)
     context.update(
@@ -330,6 +383,7 @@ def profile_section(request, section):
             "recent_lessons": recent_lessons,
             "recent_lessons_page": recent_lessons_page,
             "lesson_page_query_prefix": lesson_page_query_prefix,
+            "lesson_pagination": lesson_pagination,
             "course_stats": course_stats,
         }
     )
@@ -352,13 +406,15 @@ def my_library(request):
         course_stats,
         recent_lessons_page,
         lesson_page_query_prefix,
-    ) = _build_course_overview(request.user, request=request, per_page=10)
+        lesson_pagination,
+    ) = _build_course_overview(request.user, request=request, per_page=5)
     context = {
         "favorite_contents": favorite_contents,
         "favorite_courses": favorite_courses,
         "recent_lessons": recent_lessons,
         "recent_lessons_page": recent_lessons_page,
         "lesson_page_query_prefix": lesson_page_query_prefix,
+        "lesson_pagination": lesson_pagination,
         "course_stats": course_stats,
     }
     return render(request, "accounts/my_library.html", context)

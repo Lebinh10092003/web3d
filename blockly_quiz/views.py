@@ -227,19 +227,37 @@ def _finalize_attempt(attempt: Attempt, *, total_questions_override: int | None 
     return attempt
 
 
-def _build_question_context(*, attempt: Attempt, question: Question):
-    total_questions = Question.objects.filter(quiz=attempt.quiz).count()
-    answered_count = AttemptAnswer.objects.filter(attempt=attempt).count()
+def _ordered_questions(attempt: Attempt) -> list[Question]:
+    return list(Question.objects.filter(quiz=attempt.quiz).order_by("sort_order", "id"))
+
+
+def _build_question_context(
+    *,
+    attempt: Attempt,
+    question: Question,
+    question_index: int | None = None,
+    selected_choice_id: int | None = None,
+    answered_count: int | None = None,
+    total_questions: int | None = None,
+):
+    total_questions = total_questions or Question.objects.filter(quiz=attempt.quiz).count()
+    answered_count = (
+        answered_count
+        if answered_count is not None
+        else AttemptAnswer.objects.filter(attempt=attempt).count()
+    )
     choices = _shuffle_choices(
         Choice.objects.filter(question=question).order_by("sort_order", "id"),
         seed=f"attempt:{attempt.id}:question:{question.id}",
     )
+    question_number = question_index + 1 if question_index is not None else answered_count + 1
     return {
         "attempt": attempt,
         "quiz": attempt.quiz,
         "question": question,
         "choices": choices,
-        "question_number": answered_count + 1,
+        "selected_choice_id": selected_choice_id,
+        "question_number": question_number,
         "answered_count": answered_count,
         "total_questions": total_questions,
     }
@@ -783,23 +801,38 @@ def attempt_take(request, attempt_id):
     if attempt.completed_at:
         return redirect("blockly_quiz:review", attempt_id=attempt.id)
 
-    answered_ids = AttemptAnswer.objects.filter(attempt=attempt).values_list(
-        "question_id", flat=True
-    )
-    question = (
-        Question.objects.filter(quiz=attempt.quiz)
-        .exclude(id__in=answered_ids)
-        .order_by("sort_order", "id")
-        .first()
-    )
-    if not question:
+    ordered_questions = _ordered_questions(attempt)
+    answers = {
+        answer.question_id: answer
+        for answer in AttemptAnswer.objects.filter(attempt=attempt).select_related("question")
+    }
+    next_question = None
+    next_index = None
+    for idx, q in enumerate(ordered_questions):
+        if q.id not in answers:
+            next_question = q
+            next_index = idx
+            break
+    if not next_question:
         _finalize_attempt(attempt)
         return redirect("blockly_quiz:review", attempt_id=attempt.id)
+
+    selected_choice_id = None
+    answer = answers.get(next_question.id)
+    if answer:
+        selected_choice_id = answer.selected_choice_id
 
     return render(
         request,
         "blockly_quiz/attempt_take.html",
-        _build_question_context(attempt=attempt, question=question),
+        _build_question_context(
+            attempt=attempt,
+            question=next_question,
+            question_index=next_index,
+            selected_choice_id=selected_choice_id,
+            answered_count=len(answers),
+            total_questions=len(ordered_questions),
+        ),
     )
 
 
@@ -814,19 +847,56 @@ def attempt_answer(request, attempt_id):
             return response
         return redirect(review_url)
 
-    question_id = request.POST.get("question_id")
-    choice_id = request.POST.get("choice_id")
-    if not question_id:
+    question_id_raw = request.POST.get("question_id")
+    if not question_id_raw:
+        raise Http404
+    try:
+        question_id = int(question_id_raw)
+    except (TypeError, ValueError):
         raise Http404
 
-    question = get_object_or_404(Question, pk=question_id, quiz=attempt.quiz)
-    if not choice_id:
+    ordered_questions = _ordered_questions(attempt)
+    index_map = {q.id: idx for idx, q in enumerate(ordered_questions)}
+    if question_id not in index_map:
+        raise Http404
+    direction = (request.POST.get("direction") or "").strip().lower()
+
+    answers = {
+        answer.question_id: answer
+        for answer in AttemptAnswer.objects.filter(attempt=attempt).select_related("question")
+    }
+
+    if direction == "prev":
+        current_index = index_map[question_id]
+        if current_index > 0:
+            prev_question = ordered_questions[current_index - 1]
+            prev_answer = answers.get(prev_question.id)
+            selected_choice_id = getattr(prev_answer, "selected_choice_id", None)
+            context = _build_question_context(
+                attempt=attempt,
+                question=prev_question,
+                question_index=current_index - 1,
+                selected_choice_id=selected_choice_id,
+                answered_count=len(answers),
+                total_questions=len(ordered_questions),
+            )
+            if request.headers.get("HX-Request") == "true":
+                return render(request, "blockly_quiz/_question.html", context)
+            return redirect("blockly_quiz:attempt", attempt_id=attempt.id)
+
+    choice_id_raw = request.POST.get("choice_id")
+    if not choice_id_raw:
         messages.error(request, _("Please choose an answer."))
         if request.headers.get("HX-Request") == "true":
-            return _render_question_partial(request, attempt=attempt, question=question)
+            return _render_question_partial(
+                request,
+                attempt=attempt,
+                question=get_object_or_404(Question, pk=question_id, quiz=attempt.quiz),
+            )
         return redirect("blockly_quiz:attempt", attempt_id=attempt.id)
 
-    choice = get_object_or_404(Choice, pk=choice_id, question=question)
+    question = get_object_or_404(Question, pk=question_id, quiz=attempt.quiz)
+    choice = get_object_or_404(Choice, pk=choice_id_raw, question=question)
     AttemptAnswer.objects.update_or_create(
         attempt=attempt,
         question=question,
@@ -835,16 +905,20 @@ def attempt_answer(request, attempt_id):
             "is_correct": bool(choice.is_correct),
         },
     )
+    answers[question.id] = AttemptAnswer(
+        attempt=attempt,
+        question=question,
+        selected_choice=choice,
+        is_correct=bool(choice.is_correct),
+    )
 
-    answered_ids = AttemptAnswer.objects.filter(attempt=attempt).values_list(
-        "question_id", flat=True
-    )
-    next_question = (
-        Question.objects.filter(quiz=attempt.quiz)
-        .exclude(id__in=answered_ids)
-        .order_by("sort_order", "id")
-        .first()
-    )
+    next_question = None
+    next_index = None
+    for idx, q in enumerate(ordered_questions):
+        if q.id not in answers:
+            next_question = q
+            next_index = idx
+            break
     if not next_question:
         _finalize_attempt(attempt)
         messages.success(request, _("Quiz completed."))
@@ -854,8 +928,15 @@ def attempt_answer(request, attempt_id):
             return response
         return redirect(review_url)
 
+    context = _build_question_context(
+        attempt=attempt,
+        question=next_question,
+        question_index=next_index,
+        answered_count=len(answers),
+        total_questions=len(ordered_questions),
+    )
     if request.headers.get("HX-Request") == "true":
-        return _render_question_partial(request, attempt=attempt, question=next_question)
+        return render(request, "blockly_quiz/_question.html", context)
     return redirect("blockly_quiz:attempt", attempt_id=attempt.id)
 
 

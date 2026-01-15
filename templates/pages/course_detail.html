@@ -9,24 +9,42 @@
 
 {% block content %}
 <section class="course-detail-hero">
-  <p class="course-eyebrow">{% trans "Course" %}</p>
-  <h1>{{ course.title }}</h1>
-  {% if course.description %}
-    <p class="course-subtitle">{{ course.description }}</p>
-  {% endif %}
-  {% if request.user.is_authenticated %}
-    <form method="post" class="course-favorite-form" action="{% url 'course-favorite-toggle' course.slug %}">
-      {% csrf_token %}
-      <input type="hidden" name="next" value="{{ request.get_full_path }}">
-      <button class="button button-ghost" type="submit">
-        {% if is_favorite %}{% trans "Saved" %}{% else %}{% trans "Save course" %}{% endif %}
-      </button>
-    </form>
-  {% else %}
-    <a class="button button-ghost" href="{% url 'accounts:login' %}">
-      {% trans "Login to save" %}
-    </a>
-  {% endif %}
+  <div>
+    <p class="course-eyebrow">{% trans "Course" %}</p>
+    <h1>{{ course.title }}</h1>
+    {% if course.description %}
+      <p class="course-subtitle">{{ course.description }}</p>
+    {% endif %}
+  </div>
+  <div class="course-actions">
+    {% if request.user.is_authenticated %}
+      <form method="post" class="course-favorite-form" action="{% url 'course-favorite-toggle' course.slug %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button class="course-save-button{% if is_favorite %} is-active{% endif %}" type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            {% if is_favorite %}
+              <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            {% else %}
+              <path d="m12 17.27 5.18 3.11-1.64-5.81L20.9 10h-6.1L12 4 9.2 10H3.1l5.36 4.57-1.64 5.81z" opacity=".4"/>
+              <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            {% endif %}
+          </svg>
+          <span>
+            {% if is_favorite %}{% trans "Saved" %}{% else %}{% trans "Save course" %}{% endif %}
+          </span>
+        </button>
+      </form>
+    {% else %}
+      <a class="course-save-button" href="{% url 'accounts:login' %}">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" opacity=".4"/>
+          <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+        </svg>
+        <span>{% trans "Login to save" %}</span>
+      </a>
+    {% endif %}
+  </div>
 </section>
 
 <section class="course-detail-layout">

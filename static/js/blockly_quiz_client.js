@@ -218,9 +218,11 @@ function renderQuestionStage(container, question, meta) {
       })
     : `Question ${meta.index + 1} / ${meta.total}`;
   const copyLabel = i18n.copy || "Copy";
+  const prevLabel = i18n.previous || "Previous";
   const submitLabel =
     meta.index + 1 >= meta.total ? i18n.finish || "Finish" : i18n.next || "Next";
   const gridClass = `quiz-stage-grid${hasPreview ? " has-preview" : ""}`;
+  const prevDisabled = meta.index <= 0 ? "disabled" : "";
 
   container.innerHTML = `
     <div class="card shadow-sm">
@@ -237,7 +239,10 @@ function renderQuestionStage(container, question, meta) {
               <div class="list-group quiz-choice-list mb-3">
                 ${buildChoiceList(question.choices || [], meta.selectedChoiceId)}
               </div>
-              <div class="d-flex flex-wrap justify-content-end gap-2">
+              <div class="d-flex flex-wrap justify-content-between gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-quiz-prev ${prevDisabled}>
+                  &larr; ${escapeHtml(prevLabel)}
+                </button>
                 <button type="submit" class="btn btn-primary">
                   ${escapeHtml(submitLabel)}
                 </button>
@@ -589,6 +594,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!form) {
           return;
         }
+
+        const prevButton = form.querySelector("[data-quiz-prev]");
+        if (prevButton) {
+          prevButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            if (index > 0) {
+              index -= 1;
+              render();
+            }
+          });
+        }
+
         form.addEventListener("submit", async (event) => {
           event.preventDefault();
           const i18n = getQuizI18n();

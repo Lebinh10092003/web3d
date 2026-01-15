@@ -5,11 +5,17 @@
   --surface: #ffffff;
   --ink: #1c1b1a;
   --muted: #6b6760;
-  --accent: #45e06b;
-  --accent-strong: #25c556;
+  /* Primary theme color: change this to update the whole site */
+  --primary: #25c556;
+  --primary-soft: #45e06b;
+  --primary-contrast: #ffffff;
+
+  /* Legacy aliases to keep existing styles in sync */
+  --accent: var(--primary-soft);
+  --accent-strong: var(--primary);
   --secondary: #39d2c2;
   --shadow: rgba(21, 20, 19, 0.12);
-  --ring: rgba(69, 224, 107, 0.35);
+  --ring: color-mix(in srgb, var(--primary) 35%, transparent);
 }
 
 * {
@@ -1448,11 +1454,11 @@ textarea:focus {
 .course-detail-hero {
   padding: 18px;
   border-radius: 18px;
-  background: linear-gradient(
-    135deg,
-    rgba(69, 224, 107, 0.16),
-    rgba(57, 210, 194, 0.12)
-  );
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 18%, transparent), color-mix(in srgb, var(--secondary) 18%, transparent));
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
 }
 
 .course-eyebrow {
@@ -1467,6 +1473,50 @@ textarea:focus {
   margin: 6px 0 0;
   color: var(--muted);
   max-width: 640px;
+}
+
+.course-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.course-save-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, #d5d9de);
+  background: color-mix(in srgb, var(--primary-contrast) 90%, var(--primary) 10%);
+  color: #2f3744;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.18s ease;
+}
+
+.course-save-button svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.course-save-button:hover {
+  background: color-mix(in srgb, var(--primary-contrast) 82%, var(--primary) 18%);
+  border-color: color-mix(in srgb, var(--primary) 38%, #d5d9de);
+  transform: translateY(-1px);
+}
+
+.course-save-button.is-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.course-save-button.is-active:hover {
+  background: color-mix(in srgb, var(--primary) 92%, #000 8%);
 }
 
 .course-grid {
@@ -3118,12 +3168,74 @@ textarea:focus {
   align-items: center;
   gap: 8px;
   margin-top: 14px;
+  list-style: none;
+  padding-left: 0;
+}
+
+.pagination.pager-compact .page-link {
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, #cfd5dd);
+  background: color-mix(in srgb, var(--primary-contrast) 90%, var(--primary) 10%);
+  color: #2f3744;
+  border-radius: 10px;
+  padding: 6px 10px;
+  min-width: 38px;
+  text-align: center;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease;
+}
+
+.pagination.pager-compact .page-link:hover {
+  background: color-mix(in srgb, var(--primary-contrast) 85%, var(--primary) 15%);
+  border-color: color-mix(in srgb, var(--primary) 35%, #cfd5dd);
+}
+
+.pagination.pager-compact .page-item.active .page-link {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-contrast);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.pagination.pager-compact .page-item.disabled .page-link {
+  background: #f0f2f5;
+  border-color: #e3e7eb;
+  color: #9aa3af;
+  box-shadow: none;
+}
+
+.pagination.pager-compact .page-link:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.pagination-sm .page-link {
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.pagination-sm .page-link:hover {
+  background: rgba(69, 224, 107, 0.15);
+  border-color: rgba(69, 224, 107, 0.5);
+}
+
+.pagination-sm .page-item.disabled .page-link {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.35);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: none;
 }
 
 .pagination-pages {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.pagination .page-item {
+  display: flex;
 }
 
 .pagination-link,
