@@ -7,6 +7,15 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "web3d.settings")
+
+    # Default runserver to port 8001 when no port is provided on the CLI.
+    if len(sys.argv) >= 2 and sys.argv[1] == "runserver":
+        has_addrport = any(not arg.startswith("-") for arg in sys.argv[2:])
+        if not has_addrport:
+            default_port = os.environ.get("DJANGO_RUNSERVER_PORT", "8001")
+            if default_port:
+                sys.argv.insert(2, default_port)
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
