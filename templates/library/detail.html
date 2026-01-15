@@ -173,8 +173,17 @@
 </div>
 
 <section class="detail-comments">
-  <div class="panel">
-    <h2>{% trans "Community notes" %}</h2>
+  <div class="panel comment-card">
+    <div class="comment-card-header">
+      <div>
+        <p class="eyebrow">{% trans "Community notes" %}</p>
+        <h2 class="comment-title">{% trans "Share tips or feedback" %}</h2>
+      </div>
+      <div class="comment-count-badge">
+        <span>{% trans "Comments" %}</span>
+        <strong id="comment-count">{{ comments|length }}</strong>
+      </div>
+    </div>
     {% if request.user.is_authenticated %}
       <form
         class="form"
@@ -185,7 +194,9 @@
       >
         {% csrf_token %}
         <textarea name="body" rows="4" placeholder="{% trans 'Share tips, feedback, or build notes' %}" required></textarea>
-        <button class="button" type="submit">{% trans "Post comment" %}</button>
+        <div class="comment-actions">
+          <button class="button" type="submit">{% trans "Post comment" %}</button>
+        </div>
       </form>
     {% else %}
       <p>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n %}
+{% load static i18n user_groups %}
 
 {% block title %}{% trans "Quizzes" %} - {{ SITE_NAME }}{% endblock %}
 
@@ -56,13 +56,13 @@
            {% url 'blockly_quiz:random' as random_quiz_url %}
            {% url 'accounts:login' as login_url %}
            <div class="col-12 d-flex flex-wrap gap-2">
-             <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
-             <a class="btn btn-outline-secondary" href="{% url 'blockly_quiz:list' %}">{% trans "Reset" %}</a>
+             <button class="button" type="submit">{% trans "Apply" %}</button>
+             <a class="button button-ghost" href="{% url 'blockly_quiz:list' %}">{% trans "Reset" %}</a>
             {% if can_use_random_quiz %}
-              <a class="btn btn-outline-primary ms-auto" href="{% url 'blockly_quiz:random' %}">{% trans "Random quiz" %}</a>
+              <a class="button button-ghost ms-auto" href="{% url 'blockly_quiz:random' %}">{% trans "Random quiz" %}</a>
             {% else %}
               <button
-                class="btn btn-outline-primary ms-auto opacity-75"
+                class="button button-ghost ms-auto opacity-75"
                 type="button"
                 aria-disabled="true"
                 title="{% trans 'Only for Student V group' %}"
@@ -75,7 +75,10 @@
            </div>
           <div class="col-12 d-flex justify-content-end gap-2">
             {% if request.user.is_authenticated %}
-              <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:scores' %}">{% trans "My scores" %}</a>
+              <a class="button button-ghost button-xs" href="{% url 'blockly_quiz:scores' %}">{% trans "My scores" %}</a>
+              {% if request.user.is_staff or request.user.is_superuser or request.user|has_group:"Teacher V" %}
+                <a class="button button-ghost button-xs" href="{% url 'blockly_quiz:classroom-list' %}">{% trans "Classrooms" %}</a>
+              {% endif %}
             {% endif %}
           </div>
         </form>

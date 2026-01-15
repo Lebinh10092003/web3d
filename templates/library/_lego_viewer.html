@@ -33,49 +33,49 @@
   data-msg-viewer-missing="{% if request.LANGUAGE_CODE == "vi" %}Trình xem 3D chưa khởi động. Kiểm tra /static/js/lego_viewer.js và lỗi module trong Console.{% else %}3D viewer did not start. Check /static/js/lego_viewer.js and Console module errors.{% endif %}"
   data-msg-step-label="{% if request.LANGUAGE_CODE == "vi" %}Bước {current}/{total}{% else %}Step {current}/{total}{% endif %}"
 >
-  <div class="lego-viewer-toolbar">
-    <div class="lego-viewer-mode" role="tablist" aria-label="{% if request.LANGUAGE_CODE == "vi" %}Chế độ xem{% else %}View mode{% endif %}">
-      <button class="button button-ghost is-active" type="button" data-lego-mode="full">
-        {% if request.LANGUAGE_CODE == "vi" %}Xem đầy đủ{% else %}Full view{% endif %}
-      </button>
-      <button class="button button-ghost" type="button" data-lego-mode="step">
-        {% if request.LANGUAGE_CODE == "vi" %}Xem từng bước{% else %}Step by step{% endif %}
-      </button>
+  <div class="lego-viewer-controls">
+    <div class="lego-viewer-toolbar">
+      <div class="lego-viewer-mode" role="tablist" aria-label="{% if request.LANGUAGE_CODE == "vi" %}Chế độ xem{% else %}View mode{% endif %}">
+        <button class="button button-ghost is-active" type="button" data-lego-mode="full">
+          {% if request.LANGUAGE_CODE == "vi" %}Xem đầy đủ{% else %}Full view{% endif %}
+        </button>
+        <button class="button button-ghost" type="button" data-lego-mode="step">
+          {% if request.LANGUAGE_CODE == "vi" %}Xem từng bước{% else %}Step by step{% endif %}
+        </button>
+      </div>
+      <div class="lego-viewer-actions">
+        <button class="button button-ghost" type="button" data-lego-flip>{% trans "Flip" %}</button>
+        <button class="button button-ghost" type="button" data-lego-fit>{% trans "Fit" %}</button>
+        <button class="button button-ghost" type="button" data-lego-reset>{% trans "Reset" %}</button>
+      </div>
     </div>
-    <div class="lego-viewer-actions">
-      <button class="button button-ghost" type="button" data-lego-flip>{% trans "Flip" %}</button>
-      <button class="button button-ghost" type="button" data-lego-fit>{% trans "Fit" %}</button>
-      <button class="button button-ghost" type="button" data-lego-reset>{% trans "Reset" %}</button>
+    <div class="lego-viewer-steps" data-lego-steps hidden>
+      <button class="lego-step-button" type="button" data-lego-step-prev>
+        <span aria-hidden="true">←</span>
+        <span class="lego-step-text">{% if request.LANGUAGE_CODE == "vi" %}Trước{% else %}Prev{% endif %}</span>
+      </button>
+      <div class="lego-step-progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="lego-step-progress-bar" data-lego-step-progress></div>
+      </div>
+      <input
+        class="lego-viewer-step-range"
+        type="range"
+        min="1"
+        max="1"
+        step="1"
+        value="1"
+        aria-label="{% if request.LANGUAGE_CODE == "vi" %}Bước lắp ráp{% else %}Building step{% endif %}"
+        data-lego-step-range
+      >
+      <button class="lego-step-button" type="button" data-lego-step-next>
+        <span class="lego-step-text">{% if request.LANGUAGE_CODE == "vi" %}Sau{% else %}Next{% endif %}</span>
+        <span aria-hidden="true">→</span>
+      </button>
+      <span class="lego-viewer-step-label" data-lego-step-label>
+        {% if request.LANGUAGE_CODE == "vi" %}Bước 1/1{% else %}Step 1/1{% endif %}
+      </span>
     </div>
   </div>
-  <div class="lego-viewer-steps" data-lego-steps hidden>
-    <button class="button button-ghost" type="button" data-lego-step-prev>
-      {% if request.LANGUAGE_CODE == "vi" %}Trước{% else %}Prev{% endif %}
-    </button>
-    <input
-      class="lego-viewer-step-range"
-      type="range"
-      min="1"
-      max="1"
-      step="1"
-      value="1"
-      aria-label="{% if request.LANGUAGE_CODE == "vi" %}Bước lắp ráp{% else %}Building step{% endif %}"
-      data-lego-step-range
-    >
-    <button class="button button-ghost" type="button" data-lego-step-next>
-      {% if request.LANGUAGE_CODE == "vi" %}Sau{% else %}Next{% endif %}
-    </button>
-    <span class="lego-viewer-step-label" data-lego-step-label>
-      {% if request.LANGUAGE_CODE == "vi" %}Bước 1/1{% else %}Step 1/1{% endif %}
-    </span>
-  </div>
-  <p class="lego-viewer-fallback-note" data-lego-fallback-note hidden>
-    {% if request.LANGUAGE_CODE == "vi" %}
-      Mô hình không có STEP, các bước được chia tự động.
-    {% else %}
-      No STEP metadata; steps are auto-generated.
-    {% endif %}
-  </p>
   <div class="lego-viewer-stage">
     <canvas class="lego-viewer-canvas" data-lego-canvas></canvas>
     <div class="lego-viewer-start" data-lego-start-wrap>
@@ -161,6 +161,11 @@
         loading = false;
         pending = [];
         roots.forEach(function (root) {
+          var startWrap = root.querySelector("[data-lego-start-wrap]");
+          if (startWrap) {
+            startWrap.hidden = false;
+          }
+          root.dataset.legoStarted = "false";
           setStatus(
             root,
             root.dataset.msgViewerMissing || "3D viewer did not start.",
@@ -217,32 +222,7 @@
         return;
       }
       startButton.addEventListener("click", function () {
-        var savedMode = null;
-        if (window.sessionStorage) {
-          try {
-            savedMode = sessionStorage.getItem("legoStartMode");
-          } catch (err) {}
-        }
         if (modeModal) {
-          if (savedMode) {
-            root.dataset.legoStartMode = savedMode;
-            root.dataset.legoAutoload = "true";
-            root.dataset.legoStarted = "true";
-            if (startWrap) {
-              startWrap.hidden = true;
-            }
-            setStatus(
-              root,
-              root.dataset.msgLoadingViewer || "Loading 3D viewer...",
-              "loading"
-            );
-            ensureViewer(function () {
-              if (typeof window.startLegoViewer === "function") {
-                window.startLegoViewer(root, savedMode);
-              }
-            });
-            return;
-          }
           modeModal.hidden = false;
           modeModal.focus();
           return;

@@ -102,6 +102,17 @@ function setStatus(node, message, level = "") {
   textNode.textContent = message;
   node.dataset.level = level;
   node.dataset.visible = message ? "true" : "false";
+  if (level === "error") {
+    const root = node.closest("[data-lego-viewer]");
+    if (root) {
+      root.dataset.legoStarted = "";
+      root.dataset.legoAutoload = "false";
+      const startWrap = root.querySelector("[data-lego-start-wrap]");
+      if (startWrap) {
+        startWrap.hidden = false;
+      }
+    }
+  }
 }
 
 function getMessage(root, key, fallback) {
@@ -284,6 +295,8 @@ async function initViewer(root) {
   const stepLabel = root.querySelector("[data-lego-step-label]");
   const stepPrev = root.querySelector("[data-lego-step-prev]");
   const stepNext = root.querySelector("[data-lego-step-next]");
+  const stepProgress = root.querySelector("[data-lego-step-progress]");
+  const startWrap = root.querySelector("[data-lego-start-wrap]");
 
   const modelUrl = root.dataset.modelUrl;
   const partsPath = ensureTrailingSlash(root.dataset.partsPath);
@@ -327,11 +340,11 @@ async function initViewer(root) {
   }
 
   if (!canvas || !modelUrl) {
-    setStatus(status, messages.missingModel, "error");
+    showStartButton(messages.missingModel, "error");
     return;
   }
   if (root.dataset.legoCancel === "true") {
-    setStatus(status, root.dataset.msgCanceled || "Canceled 3D loading.", "error");
+    showStartButton(root.dataset.msgCanceled || "Canceled 3D loading.", "error");
     return;
   }
 
@@ -418,24 +431,37 @@ async function initViewer(root) {
     const formatStepLabel = (current, total) =>
       stepTemplate.replace("{current}", String(current)).replace("{total}", String(total));
 
-    const updateStepUI = () => {
-      if (!stepsContainer || !stepRange || !stepLabel) {
-        return;
-      }
-      const usable = numSteps >= 1;
-      stepsContainer.hidden = viewMode !== "step";
-      stepRange.disabled = !usable || viewMode !== "step";
-      if (stepPrev) {
-        stepPrev.disabled = !usable || viewMode !== "step" || currentStep <= 1;
-      }
-      if (stepNext) {
-        stepNext.disabled = !usable || viewMode !== "step" || currentStep >= numSteps;
-      }
-      stepRange.min = "1";
-      stepRange.max = String(numSteps);
-      stepRange.value = String(currentStep);
-      stepLabel.textContent = formatStepLabel(currentStep, numSteps);
-    };
+  const updateStepUI = () => {
+    if (!stepsContainer || !stepRange || !stepLabel) {
+      return;
+    }
+    const usable = numSteps >= 1;
+    stepsContainer.hidden = viewMode !== "step";
+    stepRange.disabled = !usable || viewMode !== "step";
+    if (stepPrev) {
+      stepPrev.disabled = !usable || viewMode !== "step" || currentStep <= 1;
+    }
+    if (stepNext) {
+      stepNext.disabled = !usable || viewMode !== "step" || currentStep >= numSteps;
+    }
+    stepRange.min = "1";
+    stepRange.max = String(numSteps);
+    stepRange.value = String(currentStep);
+    stepLabel.textContent = formatStepLabel(currentStep, numSteps);
+    if (stepProgress) {
+      const pct = numSteps > 0 ? Math.min(100, Math.max(0, (currentStep / numSteps) * 100)) : 0;
+      stepProgress.style.width = `${pct}%`;
+      stepProgress.parentElement?.setAttribute("aria-valuenow", String(Math.round(pct)));
+    }
+  };
+
+  const showStartButton = (message, level) => {
+    if (startWrap) {
+      startWrap.hidden = false;
+    }
+    root.dataset.legoStarted = "false";
+    setStatus(status, message || "", level || "");
+  };
 
     const setModeButtons = () => {
       modeButtons.forEach((btn) => {
@@ -494,10 +520,12 @@ async function initViewer(root) {
     );
     if (!ready) {
       cleanup();
+      showStartButton(messages.loadFailed, "error");
       return;
     }
     if (state.canceled) {
       cleanup();
+      showStartButton(root.dataset.msgCanceled || messages.loadFailed, "error");
       return;
     }
     setStatus(status, messages.loadingModel, "loading");

@@ -1,11 +1,28 @@
 {% load i18n %}
-<h2>{% trans "Unlock & download" %}</h2>
-<p>{% trans "Download requires points. Earn points by contributing or community engagement." %}</p>
-{% if action_message %}
-  <div class="action-note{% if action_level %} action-note--{{ action_level }}{% endif %}">
-    {{ action_message }}
+<div class="download-card">
+  <div class="download-card-header">
+    <div>
+      <p class="eyebrow">{% trans "Download" %}</p>
+      <h2 class="download-title">
+        {% if is_unlocked %}{% trans "Ready to download" %}{% else %}{% trans "Unlock & download" %}{% endif %}
+      </h2>
+      <p class="download-subtitle">{% trans "Use your points to unlock this file. Earn points by contributing or engaging with the community." %}</p>
+    </div>
+    <div class="download-cost">
+      {% if content.download_cost_points > 0 %}
+        <span class="download-cost-value">{{ content.download_cost_points }}</span>
+        <span class="download-cost-label">{% trans "points" %}</span>
+      {% else %}
+        <span class="download-cost-label">{% trans "Free" %}</span>
+      {% endif %}
+    </div>
   </div>
-{% endif %}
+
+  {% if action_message %}
+    <div class="action-note{% if action_level %} action-note--{{ action_level }}{% endif %}">
+      {{ action_message }}
+    </div>
+  {% endif %}
 {% if request.user.is_authenticated %}
   <form
     id="download-form-{{ content.id }}"
@@ -47,3 +64,4 @@
   >{% trans "Login to download" %}</a>
   <p class="field-hint">{% trans "Please sign in to unlock downloads." %}</p>
 {% endif %}
+</div>

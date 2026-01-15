@@ -9,7 +9,16 @@ from django.urls import path, reverse
 
 from .forms import BulkQuestionImportForm
 from .importer import import_questions_into_quiz, parse_bulk_questions
-from .models import Attempt, AttemptAnswer, Choice, Question, Quiz
+from .models import (
+    Attempt,
+    AttemptAnswer,
+    Choice,
+    Classroom,
+    ClassroomMembership,
+    Question,
+    Quiz,
+    QuizAssignment,
+)
 
 
 class ChoiceInline(admin.TabularInline):
@@ -159,3 +168,24 @@ class AttemptAnswerAdmin(admin.ModelAdmin):
     list_filter = ("is_correct", "attempt__quiz")
     search_fields = ("attempt__id", "question__prompt", "selected_choice__text")
     readonly_fields = ("attempt", "question", "selected_choice", "is_correct", "answered_at")
+
+
+@admin.register(Classroom)
+class ClassroomAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug", "owner", "created_at")
+    search_fields = ("name", "slug", "owner__username", "owner__email")
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(ClassroomMembership)
+class ClassroomMembershipAdmin(admin.ModelAdmin):
+    list_display = ("classroom", "user", "role", "joined_at")
+    list_filter = ("role",)
+    search_fields = ("classroom__name", "user__username", "user__email")
+
+
+@admin.register(QuizAssignment)
+class QuizAssignmentAdmin(admin.ModelAdmin):
+    list_display = ("quiz", "classroom", "title", "due_at", "max_attempts", "created_at")
+    list_filter = ("classroom", "quiz")
+    search_fields = ("quiz__title", "classroom__name", "title")

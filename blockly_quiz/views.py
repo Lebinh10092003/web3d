@@ -9,22 +9,33 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core import signing
 from django.core.paginator import Paginator
-from django.db import transaction
+from django.db import transaction, models
 from django.db.models import Count, Exists, OuterRef, Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import Attempt, AttemptAnswer, Choice, Question, Quiz
+from .models import (
+    Attempt,
+    AttemptAnswer,
+    Choice,
+    Classroom,
+    ClassroomMembership,
+    Question,
+    Quiz,
+    QuizAssignment,
+)
 
 SELECTION_TOKEN_MAX_AGE_SECONDS = 2 * 60 * 60
 RANDOM_QUIZ_REQUIRED_GROUP_NAME = "Student V"
 RANDOM_QUIZ_PRESET_COUNTS = {"easy": 5, "medium": 15, "hard": 10}
 RANDOM_QUIZ_DEFAULT_TYPE = "blockly"
+TEACHER_GROUP_NAME = "Teacher V"
 
 
 def _build_page_query_prefix(request, param_name: str) -> str:
@@ -51,6 +62,14 @@ def _user_can_use_random_quiz(user) -> bool:
     if not user.is_authenticated:
         return False
     return user.groups.filter(name=RANDOM_QUIZ_REQUIRED_GROUP_NAME).exists()
+
+
+def _user_is_teacher(user) -> bool:
+    if not user.is_authenticated:
+        return False
+    if user.is_staff or user.is_superuser:
+        return True
+    return user.groups.filter(name=TEACHER_GROUP_NAME).exists()
 
 
 def _filter_quiz_queryset_for_user(quizzes, user):
@@ -165,15 +184,25 @@ def _get_playable_quiz_or_404(request, slug: str, *, include_type_flags: bool = 
 
 def _get_attempt_or_404(request, attempt_id: int) -> Attempt:
     attempt = get_object_or_404(
-        Attempt.objects.select_related("quiz", "user"),
+        Attempt.objects.select_related("quiz", "user", "assignment", "assignment__classroom"),
         pk=attempt_id,
     )
     if attempt.user_id:
-        if not request.user.is_authenticated or attempt.user_id != request.user.id:
-            raise Http404
-        if not _user_can_access_quiz(request.user, attempt.quiz):
-            raise Http404
-        return attempt
+        if request.user.is_authenticated and request.user.id == attempt.user_id:
+            if not _user_can_access_quiz(request.user, attempt.quiz):
+                raise Http404
+            return attempt
+        if request.user.is_authenticated:
+            if request.user.is_staff or request.user.is_superuser:
+                return attempt
+            classroom = getattr(attempt.assignment, "classroom", None)
+            if classroom:
+                is_teacher = ClassroomMembership.objects.filter(
+                    classroom=classroom, user=request.user, role="teacher"
+                ).exists()
+                if is_teacher:
+                    return attempt
+        raise Http404
 
     session_key = _ensure_session_key(request)
     if not attempt.session_key or attempt.session_key != session_key:
@@ -316,7 +345,7 @@ def quiz_list(request):
 def attempt_list(request):
     attempts = (
         Attempt.objects.filter(user=request.user, completed_at__isnull=False)
-        .select_related("quiz")
+        .select_related("quiz", "assignment", "assignment__classroom")
         .order_by("-completed_at", "-started_at", "-id")
     )
     paginator = Paginator(attempts, getattr(settings, "QUIZ_ATTEMPT_PAGE_SIZE", 10))
@@ -328,6 +357,230 @@ def attempt_list(request):
             "attempts": page_obj.object_list,
             "page_obj": page_obj,
             "page_query_prefix": _build_page_query_prefix(request, "page"),
+        },
+    )
+
+
+@login_required
+@require_GET
+def attempt_admin_list(request):
+    if not _user_is_teacher(request.user):
+        raise Http404
+    attempts = Attempt.objects.filter(completed_at__isnull=False).select_related(
+        "quiz", "user", "assignment", "assignment__classroom"
+    )
+    quiz_id = request.GET.get("quiz")
+    classroom_slug = request.GET.get("classroom")
+    user_id = request.GET.get("user")
+    if quiz_id:
+        attempts = attempts.filter(quiz_id=quiz_id)
+    if classroom_slug:
+        attempts = attempts.filter(assignment__classroom__slug=classroom_slug)
+    if user_id:
+        attempts = attempts.filter(user_id=user_id)
+    attempts = attempts.order_by("-completed_at", "-started_at", "-id")
+    paginator = Paginator(attempts, getattr(settings, "QUIZ_ADMIN_PAGE_SIZE", 25))
+    page_obj = paginator.get_page(request.GET.get("page"))
+    classrooms = Classroom.objects.filter(
+        models.Q(owner=request.user) | models.Q(memberships__user=request.user, memberships__role="teacher")
+    ).distinct()
+    quizzes = Quiz.objects.all().order_by("title")
+    return render(
+        request,
+        "blockly_quiz/attempt_admin_list.html",
+        {
+            "attempts": page_obj.object_list,
+            "page_obj": page_obj,
+            "page_query_prefix": _build_page_query_prefix(request, "page"),
+            "quizzes": quizzes,
+            "classrooms": classrooms,
+            "filter_quiz": quiz_id or "",
+            "filter_classroom": classroom_slug or "",
+            "filter_user": user_id or "",
+        },
+    )
+
+
+@login_required
+@require_GET
+def attempt_export_csv(request):
+    if not _user_is_teacher(request.user):
+        raise Http404
+    attempts = Attempt.objects.filter(completed_at__isnull=False).select_related(
+        "quiz", "user", "assignment", "assignment__classroom"
+    )
+    quiz_id = request.GET.get("quiz")
+    classroom_slug = request.GET.get("classroom")
+    if quiz_id:
+        attempts = attempts.filter(quiz_id=quiz_id)
+    if classroom_slug:
+        attempts = attempts.filter(assignment__classroom__slug=classroom_slug)
+    rows = [
+        ["Attempt ID", "Quiz", "User", "Score %", "Correct", "Total", "Completed at", "Classroom"]
+    ]
+    for attempt in attempts:
+        rows.append(
+            [
+                attempt.id,
+                attempt.quiz.title,
+                attempt.user.username if attempt.user else "",
+                attempt.score_percent,
+                attempt.correct_count,
+                attempt.total_questions,
+                attempt.completed_at.isoformat() if attempt.completed_at else "",
+                attempt.assignment.classroom.name if attempt.assignment and attempt.assignment.classroom else "",
+            ]
+        )
+    csv_content = "\n".join([",".join([str(cell).replace(",", ";") for cell in row]) for row in rows])
+    response = HttpResponse(csv_content, content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="quiz_attempts.csv"'
+    return response
+
+
+@login_required
+def classroom_list(request):
+    can_create = _user_is_teacher(request.user)
+    if request.method == "POST":
+        if not can_create:
+            raise Http404
+        name = (request.POST.get("name") or "").strip()
+        if not name:
+            messages.error(request, _("Class name is required."))
+        else:
+            base_slug = slugify(name) or "class"
+            slug = base_slug
+            suffix = 1
+            while Classroom.objects.filter(slug=slug).exists():
+                suffix += 1
+                slug = f"{base_slug}-{suffix}"
+            Classroom.objects.create(name=name, slug=slug, owner=request.user)
+            messages.success(request, _("Classroom created."))
+            return redirect("blockly_quiz:classroom-detail", slug=slug)
+
+    classrooms = Classroom.objects.filter(
+        models.Q(owner=request.user) | models.Q(memberships__user=request.user)
+    ).distinct()
+    return render(
+        request,
+        "blockly_quiz/classroom_list.html",
+        {"classrooms": classrooms, "can_create": can_create},
+    )
+
+
+@login_required
+def classroom_detail(request, slug):
+    classroom = get_object_or_404(Classroom.objects.select_related("owner"), slug=slug)
+    is_teacher = _user_is_teacher(request.user) and (
+        classroom.owner_id == request.user.id
+        or ClassroomMembership.objects.filter(
+            classroom=classroom, user=request.user, role="teacher"
+        ).exists()
+    )
+    if not is_teacher and not request.user.is_staff:
+        raise Http404
+
+    if request.method == "POST":
+        action = (request.POST.get("action") or "").strip()
+        if action == "create_assignment":
+            quiz_id = request.POST.get("quiz_id")
+            title = (request.POST.get("title") or "").strip()
+            max_attempts = request.POST.get("max_attempts")
+            due_at_raw = (request.POST.get("due_at") or "").strip()
+            due_at = None
+            if due_at_raw:
+                try:
+                    due_at = timezone.datetime.fromisoformat(due_at_raw)
+                except Exception:
+                    due_at = None
+            try:
+                quiz = Quiz.objects.get(id=int(quiz_id))
+                assignment, created = QuizAssignment.objects.get_or_create(
+                    quiz=quiz,
+                    classroom=classroom,
+                    defaults={
+                        "title": title or quiz.title,
+                        "max_attempts": int(max_attempts) if max_attempts else None,
+                        "due_at": due_at,
+                    },
+                )
+                if not created and title:
+                    assignment.title = title
+                    assignment.max_attempts = int(max_attempts) if max_attempts else None
+                    assignment.due_at = due_at
+                    assignment.save()
+                messages.success(request, _("Quiz assigned to class."))
+            except Exception:
+                messages.error(request, _("Could not assign quiz."))
+            return redirect(classroom.get_absolute_url())
+        if action == "add_member":
+            username = (request.POST.get("username") or "").strip()
+            role = (request.POST.get("role") or "student").strip()
+            role = role if role in {"teacher", "student"} else "student"
+            try:
+                from django.contrib.auth import get_user_model
+
+                User = get_user_model()
+                user = None
+                if username:
+                    user = (
+                        User.objects.filter(models.Q(username=username) | models.Q(email=username))
+                        .order_by("id")
+                        .first()
+                    )
+                if not user:
+                    raise ValueError("missing user")
+                ClassroomMembership.objects.get_or_create(
+                    classroom=classroom, user=user, defaults={"role": role}
+                )
+                messages.success(request, _("Member added to class."))
+            except Exception:
+                messages.error(request, _("Could not add member."))
+            return redirect(classroom.get_absolute_url())
+
+    assignments = list(
+        classroom.assignments.select_related("quiz").order_by("-created_at", "-id")
+    )
+    member_qs = classroom.memberships.select_related("user").order_by("user__username")
+    member_paginator = Paginator(member_qs, getattr(settings, "CLASSROOM_MEMBER_PAGE_SIZE", 10))
+    member_page_obj = member_paginator.get_page(request.GET.get("member_page"))
+    members = list(member_page_obj)
+    students = [m.user for m in members if m.role == "student"]
+
+    attempts = (
+        Attempt.objects.filter(assignment__classroom=classroom, completed_at__isnull=False)
+        .select_related("user", "quiz", "assignment")
+        .order_by("-completed_at")
+    )
+    latest_attempt = {}
+    for att in attempts:
+        key = f"{att.user_id}:{att.assignment_id}"
+        if key not in latest_attempt:
+            latest_attempt[key] = att
+
+    gradebook_rows = []
+    for student in students:
+        cells = []
+        for assignment in assignments:
+            cells.append(
+                {
+                    "assignment": assignment,
+                    "attempt": latest_attempt.get(f"{student.id}:{assignment.id}"),
+                }
+            )
+        gradebook_rows.append({"student": student, "cells": cells})
+
+    return render(
+        request,
+        "blockly_quiz/classroom_detail.html",
+        {
+            "classroom": classroom,
+            "assignments": assignments,
+            "members": members,
+            "member_page_obj": member_page_obj,
+            "member_page_prefix": _build_page_query_prefix(request, "member_page"),
+            "students": students,
+            "gradebook_rows": gradebook_rows,
+            "quizzes": Quiz.objects.all().order_by("title"),
         },
     )
 
@@ -784,6 +1037,22 @@ def quiz_start(request, slug):
     participant_name = (request.POST.get("name") or "").strip()
     participant_dob = (request.POST.get("dob") or "").strip()
     participant_campus = (request.POST.get("campus") or "").strip()
+    assignment_id = request.POST.get("assignment_id") or request.GET.get("assignment_id")
+    assignment = None
+    if assignment_id:
+        try:
+            assignment = QuizAssignment.objects.select_related("classroom").get(
+                id=int(assignment_id), quiz=quiz
+            )
+        except (QuizAssignment.DoesNotExist, ValueError, TypeError):
+            assignment = None
+    if assignment and not _user_is_teacher(request.user):
+        is_member = ClassroomMembership.objects.filter(
+            classroom=assignment.classroom, user=request.user
+        ).exists()
+        if not is_member and not request.user.is_staff:
+            assignment = None
+
     attempt = Attempt.objects.create(
         quiz=quiz,
         user=request.user if request.user.is_authenticated else None,
@@ -791,6 +1060,7 @@ def quiz_start(request, slug):
         participant_name=participant_name,
         participant_dob=participant_dob,
         participant_campus=participant_campus,
+        assignment=assignment,
     )
     return redirect("blockly_quiz:attempt", attempt_id=attempt.id)
 
@@ -1148,6 +1418,22 @@ def api_quiz_submit(request, slug):
     participant_name = payload.get("name")
     participant_dob = payload.get("dob")
     participant_campus = payload.get("campus")
+    assignment = None
+    assignment_id = payload.get("assignment_id")
+    if assignment_id:
+        try:
+            assignment = QuizAssignment.objects.select_related("classroom").get(
+                id=int(assignment_id), quiz=quiz
+            )
+        except (QuizAssignment.DoesNotExist, ValueError, TypeError):
+            assignment = None
+    if assignment and request.user.is_authenticated and not _user_is_teacher(request.user):
+        is_member = ClassroomMembership.objects.filter(
+            classroom=assignment.classroom, user=request.user
+        ).exists()
+        if not is_member:
+            assignment = None
+
     attempt = Attempt.objects.create(
         quiz=quiz,
         user=request.user if request.user.is_authenticated else None,
@@ -1155,6 +1441,7 @@ def api_quiz_submit(request, slug):
         participant_name=str(participant_name or "").strip(),
         participant_dob=str(participant_dob or "").strip(),
         participant_campus=str(participant_campus or "").strip(),
+        assignment=assignment,
     )
 
     answer_map: dict[int, int] = {}

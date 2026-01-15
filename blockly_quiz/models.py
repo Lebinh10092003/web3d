@@ -116,6 +116,62 @@ class Choice(models.Model):
         return self.text
 
 
+class Classroom(models.Model):
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=220, unique=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="quiz_classrooms",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name", "id"]
+
+    def __str__(self) -> str:
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse("blockly_quiz:classroom-detail", kwargs={"slug": self.slug})
+
+
+class ClassroomMembership(models.Model):
+    ROLE_CHOICES = (
+        ("teacher", _("Teacher")),
+        ("student", _("Student")),
+    )
+    classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name="memberships")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="+")
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES, default="student")
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("classroom", "user")]
+        ordering = ["-joined_at", "-id"]
+
+    def __str__(self) -> str:
+        return f"{self.user} in {self.classroom} ({self.role})"
+
+
+class QuizAssignment(models.Model):
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="assignments")
+    classroom = models.ForeignKey(
+        Classroom, on_delete=models.CASCADE, related_name="assignments"
+    )
+    title = models.CharField(max_length=220, blank=True)
+    due_at = models.DateTimeField(null=True, blank=True)
+    max_attempts = models.PositiveIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("quiz", "classroom")]
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self) -> str:
+        return self.title or f"{self.quiz.title} @ {self.classroom.name}"
+
+
 class Attempt(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="attempts")
     user = models.ForeignKey(
@@ -141,6 +197,13 @@ class Attempt(models.Model):
     sheets_queued_at = models.DateTimeField(null=True, blank=True)
     sheets_sent_at = models.DateTimeField(null=True, blank=True)
     sheets_error = models.TextField(blank=True)
+    assignment = models.ForeignKey(
+        QuizAssignment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="attempts",
+    )
 
     class Meta:
         ordering = ["-started_at", "-id"]

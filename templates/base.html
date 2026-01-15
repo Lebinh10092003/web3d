@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n user_groups %}
 <!doctype html>
 <html lang="{{ request.LANGUAGE_CODE|default:'en' }}">
 <head>
@@ -26,6 +26,7 @@
   <meta name="twitter:description" content="{% block twitter_description %}{{ DEFAULT_META_DESCRIPTION }}{% endblock %}">
   <meta name="twitter:image" content="{% block twitter_image %}{{ DEFAULT_OG_IMAGE }}{% endblock %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   {% if ADSENSE_CLIENT %}
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ ADSENSE_CLIENT }}" crossorigin="anonymous"></script>
@@ -97,6 +98,18 @@
         </svg>
         <span>{% trans "Quizzes" %}</span>
       </a>
+      {% if request.user.is_authenticated %}
+        {% if request.user.is_staff or request.user.is_superuser or request.user|has_group:"Teacher V" %}
+          <a class="nav-link{% if view_name == 'blockly_quiz:classroom-list' %} is-active{% endif %}" href="{% url 'blockly_quiz:classroom-list' %}">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M8 12h8M8 16h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>{% trans "Classrooms" %}</span>
+          </a>
+        {% endif %}
+      {% endif %}
       <a class="nav-link{% if view_name == 'about' %} is-active{% endif %}" href="{% url 'about' %}">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 5a1.5 1.5 0 1 1-1.5 1.5A1.5 1.5 0 0 1 12 7zm2 10h-4v-2h1v-3h-1V10h3v5h1z" fill="currentColor"/>
@@ -198,11 +211,6 @@
   </header>
 
   <main class="site-main">
-    <div class="back-row">
-      <button class="button button-ghost back-button" type="button" data-back-button>
-        &larr; {% trans "Back" %}
-      </button>
-    </div>
     {% if messages %}
       <script>
         window.__djangoMessages = [

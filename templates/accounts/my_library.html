@@ -56,10 +56,16 @@
             <ul class="course-lesson-history">
               {% for progress in page %}
                 <li>
-                  <a href="{{ progress.lesson.course.get_absolute_url }}?v={{ progress.lesson.video_id }}">
-                    {{ progress.lesson.title }}
-                  </a>
-                  <span class="course-lesson-meta">{{ progress.lesson.course.title }}</span>
+                  <span class="lesson-icon" aria-hidden="true"><i class="ri-play-fill"></i></span>
+                  <div class="lesson-body">
+                    <a href="{{ progress.lesson.course.get_absolute_url }}?v={{ progress.lesson.video_id }}">
+                      {{ progress.lesson.title }}
+                    </a>
+                    <span class="course-lesson-meta">
+                      <i class="ri-book-open-line" aria-hidden="true"></i>
+                      {{ progress.lesson.course.title }}
+                    </span>
+                  </div>
                 </li>
               {% endfor %}
             </ul>
@@ -75,7 +81,7 @@
                   </li>
                   {% for p in lesson_pagination.pages %}
                     {% if p.ellipsis %}
-                      <li class="page-item disabled"><span class="page-link">…</span></li>
+                      <li class="page-item disabled"><span class="page-link">...</span></li>
                     {% else %}
                       <li class="page-item{% if p.is_current %} active{% endif %}">
                         {% if p.is_current %}
@@ -104,10 +110,16 @@
             <ul class="course-lesson-history">
               {% for progress in recent_lessons %}
                 <li>
-                  <a href="{{ progress.lesson.course.get_absolute_url }}?v={{ progress.lesson.video_id }}">
-                    {{ progress.lesson.title }}
-                  </a>
-                  <span class="course-lesson-meta">{{ progress.lesson.course.title }}</span>
+                  <span class="lesson-icon" aria-hidden="true"><i class="ri-play-fill"></i></span>
+                  <div class="lesson-body">
+                    <a href="{{ progress.lesson.course.get_absolute_url }}?v={{ progress.lesson.video_id }}">
+                      {{ progress.lesson.title }}
+                    </a>
+                    <span class="course-lesson-meta">
+                      <i class="ri-book-open-line" aria-hidden="true"></i>
+                      {{ progress.lesson.course.title }}
+                    </span>
+                  </div>
                 </li>
               {% endfor %}
             </ul>

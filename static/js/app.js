@@ -442,22 +442,6 @@ function bindOwnerTriggers() {
   });
 }
 
-function bindBackButtons() {
-  const buttons = document.querySelectorAll("[data-back-button]");
-  if (!buttons.length) {
-    return;
-  }
-  const isHome = window.location.pathname === "/" || window.location.pathname === "";
-  const canGoBack = !isHome && (window.history.length > 1 || document.referrer);
-  buttons.forEach((button) => {
-    if (!canGoBack) {
-      button.style.display = "none";
-      return;
-    }
-    button.addEventListener("click", () => window.history.back());
-  });
-}
-
 function bindLanguageSwitcher() {
   const select = document.querySelector("[data-lang-switcher]");
   if (!select || !select.form) {
@@ -992,7 +976,6 @@ document.addEventListener("DOMContentLoaded", () => {
   bindModalEvents();
   bindContactTriggers();
   bindPointsTriggers();
-  bindBackButtons();
   bindLanguageSwitcher();
   bindUserMenu();
   bindNavToggle();

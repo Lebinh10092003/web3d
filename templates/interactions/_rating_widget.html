@@ -27,8 +27,19 @@
             value="{{ score }}"
             {% if user_rating and user_rating.score == score %}checked{% endif %}
           >
-          <label for="star-{{ score }}">&#9733;</label>
+          <label
+            for="star-{{ score }}"
+            title="{% if score == 5 %}{% trans 'Excellent' %}{% elif score == 4 %}{% trans 'Good' %}{% elif score == 3 %}{% trans 'Average' %}{% elif score == 2 %}{% trans 'Below average' %}{% else %}{% trans 'Poor' %}{% endif %}"
+            aria-label="{% if score == 5 %}{% trans 'Excellent' %}{% elif score == 4 %}{% trans 'Good' %}{% elif score == 3 %}{% trans 'Average' %}{% elif score == 2 %}{% trans 'Below average' %}{% else %}{% trans 'Poor' %}{% endif %}"
+          >&#9733;</label>
         {% endfor %}
+      </div>
+      <div class="rating-legend" aria-hidden="true">
+        <span><strong>5★</strong> {% trans "Excellent" %}</span>
+        <span><strong>4★</strong> {% trans "Good" %}</span>
+        <span><strong>3★</strong> {% trans "Average" %}</span>
+        <span><strong>2★</strong> {% trans "Below average" %}</span>
+        <span><strong>1★</strong> {% trans "Poor" %}</span>
       </div>
       <button class="button button-ghost" type="submit">{% trans "Submit rating" %}</button>
     </form>

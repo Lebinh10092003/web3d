@@ -5,14 +5,14 @@
 {% block meta_title %}V+ STEAM LAB Library{% endblock %}
 {% block meta_description %}
   {% if request.LANGUAGE_CODE == "vi" %}
-    V+ STEAM LAB Library là thư viện tài nguyên học tập. V for tech, V for future. Chia sẻ PDF, mô hình LEGO 3D và bài học STEAM.
+    V+ STEAM LAB Library lAÿ th’ø vi ¯Øn tAÿi nguyA¦n h ¯?c t §-p. V for tech, V for future. Chia s §¯ PDF, mA' hAªnh LEGO 3D vAÿ bAÿi h ¯?c STEAM.
   {% else %}
     V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
   {% endif %}
 {% endblock %}
 {% block og_description %}
   {% if request.LANGUAGE_CODE == "vi" %}
-    V+ STEAM LAB Library là thư viện tài nguyên học tập. V for tech, V for future. Chia sẻ PDF, mô hình LEGO 3D và bài học STEAM.
+    V+ STEAM LAB Library lAÿ th’ø vi ¯Øn tAÿi nguyA¦n h ¯?c t §-p. V for tech, V for future. Chia s §¯ PDF, mA' hAªnh LEGO 3D vAÿ bAÿi h ¯?c STEAM.
   {% else %}
     V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
   {% endif %}
@@ -20,71 +20,74 @@
 {% block twitter_title %}V+ STEAM LAB Library{% endblock %}
 {% block twitter_description %}
   {% if request.LANGUAGE_CODE == "vi" %}
-    V+ STEAM LAB Library là thư viện tài nguyên học tập. V for tech, V for future. Chia sẻ PDF, mô hình LEGO 3D và bài học STEAM.
+    V+ STEAM LAB Library lAÿ th’ø vi ¯Øn tAÿi nguyA¦n h ¯?c t §-p. V for tech, V for future. Chia s §¯ PDF, mA' hAªnh LEGO 3D vAÿ bAÿi h ¯?c STEAM.
   {% else %}
     V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
   {% endif %}
 {% endblock %}
 
 {% block content %}
-<section class="hero hero--brand">
-  <div class="hero-content">
-    <div class="hero-badge">V+ STEAM LAB Library</div>
-    <h1>{% if request.LANGUAGE_CODE == "vi" %}V for tech, V for future{% else %}V for tech, V for future{% endif %}</h1>
-    <p>
+<section class="library-hero">
+  <div class="library-hero-copy">
+    <p class="eyebrow">{% trans "Browse themes" %}</p>
+    <h1>{% if request.LANGUAGE_CODE == "vi" %}KhA­m phA­ tAÿi nguyA¦n STEAM{% else %}Explore STEAM resources{% endif %}</h1>
+    <p class="muted">
       {% if request.LANGUAGE_CODE == "vi" %}
-        V+ STEAM LAB Library là website chia sẻ tài liệu và trao đổi tài nguyên STEAM, robotics cho giáo viên, học sinh và cộng đồng. Khám phá PDF, mô hình LEGO 3D và giáo án thực hành từ các mùa giải thi đấu.
+        Tìm nhanh PDF, mô hình 3D LEGO và bài học. Lọc theo loại tệp, danh mục hoặc mức độ yêu thích.
       {% else %}
-        V+ STEAM LAB Library is a resource library for teachers, students, and the community. Exchange PDFs, 3D LEGO builds, and hands-on lesson plans from competition seasons.
+        Quickly search PDFs, 3D LEGO models, and lesson files. Filter by type, category, or popularity.
       {% endif %}
     </p>
-    <div class="hero-actions">
-      <a class="button" href="{% url 'about' %}">{% trans "Learn more" %}</a>
-      <a class="button button-ghost" href="{% url 'contributions:submit' %}">{% trans "Submit" %}</a>
-      <a class="button button-ghost" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noopener noreferrer">Facebook</a>
+  </div>
+  <form method="get" class="library-search" hx-get="." hx-target="#content-grid" hx-push-url="true">
+    <div class="search-bar">
+      <span class="search-icon" aria-hidden="true"><i class="ri-search-line"></i></span>
+      <input type="search" name="q" placeholder="{% trans 'Search PDFs, 3D builds, lessons...' %}" value="{{ query }}">
+      <button class="button" type="submit">{% trans "Search" %}</button>
     </div>
-  </div>
-  <div class="hero-media">
-    <img src="{% static 'img/logoV+.png' %}" alt="{% if request.LANGUAGE_CODE == "vi" %}Logo chữ V{% else %}V logo{% endif %}">
-  </div>
-</section>
-
-<section class="filters">
-  <form method="get" class="filter-form" hx-get="." hx-target="#content-grid" hx-push-url="true">
-    <input type="search" name="q" placeholder="{% trans 'Search PDFs, 3D builds' %}" value="{{ query }}">
-    <select name="content_type">
-      <option value="">{% trans "All types" %}</option>
-      {% for file_type in file_types %}
-        <option value="{{ file_type.value }}" {% if file_type.value == content_type %}selected{% endif %}>
-          {{ file_type.label }}
-        </option>
-      {% endfor %}
-    </select>
-    <select name="category">
-      <option value="">{% trans "All categories" %}</option>
-      {% for category in categories %}
-        <option value="{{ category.slug }}" {% if category.slug == category_slug %}selected{% endif %}>{{ category.name }}</option>
-      {% endfor %}
-    </select>
-    <select name="sort">
-      {% if query %}
-        <option value="relevance" {% if sort == "relevance" %}selected{% endif %}>{% if request.LANGUAGE_CODE == "vi" %}Liên quan{% else %}Relevance{% endif %}</option>
-      {% endif %}
-      {% if request.LANGUAGE_CODE == "vi" %}
-        <option value="newest" {% if sort == "newest" %}selected{% endif %}>Mới nhất</option>
-        <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Cũ nhất</option>
-        <option value="rating" {% if sort == "rating" %}selected{% endif %}>Đánh giá cao</option>
-        <option value="favorites" {% if sort == "favorites" %}selected{% endif %}>Được lưu nhiều</option>
-        <option value="title" {% if sort == "title" %}selected{% endif %}>Theo tiêu đề</option>
-      {% else %}
-        <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
-        <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Oldest</option>
-        <option value="rating" {% if sort == "rating" %}selected{% endif %}>Top rated</option>
-        <option value="favorites" {% if sort == "favorites" %}selected{% endif %}>Most saved</option>
-        <option value="title" {% if sort == "title" %}selected{% endif %}>Title A-Z</option>
-      {% endif %}
-    </select>
-    <button class="button" type="submit">{% trans "Apply" %}</button>
+    <div class="filter-pills">
+      <label class="pill-select">
+        <span>{% trans "Type" %}</span>
+        <select name="content_type">
+          <option value="">{% trans "All types" %}</option>
+          {% for file_type in file_types %}
+            <option value="{{ file_type.value }}" {% if file_type.value == content_type %}selected{% endif %}>
+              {{ file_type.label }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="pill-select">
+        <span>{% trans "Category" %}</span>
+        <select name="category">
+          <option value="">{% trans "All categories" %}</option>
+          {% for category in categories %}
+            <option value="{{ category.slug }}" {% if category.slug == category_slug %}selected{% endif %}>{{ category.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="pill-select">
+        <span>{% trans "Sort" %}</span>
+        <select name="sort">
+          {% if query %}
+            <option value="relevance" {% if sort == "relevance" %}selected{% endif %}>{% if request.LANGUAGE_CODE == "vi" %}LiA¦n quan{% else %}Relevance{% endif %}</option>
+          {% endif %}
+          {% if request.LANGUAGE_CODE == "vi" %}
+            <option value="newest" {% if sort == "newest" %}selected{% endif %}>M ¯>i nh §t</option>
+            <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Cc nh §t</option>
+            <option value="rating" {% if sort == "rating" %}selected{% endif %}>Ž?A­nh giA­ cao</option>
+            <option value="favorites" {% if sort == "favorites" %}selected{% endif %}>Ž?’ø ¯œc l’øu nhi ¯?u</option>
+            <option value="title" {% if sort == "title" %}selected{% endif %}>Theo tiA¦u Ž` ¯?</option>
+          {% else %}
+            <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
+            <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Oldest</option>
+            <option value="rating" {% if sort == "rating" %}selected{% endif %}>Top rated</option>
+            <option value="favorites" {% if sort == "favorites" %}selected{% endif %}>Most saved</option>
+            <option value="title" {% if sort == "title" %}selected{% endif %}>Title A-Z</option>
+          {% endif %}
+        </select>
+      </label>
+    </div>
   </form>
 </section>
 

@@ -1,6 +1,7 @@
 {% load static i18n %}
 <div id="comment-list" class="comment-list">
   {% for comment in comments %}
+    {% if not comment.is_deleted or editing_comment_id == comment.id %}
     <div class="comment">
       <div class="comment-header">
         <div class="comment-avatar">
@@ -66,8 +67,6 @@
               >{% trans "Cancel" %}</button>
             </div>
           </form>
-        {% elif comment.is_deleted %}
-          <p class="comment-deleted">{% trans "Comment deleted." %}</p>
         {% else %}
           <p>{{ comment.body }}</p>
         {% endif %}
@@ -76,6 +75,7 @@
       {% if comment.replies.all %}
         <div class="comment-replies">
           {% for reply in comment.replies.all %}
+            {% if not reply.is_deleted or editing_comment_id == reply.id %}
             <div class="comment comment-reply">
               <div class="comment-header">
                 <div class="comment-avatar">
@@ -141,13 +141,12 @@
                       >{% trans "Cancel" %}</button>
                     </div>
                   </form>
-                {% elif reply.is_deleted %}
-                  <p class="comment-deleted">{% trans "Comment deleted." %}</p>
                 {% else %}
                   <p>{{ reply.body }}</p>
                 {% endif %}
               </div>
             </div>
+            {% endif %}
           {% endfor %}
         </div>
       {% endif %}
@@ -170,6 +169,7 @@
         </details>
       {% endif %}
     </div>
+    {% endif %}
   {% empty %}
     <div class="empty-state">{% trans "No comments yet. Be the first to share tips." %}</div>
   {% endfor %}

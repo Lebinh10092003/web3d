@@ -10,46 +10,45 @@
 {% block content %}
   <div class="container py-4" data-blockly-quiz>
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-      <h1 class="h4 mb-0">{% trans "My quiz scores" %}</h1>
+      <div>
+        <p class="eyebrow mb-1 text-uppercase">{% trans "My quiz scores" %}</p>
+        <h1 class="h4 mb-0">{% trans "Recent attempts" %}</h1>
+      </div>
       <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:list' %}">&larr; {% trans "All quizzes" %}</a>
     </div>
 
     {% if attempts %}
-      <div class="card shadow-sm">
-        <div class="table-responsive">
-          <table class="table align-middle mb-0">
-            <thead>
-              <tr>
-                <th scope="col">{% trans "Quiz" %}</th>
-                <th scope="col" class="text-center">{% trans "Score" %}</th>
-                <th scope="col" class="text-center">{% trans "Questions" %}</th>
-                <th scope="col" class="text-end">{% trans "Completed at" %}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for attempt in attempts %}
-                <tr>
-                  <td>
-                    <a href="{{ attempt.quiz.get_absolute_url }}">{{ attempt.quiz.title }}</a>
-                  </td>
-                  <td class="text-center">
-                    {{ attempt.score_percent }}%
-                  </td>
-                  <td class="text-center">
-                    {{ attempt.correct_count }} / {{ attempt.total_questions }}
-                  </td>
-                  <td class="text-end">
-                    {% if attempt.completed_at %}
-                      {{ attempt.completed_at|date:"Y-m-d H:i" }}
-                    {% else %}
-                      <span class="text-muted">{% trans "In progress" %}</span>
-                    {% endif %}
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+      <div class="scores-grid">
+        {% for attempt in attempts %}
+          <article class="score-card">
+            <div class="score-card__body">
+              <div class="score-card__top">
+                <div class="score-card__title">{{ attempt.quiz.title }}</div>
+                <div class="score-card__score">
+                  <span class="badge text-bg-success fs-6">{{ attempt.score_percent }}%</span>
+                  <span class="score-card__meta">
+                    {% blocktrans with c=attempt.correct_count t=attempt.total_questions %}{{ c }}/{{ t }}{% endblocktrans %}
+                  </span>
+                </div>
+              </div>
+              {% if attempt.assignment %}
+                <div class="score-card__chip">{% trans "Class" %}: {{ attempt.assignment.classroom.name }}</div>
+              {% endif %}
+              <div class="score-card__time">
+                <i class="ri-time-line" aria-hidden="true"></i>
+                {% if attempt.completed_at %}
+                  {{ attempt.completed_at|date:"Y-m-d H:i" }}
+                {% else %}
+                  {% trans "In progress" %}
+                {% endif %}
+              </div>
+              <div class="score-card__actions">
+                <a class="button button-ghost button-xs" href="{{ attempt.quiz.get_absolute_url }}">{% trans "View quiz" %}</a>
+                <a class="button button-xs" href="{% url 'blockly_quiz:review' attempt.id %}">{% trans "Review answers" %}</a>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
       </div>
 
       {% if page_obj.paginator.num_pages > 1 %}

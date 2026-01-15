@@ -10,12 +10,21 @@
         {% endif %}
       </a>
       <div class="card-body">
-        <div class="card-tags">
-          <span class="tag">{{ item.file_type_label }}</span>
-          <span class="tag tag-muted">{{ item.get_status_display }}</span>
+        <div class="card-top">
+          <div class="card-tags">
+            <span class="tag">{{ item.file_type_label }}</span>
+            <span class="tag tag-muted">{{ item.get_status_display }}</span>
+          </div>
+          {% if item.download_cost_points == 0 %}
+            <span class="card-price card-price--free">{% trans "Free" %}</span>
+          {% else %}
+            <span class="card-price card-price--paid">
+              {% blocktrans with points=item.download_cost_points %}{{ points }} pts{% endblocktrans %}
+            </span>
+          {% endif %}
         </div>
         <h3><a href="{% url 'library:content-detail' item.slug %}">{{ item.title }}</a></h3>
-        <p>{{ item.description|default:""|truncatechars:140 }}</p>
+        <p class="card-desc">{{ item.description|default:""|truncatechars:140 }}</p>
         {% if item.owner %}
           {% if item.owner.website_url or item.owner.facebook_url or item.owner.github_url %}
             <div class="card-owner">
@@ -23,16 +32,15 @@
             </div>
           {% endif %}
         {% endif %}
-        <div class="card-meta">
-          <span>{% trans "Rating" %}: {{ item.rating_avg|default_if_none:"-" }}</span>
-          <span>{% blocktrans with count=item.favorites_count %}{{ count }} saves{% endblocktrans %}</span>
-          {% if item.download_cost_points == 0 %}
-            <span class="points-badge points-free">{% trans "Free" %}</span>
-          {% else %}
-            <span class="points-badge points-paid">
-              {% blocktrans with points=item.download_cost_points %}{{ points }} pts{% endblocktrans %}
-            </span>
-          {% endif %}
+        <div class="card-meta-bar">
+          <span class="card-stat">
+            <i class="ri-star-s-fill" aria-hidden="true"></i>
+            {{ item.rating_avg|default_if_none:"-" }}
+          </span>
+          <span class="card-stat">
+            <i class="ri-heart-3-line" aria-hidden="true"></i>
+            {% blocktrans with count=item.favorites_count %}{{ count }} saves{% endblocktrans %}
+          </span>
         </div>
       </div>
     </article>

@@ -77,6 +77,9 @@ TEMPLATES = [
                 "web3d.context_processors.adsense",
                 "web3d.context_processors.site_meta",
             ],
+            "libraries": {
+                "user_groups": "accounts.templatetags.user_groups",
+            },
         },
     },
 ]

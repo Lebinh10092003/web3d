@@ -41,6 +41,220 @@ body.random-quiz-page .modal-backdrop {
   box-shadow: 0 16px 36px var(--shadow) !important;
 }
 
+[data-blockly-quiz] .score-card {
+  border: 1px solid var(--quiz-border);
+  border-radius: var(--quiz-radius);
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-blockly-quiz] .score-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+  border-color: color-mix(in srgb, var(--primary) 28%, #d6e1ec);
+}
+
+[data-blockly-quiz] .score-card .badge {
+  border-radius: 10px;
+}
+
+[data-blockly-quiz] .score-card .gradebook-badge {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--muted);
+}
+
+[data-blockly-quiz] .score-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+[data-blockly-quiz] .score-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+[data-blockly-quiz] .score-card__title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+[data-blockly-quiz] .score-card__score {
+  text-align: right;
+}
+
+[data-blockly-quiz] .score-card__meta {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+[data-blockly-quiz] .score-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+[data-blockly-quiz] .score-card__time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+[data-blockly-quiz] .score-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+[data-blockly-quiz] .scores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+[data-blockly-quiz] .classroom-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+[data-blockly-quiz] .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+[data-blockly-quiz] .page-header h1 {
+  margin: 0;
+}
+
+[data-blockly-quiz] .soft-list {
+  display: grid;
+  gap: 8px;
+}
+
+[data-blockly-quiz] .soft-list-item {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--quiz-border);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+[data-blockly-quiz] .stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  font-weight: 700;
+  color: var(--muted);
+}
+[data-blockly-quiz] .pill-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #f7f2eb;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #2f3744;
+  text-decoration: none;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+[data-blockly-quiz] .pill-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  border-color: color-mix(in srgb, var(--primary) 25%, #d5d9de);
+}
+
+[data-blockly-quiz] .score-card .badge {
+  border-radius: 10px;
+}
+
+[data-blockly-quiz] .filter-pill-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+[data-blockly-quiz] .filter-pill {
+  border-radius: 12px;
+  border: 1px solid var(--quiz-border);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+}
+
+[data-blockly-quiz] .table th {
+  color: var(--muted);
+  font-weight: 700;
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-blockly-quiz] .table td {
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+[data-blockly-quiz] .gradebook-badge {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+[data-blockly-quiz] .gradebook-table th,
+[data-blockly-quiz] .gradebook-table td {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+[data-blockly-quiz] .gradebook-table thead th {
+  background: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-blockly-quiz] .gradebook-table tbody tr:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+[data-blockly-quiz] .table-striped tbody tr:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-blockly-quiz] .gradebook-table td {
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+[data-blockly-quiz] .scores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
 [data-blockly-quiz] .quiz-hero {
   display: flex;
   flex-wrap: wrap;
@@ -679,5 +893,11 @@ body.random-quiz-page .modal-backdrop {
   }
   [data-blockly-quiz] .list-group-item:hover {
     transform: none;
+  }
+}
+
+@media (min-width: 992px) {
+  [data-blockly-quiz] .classroom-grid {
+    grid-template-columns: minmax(0, 0.6fr) minmax(0, 1fr);
   }
 }
