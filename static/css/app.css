@@ -2206,15 +2206,25 @@ textarea:focus {
   }
 
   .lego-viewer-mode .button {
-    background: transparent;
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: color-mix(in srgb, var(--primary-contrast) 90%, var(--primary) 10%);
+    border: 1px solid color-mix(in srgb, var(--primary) 28%, #d5d9de);
+    color: var(--ink);
+    box-shadow: 0 8px 18px rgba(12, 44, 25, 0.08);
+    transition: all 0.15s ease;
+  }
+
+  .lego-viewer-mode .button:hover {
+    background: color-mix(in srgb, var(--primary) 16%, #ffffff);
+    border-color: color-mix(in srgb, var(--primary) 42%, #d5d9de);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(12, 44, 25, 0.12);
   }
 
   .lego-viewer-mode .is-active {
-    background: #143624;
-    color: #ffffff;
-    border-color: transparent;
-    box-shadow: 0 6px 16px rgba(20, 54, 36, 0.25);
+    background: var(--primary);
+    color: var(--primary-contrast);
+    border-color: color-mix(in srgb, var(--primary) 70%, var(--secondary) 30%);
+    box-shadow: 0 12px 28px rgba(34, 197, 94, 0.25);
     transform: translateY(-1px);
   }
 

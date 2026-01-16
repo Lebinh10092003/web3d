@@ -5,14 +5,14 @@
 {% block meta_title %}V+ STEAM LAB Library{% endblock %}
 {% block meta_description %}
   {% if request.LANGUAGE_CODE == "vi" %}
-    V+ STEAM LAB Library lAÿ th’ø vi ¯Øn tAÿi nguyA¦n h ¯?c t §-p. V for tech, V for future. Chia s §¯ PDF, mA' hAªnh LEGO 3D vAÿ bAÿi h ¯?c STEAM.
+    V+ STEAM LAB Library la thu vien tai nguyen hoc tap. V for tech, V for future. Chia se PDF, mo hinh LEGO 3D va bai hoc STEAM.
   {% else %}
     V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
   {% endif %}
 {% endblock %}
 {% block og_description %}
   {% if request.LANGUAGE_CODE == "vi" %}
-    V+ STEAM LAB Library lAÿ th’ø vi ¯Øn tAÿi nguyA¦n h ¯?c t §-p. V for tech, V for future. Chia s §¯ PDF, mA' hAªnh LEGO 3D vAÿ bAÿi h ¯?c STEAM.
+    V+ STEAM LAB Library la thu vien tai nguyen hoc tap. V for tech, V for future. Chia se PDF, mo hinh LEGO 3D va bai hoc STEAM.
   {% else %}
     V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
   {% endif %}
@@ -20,7 +20,7 @@
 {% block twitter_title %}V+ STEAM LAB Library{% endblock %}
 {% block twitter_description %}
   {% if request.LANGUAGE_CODE == "vi" %}
-    V+ STEAM LAB Library lAÿ th’ø vi ¯Øn tAÿi nguyA¦n h ¯?c t §-p. V for tech, V for future. Chia s §¯ PDF, mA' hAªnh LEGO 3D vAÿ bAÿi h ¯?c STEAM.
+    V+ STEAM LAB Library la thu vien tai nguyen hoc tap. V for tech, V for future. Chia se PDF, mo hinh LEGO 3D va bai hoc STEAM.
   {% else %}
     V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
   {% endif %}
@@ -50,10 +50,10 @@
 <section class="library-hero">
   <div class="library-hero-copy">
     <p class="eyebrow">{% trans "Browse themes" %}</p>
-    <h1>{% if request.LANGUAGE_CODE == "vi" %}KhA­m phA­ tAÿi nguyA¦n STEAM{% else %}Explore STEAM resources{% endif %}</h1>
-    <p class="muted">
+        <h1>{% if request.LANGUAGE_CODE == "vi" %}Kham pha tai nguyen STEAM{% else %}Explore STEAM resources{% endif %}</h1>
+        <p class="muted">
       {% if request.LANGUAGE_CODE == "vi" %}
-        Tìm nhanh PDF, mô hình 3D LEGO và bài học. Lọc theo loại tệp, danh mục hoặc mức độ yêu thích.
+        Tim nhanh PDF, mo hinh 3D LEGO va bai hoc. Loc theo loai tep, danh muc hoac muc do yeu thich.
       {% else %}
         Quickly search PDFs, 3D LEGO models, and lesson files. Filter by type, category, or popularity.
       {% endif %}
@@ -86,18 +86,18 @@
           {% endfor %}
         </select>
       </label>
-      <label class="pill-select">
+            <label class="pill-select">
         <span>{% trans "Sort" %}</span>
         <select name="sort">
           {% if query %}
-            <option value="relevance" {% if sort == "relevance" %}selected{% endif %}>{% if request.LANGUAGE_CODE == "vi" %}LiA¦n quan{% else %}Relevance{% endif %}</option>
+            <option value="relevance" {% if sort == "relevance" %}selected{% endif %}>{% if request.LANGUAGE_CODE == "vi" %}Lien quan{% else %}Relevance{% endif %}</option>
           {% endif %}
           {% if request.LANGUAGE_CODE == "vi" %}
-            <option value="newest" {% if sort == "newest" %}selected{% endif %}>M ¯>i nh §t</option>
-            <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Cc nh §t</option>
-            <option value="rating" {% if sort == "rating" %}selected{% endif %}>Ž?A­nh giA­ cao</option>
-            <option value="favorites" {% if sort == "favorites" %}selected{% endif %}>Ž?’ø ¯œc l’øu nhi ¯?u</option>
-            <option value="title" {% if sort == "title" %}selected{% endif %}>Theo tiA¦u Ž` ¯?</option>
+            <option value="newest" {% if sort == "newest" %}selected{% endif %}>Moi nhat</option>
+            <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Cu nhat</option>
+            <option value="rating" {% if sort == "rating" %}selected{% endif %}>Danh gia cao</option>
+            <option value="favorites" {% if sort == "favorites" %}selected{% endif %}>Duoc luu nhieu</option>
+            <option value="title" {% if sort == "title" %}selected{% endif %}>Theo tieu de</option>
           {% else %}
             <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
             <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Oldest</option>

@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from .forms import ContributionSubmissionForm
+from .models import ContributionSubmission
 from .preview_utils import build_preview_filename, build_preview_path
 from .tasks import enqueue_preview_generation
 
