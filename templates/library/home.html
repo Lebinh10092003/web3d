@@ -5,14 +5,14 @@
 {% block meta_title %}V+ STEAM LAB Library{% endblock %}
 {% block meta_description %}
   {% if request.LANGUAGE_CODE == "vi" %}
-    V+ STEAM LAB Library la thu vien tai nguyen hoc tap. V for tech, V for future. Chia se PDF, mo hinh LEGO 3D va bai hoc STEAM.
+    V+ STEAM LAB Library là thư viện tài nguyên học tập. V for tech, V for future. Chia sẻ PDF, mô hình LEGO 3D và bài học STEAM.
   {% else %}
     V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
   {% endif %}
 {% endblock %}
 {% block og_description %}
   {% if request.LANGUAGE_CODE == "vi" %}
-    V+ STEAM LAB Library la thu vien tai nguyen hoc tap. V for tech, V for future. Chia se PDF, mo hinh LEGO 3D va bai hoc STEAM.
+    V+ STEAM LAB Library là thư viện tài nguyên học tập. V for tech, V for future. Chia sẻ PDF, mô hình LEGO 3D và bài học STEAM.
   {% else %}
     V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
   {% endif %}
@@ -20,7 +20,7 @@
 {% block twitter_title %}V+ STEAM LAB Library{% endblock %}
 {% block twitter_description %}
   {% if request.LANGUAGE_CODE == "vi" %}
-    V+ STEAM LAB Library la thu vien tai nguyen hoc tap. V for tech, V for future. Chia se PDF, mo hinh LEGO 3D va bai hoc STEAM.
+    V+ STEAM LAB Library là thư viện tài nguyên học tập. V for tech, V for future. Chia sẻ PDF, mô hình LEGO 3D và bài học STEAM.
   {% else %}
     V+ STEAM LAB Library is a learning resource library. V for tech, V for future. Exchange PDFs, 3D LEGO builds, and STEAM lessons.
   {% endif %}
@@ -34,7 +34,7 @@
       <h2 class="h4 mb-2">V+ STEAM LAB Library</h2>
       <p class="muted">
         {% if request.LANGUAGE_CODE == "vi" %}
-          Thu vien tai nguyen STEAM & Robotics duoc tao de chia se bai thuc hanh, PDF, mo hinh LEGO 3D va kinh nghiem thi robot (WRO, FLL, VEX).
+          Thư viện tài nguyên STEAM & Robotics được tạo để chia sẻ bài thực hành, PDF, mô hình LEGO 3D và kinh nghiệm thi robot (WRO, FLL, VEX).
         {% else %}
           STEAM & Robotics hub built to share hands-on lessons, PDFs, 3D LEGO builds, and robotics competition know-how (WRO, FLL, VEX).
         {% endif %}
@@ -50,10 +50,10 @@
 <section class="library-hero">
   <div class="library-hero-copy">
     <p class="eyebrow">{% trans "Browse themes" %}</p>
-        <h1>{% if request.LANGUAGE_CODE == "vi" %}Kham pha tai nguyen STEAM{% else %}Explore STEAM resources{% endif %}</h1>
+        <h1>{% if request.LANGUAGE_CODE == "vi" %}Khám phá tài nguyên STEAM{% else %}Explore STEAM resources{% endif %}</h1>
         <p class="muted">
       {% if request.LANGUAGE_CODE == "vi" %}
-        Tim nhanh PDF, mo hinh 3D LEGO va bai hoc. Loc theo loai tep, danh muc hoac muc do yeu thich.
+        Tìm nhanh PDF, mô hình 3D LEGO và bài học. Lọc theo loại tệp, danh mục hoặc mức độ yêu thích.
       {% else %}
         Quickly search PDFs, 3D LEGO models, and lesson files. Filter by type, category, or popularity.
       {% endif %}
@@ -90,14 +90,14 @@
         <span>{% trans "Sort" %}</span>
         <select name="sort">
           {% if query %}
-            <option value="relevance" {% if sort == "relevance" %}selected{% endif %}>{% if request.LANGUAGE_CODE == "vi" %}Lien quan{% else %}Relevance{% endif %}</option>
+            <option value="relevance" {% if sort == "relevance" %}selected{% endif %}>{% if request.LANGUAGE_CODE == "vi" %}Liên quan{% else %}Relevance{% endif %}</option>
           {% endif %}
           {% if request.LANGUAGE_CODE == "vi" %}
-            <option value="newest" {% if sort == "newest" %}selected{% endif %}>Moi nhat</option>
-            <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Cu nhat</option>
-            <option value="rating" {% if sort == "rating" %}selected{% endif %}>Danh gia cao</option>
-            <option value="favorites" {% if sort == "favorites" %}selected{% endif %}>Duoc luu nhieu</option>
-            <option value="title" {% if sort == "title" %}selected{% endif %}>Theo tieu de</option>
+            <option value="newest" {% if sort == "newest" %}selected{% endif %}>Mới nhất</option>
+            <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Cũ nhất</option>
+            <option value="rating" {% if sort == "rating" %}selected{% endif %}>Đánh giá cao</option>
+            <option value="favorites" {% if sort == "favorites" %}selected{% endif %}>Được lưu nhiều</option>
+            <option value="title" {% if sort == "title" %}selected{% endif %}>Theo tiêu đề</option>
           {% else %}
             <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
             <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Oldest</option>

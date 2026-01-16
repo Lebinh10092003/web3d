@@ -1320,6 +1320,76 @@ textarea:focus {
   height: 18px;
 }
 
+.btn,
+.btn-primary,
+.btn-success,
+.btn-secondary {
+  font-family: inherit;
+  font-weight: 700;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 55%, #d5d9de);
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: var(--primary-contrast);
+  box-shadow: 0 12px 26px rgba(12, 44, 25, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:hover,
+.btn-primary:hover,
+.btn-success:hover,
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(12, 44, 25, 0.22);
+  background: color-mix(in srgb, var(--primary) 82%, var(--secondary) 18%);
+  border-color: color-mix(in srgb, var(--primary) 70%, var(--secondary) 30%);
+  color: var(--primary-contrast);
+}
+
+.btn:active,
+.btn-primary:active,
+.btn-success:active,
+.btn-secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 10px 22px rgba(12, 44, 25, 0.16);
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.65;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-outline-primary,
+.btn-outline-secondary {
+  font-weight: 700;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 55%, #d5d9de);
+  background: transparent;
+  color: #0f3d2a;
+  box-shadow: 0 8px 18px rgba(12, 44, 25, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover {
+  background: color-mix(in srgb, #ffffff 88%, var(--primary) 12%);
+  border-color: color-mix(in srgb, var(--primary) 65%, #d5d9de);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(12, 44, 25, 0.12);
+}
+
+.btn-link {
+  color: var(--accent-strong);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.btn-link:hover {
+  color: color-mix(in srgb, var(--primary) 75%, #0f3d2a);
+  text-decoration: underline;
+}
+
 .button-outline {
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--primary) 55%, #d5d9de);
