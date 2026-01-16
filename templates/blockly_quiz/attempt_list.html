@@ -14,7 +14,7 @@
         <p class="eyebrow mb-1 text-uppercase">{% trans "My quiz scores" %}</p>
         <h1 class="h4 mb-0">{% trans "Recent attempts" %}</h1>
       </div>
-      <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:list' %}">&larr; {% trans "All quizzes" %}</a>
+      <a class="pill-link" href="{% url 'blockly_quiz:list' %}">&larr; {% trans "All quizzes" %}</a>
     </div>
 
     {% if attempts %}

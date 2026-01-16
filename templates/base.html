@@ -91,7 +91,7 @@
         </svg>
         <span>{% trans "Courses" %}</span>
       </a>
-      <a class="nav-link{% if view_name|slice:':12' == 'blockly_quiz' %} is-active{% endif %}" href="{% url 'blockly_quiz:list' %}">
+      <a class="nav-link{% if view_name|slice:':12' == 'blockly_quiz' and 'classroom' not in view_name %} is-active{% endif %}" href="{% url 'blockly_quiz:list' %}">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
           <path d="M8 8h8M8 12h6M8 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -99,16 +99,14 @@
         <span>{% trans "Quizzes" %}</span>
       </a>
       {% if request.user.is_authenticated %}
-        {% if request.user.is_staff or request.user.is_superuser or request.user|has_group:"Teacher V" %}
-          <a class="nav-link{% if view_name == 'blockly_quiz:classroom-list' %} is-active{% endif %}" href="{% url 'blockly_quiz:classroom-list' %}">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 7h16v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-              <path d="M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-              <path d="M8 12h8M8 16h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <span>{% trans "Classrooms" %}</span>
-          </a>
-        {% endif %}
+        <a class="nav-link{% if view_name|slice:':22' == 'blockly_quiz:classroom' %} is-active{% endif %}" href="{% url 'blockly_quiz:classroom-list' %}">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M8 12h8M8 16h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>{% trans "Classrooms" %}</span>
+        </a>
       {% endif %}
       <a class="nav-link{% if view_name == 'about' %} is-active{% endif %}" href="{% url 'about' %}">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">

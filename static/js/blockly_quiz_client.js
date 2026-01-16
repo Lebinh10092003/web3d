@@ -521,6 +521,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const apiQuizUrl = root.dataset.apiQuizUrl;
   const apiSubmitUrl = root.dataset.apiSubmitUrl;
+  const assignmentId = root.dataset.assignmentId || "";
   if (!apiQuizUrl || !apiSubmitUrl) {
     const i18n = getQuizI18n();
     showError(stage, i18n.missingQuizApiUrls || "Missing quiz API URLs.");
@@ -643,6 +644,9 @@ document.addEventListener("DOMContentLoaded", () => {
               choice_id
             }))
           };
+          if (assignmentId) {
+            submitPayload.assignment_id = assignmentId;
+          }
 
           try {
             if (window.Swal) {

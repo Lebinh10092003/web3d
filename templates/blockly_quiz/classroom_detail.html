@@ -13,176 +13,425 @@
       <div>
         <p class="eyebrow mb-1 text-uppercase">{% trans "Classroom" %}</p>
         <h1 class="h3 mb-1">{{ classroom.name }}</h1>
-        <p class="text-muted small mb-0">{% trans "Manage members, assignments, and scores for this class." %}</p>
+        <p class="text-muted small mb-0">
+          {% if is_teacher %}
+            {% trans "Manage members, assignments, and scores for this class." %}
+          {% else %}
+            {% trans "See your class assignments and start quizzes from here." %}
+          {% endif %}
+        </p>
       </div>
       <a class="pill-link" href="{% url 'blockly_quiz:classroom-list' %}">&larr; {% trans "All classes" %}</a>
     </div>
 
     <div class="classroom-grid">
-      <div class="panel panel-stack">
-        <div class="panel-section">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h2 class="h5 mb-0">{% trans "Members" %}</h2>
-            <span class="badge gradebook-badge">{{ member_page_obj.paginator.count }} {% trans "people" %}</span>
-          </div>
-          <div class="table-responsive">
-            <table class="table gradebook-table table-striped mb-0">
-              <thead>
-                <tr>
-                  <th>{% trans "Username" %}</th>
-                  <th>{% trans "Email" %}</th>
-                  <th class="text-center">{% trans "Role" %}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for member in members %}
+      {% if is_teacher %}
+        <div class="panel panel-stack">
+          <div class="panel-section">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h2 class="h5 mb-0">{% trans "Members" %}</h2>
+              <span class="badge gradebook-badge">{{ member_page_obj.paginator.count }} {% trans "people" %}</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table gradebook-table table-striped mb-0">
+                <thead>
                   <tr>
-                    <td>{{ member.user.username }}</td>
-                    <td>{{ member.user.email }}</td>
-                    <td class="text-center text-muted">{{ member.get_role_display }}</td>
+                    <th>{% trans "Username" %}</th>
+                    <th>{% trans "Email" %}</th>
+                    <th class="text-center">{% trans "Role" %}</th>
                   </tr>
-                {% empty %}
-                  <tr>
-                    <td colspan="3" class="text-muted small">{% trans "No members yet." %}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {% for member in members %}
+                    <tr>
+                      <td>{{ member.user.username }}</td>
+                      <td>{{ member.user.email }}</td>
+                      <td class="text-center text-muted">{{ member.get_role_display }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="3" class="text-muted small">{% trans "No members yet." %}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% if member_page_obj.paginator.num_pages > 1 %}
+              <nav class="d-flex justify-content-end mt-2" aria-label="{% trans 'Members pagination' %}">
+                <ul class="pagination pagination-sm pager-compact mb-0">
+                  <li class="page-item{% if not member_page_obj.has_previous %} disabled{% endif %}" aria-disabled="{% if not member_page_obj.has_previous %}true{% else %}false{% endif %}">
+                    {% if member_page_obj.has_previous %}
+                      <a class="page-link" href="?{{ member_page_prefix }}member_page={{ member_page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}" rel="prev">{% trans "Previous" %}</a>
+                    {% else %}
+                      <span class="page-link" aria-hidden="true">{% trans "Previous" %}</span>
+                    {% endif %}
+                  </li>
+                  <li class="page-item disabled">
+                    <span class="page-link">{{ member_page_obj.number }} / {{ member_page_obj.paginator.num_pages }}</span>
+                  </li>
+                  <li class="page-item{% if not member_page_obj.has_next %} disabled{% endif %}" aria-disabled="{% if not member_page_obj.has_next %}true{% else %}false{% endif %}">
+                    {% if member_page_obj.has_next %}
+                      <a class="page-link" href="?{{ member_page_prefix }}member_page={{ member_page_obj.next_page_number }}" aria-label="{% trans 'Next' %}" rel="next">{% trans "Next" %}</a>
+                    {% else %}
+                      <span class="page-link" aria-hidden="true">{% trans "Next" %}</span>
+                    {% endif %}
+                  </li>
+                </ul>
+              </nav>
+            {% endif %}
+            <form method="post" class="row g-2 mt-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="add_member">
+              <div class="col-12 col-md-6">
+                <label class="form-label small mb-1">{% trans "Username or email" %}</label>
+                <input class="form-control" name="username" required placeholder="{% trans 'Enter username or email' %}">
+              </div>
+              <div class="col-12 col-md-3">
+                <label class="form-label small mb-1">{% trans "Role" %}</label>
+                <select class="form-select" name="role">
+                  <option value="student">{% trans "Student" %}</option>
+                  <option value="teacher">{% trans "Teacher" %}</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-3 d-flex align-items-end">
+                <button class="button w-100" type="submit">{% trans "Add" %}</button>
+              </div>
+            </form>
           </div>
-          {% if member_page_obj.paginator.num_pages > 1 %}
-            <nav class="d-flex justify-content-end mt-2" aria-label="{% trans 'Members pagination' %}">
-              <ul class="pagination pagination-sm pager-compact mb-0">
-                <li class="page-item{% if not member_page_obj.has_previous %} disabled{% endif %}" aria-disabled="{% if not member_page_obj.has_previous %}true{% else %}false{% endif %}">
-                  {% if member_page_obj.has_previous %}
-                    <a class="page-link" href="?{{ member_page_prefix }}member_page={{ member_page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}" rel="prev">{% trans "Previous" %}</a>
-                  {% else %}
-                    <span class="page-link" aria-hidden="true">{% trans "Previous" %}</span>
-                  {% endif %}
-                </li>
-                <li class="page-item disabled">
-                  <span class="page-link">{{ member_page_obj.number }} / {{ member_page_obj.paginator.num_pages }}</span>
-                </li>
-                <li class="page-item{% if not member_page_obj.has_next %} disabled{% endif %}" aria-disabled="{% if not member_page_obj.has_next %}true{% else %}false{% endif %}">
-                  {% if member_page_obj.has_next %}
-                    <a class="page-link" href="?{{ member_page_prefix }}member_page={{ member_page_obj.next_page_number }}" aria-label="{% trans 'Next' %}" rel="next">{% trans "Next" %}</a>
-                  {% else %}
-                    <span class="page-link" aria-hidden="true">{% trans "Next" %}</span>
-                  {% endif %}
-                </li>
-              </ul>
-            </nav>
-          {% endif %}
-          <form method="post" class="row g-2 mt-2">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="add_member">
-            <div class="col-12 col-md-6">
-              <label class="form-label small mb-1">{% trans "Username or email" %}</label>
-              <input class="form-control" name="username" required placeholder="{% trans 'Enter username or email' %}">
-            </div>
-            <div class="col-12 col-md-3">
-              <label class="form-label small mb-1">{% trans "Role" %}</label>
-              <select class="form-select" name="role">
-                <option value="student">{% trans "Student" %}</option>
-                <option value="teacher">{% trans "Teacher" %}</option>
-              </select>
-            </div>
-            <div class="col-12 col-md-3 d-flex align-items-end">
-              <button class="button w-100" type="submit">{% trans "Add" %}</button>
-            </div>
-          </form>
         </div>
-      </div>
+      {% endif %}
 
       <div class="panel panel-stack">
-        <div class="panel-section">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h2 class="h5 mb-0">{% trans "Assign quiz" %}</h2>
-            <span class="badge gradebook-badge">{{ assignments|length }} {% trans "assigned" %}</span>
-          </div>
-          <form class="row g-2 align-items-end" method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="create_assignment">
-            <div class="col-12 col-md-6">
-              <label class="form-label small mb-1">{% trans "Quiz" %}</label>
-              <select class="form-select" name="quiz_id" required>
-                {% for quiz in quizzes %}
-                  <option value="{{ quiz.id }}">{{ quiz.title }}</option>
-                {% endfor %}
-              </select>
+        {% if is_teacher %}
+          <div class="panel-section wg-grid">
+            <div class="wg-card">
+              <div class="wg-label">{% trans "Create a quiz" %}</div>
+              <h2 class="h5 mb-1">{% trans "Spin up a quiz for this class" %}</h2>
+              <p class="text-muted small mb-2">{% trans "New quiz will be drafted and auto-assigned here." %}</p>
+              <form class="row g-2" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_quiz">
+                <div class="col-12">
+                  <label class="form-label small mb-1">{% trans "Quiz title" %}</label>
+                  <input class="form-control" name="title" required placeholder="{% trans 'e.g. Robotics practice set' %}">
+                </div>
+                <div class="col-12">
+                  <label class="form-label small mb-1">{% trans "Description (optional)" %}</label>
+                  <textarea class="form-control" name="description" rows="2" placeholder="{% trans 'Short summary' %}"></textarea>
+                </div>
+                <div class="col-12 d-flex justify-content-end">
+                  <button class="button button-icon" type="submit">{% trans "Create & assign" %}</button>
+                </div>
+              </form>
             </div>
-            <div class="col-12 col-md-6">
-              <label class="form-label small mb-1">{% trans "Title (optional)" %}</label>
-              <input class="form-control" name="title" placeholder="{% trans 'Defaults to quiz title' %}">
-            </div>
-            <div class="col-6 col-md-4">
-              <label class="form-label small mb-1">{% trans "Max attempts" %}</label>
-              <input class="form-control" type="number" min="1" name="max_attempts">
-            </div>
-            <div class="col-6 col-md-4">
-              <label class="form-label small mb-1">{% trans "Due at (ISO)" %}</label>
-              <input class="form-control" type="datetime-local" name="due_at">
-            </div>
-            <div class="col-12 col-md-4 d-flex align-items-end">
-              <button class="button w-100" type="submit">{% trans "Assign" %}</button>
-            </div>
-          </form>
-        </div>
 
-        <div class="panel-section">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h2 class="h5 mb-0">{% trans "Gradebook" %}</h2>
-            <a class="button button-ghost" href="{% url 'blockly_quiz:scores-export' %}?classroom={{ classroom.slug }}">{% trans "Export CSV" %}</a>
+            <div class="wg-card">
+              <div class="wg-label">{% trans "Import questions" %}</div>
+              <h2 class="h5 mb-1">{% trans "Paste JSON/YAML" %}</h2>
+              <p class="text-muted small mb-2">
+                {% if request.LANGUAGE_CODE == "vi" %}
+                  Dan JSON/YAML: prompt, choices (>=2, chi 1 dung); co the them question_type, difficulty, blockly_state/xml, scratchblocks_text, code_text + code_language, explanation.
+                {% else %}
+                  Paste JSON/YAML: prompt, choices (2+, exactly 1 correct); optional question_type, difficulty, blockly_state/xml, scratchblocks_text, code_text + code_language, explanation.
+                {% endif %}
+              </p>
+              <div class="d-flex flex-wrap gap-2 mt-2">
+                <button class="button button-icon" type="button" data-open-dialog="import-dialog">{% trans "Open import modal" %}</button>
+                <span class="wg-badge">{% trans "Includes Blockly/Scratch/Python samples" %}</span>
+              </div>
+            </div>
           </div>
-          {% if assignments %}
-            <div class="mb-3">
-              <div class="d-flex flex-wrap gap-2">
+
+          <div class="panel-section">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h2 class="h5 mb-0">{% trans "Assign quiz" %}</h2>
+              <span class="badge gradebook-badge">{{ assignments|length }} {% trans "assigned" %}</span>
+            </div>
+            <form class="row g-2 align-items-end" method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="create_assignment">
+              <div class="col-12 col-md-6">
+                <label class="form-label small mb-1">{% trans "Quiz" %}</label>
+                <select class="form-select" name="quiz_id" required>
+                  {% for quiz in quizzes %}
+                    <option value="{{ quiz.id }}">{{ quiz.title }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small mb-1">{% trans "Title (optional)" %}</label>
+                <input class="form-control" name="title" placeholder="{% trans 'Defaults to quiz title' %}">
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label small mb-1">{% trans "Max attempts" %}</label>
+                <input class="form-control" type="number" min="1" name="max_attempts">
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label small mb-1">{% trans "Due at (ISO)" %}</label>
+                <input class="form-control" type="datetime-local" name="due_at">
+              </div>
+              <div class="col-12 col-md-4 d-flex align-items-end">
+                <button class="button w-100" type="submit">{% trans "Assign" %}</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel-section">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h2 class="h5 mb-0">{% trans "Gradebook" %}</h2>
+              <a class="button button-ghost" href="{% url 'blockly_quiz:scores-export' %}?classroom={{ classroom.slug }}">{% trans "Export CSV" %}</a>
+            </div>
+            {% if assignments %}
+              <div class="mb-3">
+                <div class="d-flex flex-wrap gap-2">
+                  {% for assignment in assignments %}
+                    <div class="badge bg-light text-dark border">
+                      {{ assignment.title|default:assignment.quiz.title }}
+                      <a class="ms-1 small" href="{% url 'blockly_quiz:play' assignment.quiz.slug %}?assignment_id={{ assignment.id }}">{% trans "Open" %}</a>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+            <div class="table-responsive">
+              <table class="table align-middle mb-0 gradebook-table">
+                <thead>
+                  <tr>
+                    <th>{% trans "Student" %}</th>
+                    {% for assignment in assignments %}
+                      <th class="text-center">
+                        {{ assignment.title|default:assignment.quiz.title }}
+                      </th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in gradebook_rows %}
+                    <tr>
+                      <td>{{ row.student.username }}</td>
+                      {% for cell in row.cells %}
+                        {% if cell.attempt %}
+                          <td class="text-center">
+                            {{ cell.attempt.score_percent }}%
+                            <div class="small text-muted">{{ cell.attempt.correct_count }}/{{ cell.attempt.total_questions }}</div>
+                            <a class="btn btn-link btn-sm p-0" href="{% url 'blockly_quiz:review' cell.attempt.id %}">{% trans "Review" %}</a>
+                          </td>
+                        {% else %}
+                          <td class="text-center text-muted">-</td>
+                        {% endif %}
+                      {% endfor %}
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="{{ assignments|length|add:'1' }}" class="text-muted">{% trans "No students in class." %}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% else %}
+          <div class="panel-section">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h2 class="h5 mb-0">{% trans "Assignments" %}</h2>
+              <span class="badge gradebook-badge">{{ assignments|length }} {% trans "available" %}</span>
+            </div>
+            {% if assignments %}
+              <div class="list-group list-group-flush">
                 {% for assignment in assignments %}
-                  <div class="badge bg-light text-dark border">
-                    {{ assignment.title|default:assignment.quiz.title }}
-                    <a class="ms-1 small" href="{% url 'blockly_quiz:play' assignment.quiz.slug %}?assignment_id={{ assignment.id }}">{% trans "Open" %}</a>
+                  <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                      <div class="fw-semibold">{{ assignment.title|default:assignment.quiz.title }}</div>
+                      {% if assignment.due_at %}
+                        <div class="small text-muted">
+                          {% trans "Due" %}: {{ assignment.due_at|date:"Y-m-d H:i" }}
+                        </div>
+                      {% endif %}
+                    </div>
+                    <a class="button button-ghost button-xs" href="{% url 'blockly_quiz:play' assignment.quiz.slug %}?assignment_id={{ assignment.id }}">{% trans "Open quiz" %}</a>
                   </div>
                 {% endfor %}
               </div>
-            </div>
-          {% endif %}
-          <div class="table-responsive">
-            <table class="table align-middle mb-0 gradebook-table">
-              <thead>
-                <tr>
-                  <th>{% trans "Student" %}</th>
-                  {% for assignment in assignments %}
-                    <th class="text-center">
-                      {{ assignment.title|default:assignment.quiz.title }}
-                    </th>
-                  {% endfor %}
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in gradebook_rows %}
-                  <tr>
-                    <td>{{ row.student.username }}</td>
-                    {% for cell in row.cells %}
-                      {% if cell.attempt %}
-                        <td class="text-center">
-                          {{ cell.attempt.score_percent }}%
-                          <div class="small text-muted">{{ cell.attempt.correct_count }}/{{ cell.attempt.total_questions }}</div>
-                          <a class="btn btn-link btn-sm p-0" href="{% url 'blockly_quiz:review' cell.attempt.id %}">{% trans "Review" %}</a>
-                        </td>
-                      {% else %}
-                        <td class="text-center text-muted">-</td>
-                      {% endif %}
-                    {% endfor %}
-                  </tr>
-                {% empty %}
-                  <tr>
-                    <td colspan="{{ assignments|length|add:'1' }}" class="text-muted">{% trans "No students in class." %}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+            {% else %}
+              <p class="text-muted mb-0">{% trans "No assignments yet. Check back later." %}</p>
+            {% endif %}
           </div>
-        </div>
+        {% endif %}
       </div>
     </div>
   </div>
+
+  {% if is_teacher %}
+    <dialog id="import-dialog" class="wg-dialog">
+      <form method="dialog" class="wg-dialog__header">
+        <h2 class="h5 mb-0">{% trans "Import questions" %}</h2>
+        <button type="submit" class="button button-ghost button-xs" data-close-dialog>{% trans "Close" %}</button>
+      </form>
+      <div class="wg-dialog__body">
+        <div class="wg-tabs" data-tab-group="import-samples-modal">
+          <button type="button" class="wg-tab is-active" data-tab-target="modal-blockly">Blockly</button>
+          <button type="button" class="wg-tab" data-tab-target="modal-scratch">Scratch</button>
+          <button type="button" class="wg-tab" data-tab-target="modal-python">Python</button>
+        </div>
+        <div class="wg-tabpanel is-active" data-tab-panel="modal-blockly">
+          <pre class="wg-code">{
+  "questions": [
+    {
+      "prompt": "Blockly: How many times does this loop run?",
+      "question_type": "blockly",
+      "difficulty": "easy",
+      "blockly_state": {
+        "blocks": {
+          "languageVersion": 0,
+          "blocks": [
+            {
+              "type": "controls_repeat_ext",
+              "x": 10,
+              "y": 10,
+              "inputs": {
+                "TIMES": {
+                  "shadow": { "type": "math_number", "fields": { "NUM": 5 } }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "explanation": "Repeats 5 times.",
+      "choices": [
+        { "text": "5 times", "is_correct": true },
+        { "text": "10 times" }
+      ]
+    }
+  ]
+}</pre>
+        </div>
+        <div class="wg-tabpanel" data-tab-panel="modal-scratch">
+          <pre class="wg-code">{
+  "questions": [
+    {
+      "prompt": "Scratch: what does the sprite do?",
+      "question_type": "scratch",
+      "difficulty": "medium",
+      "scratchblocks_text": "when green flag clicked\\nrepeat (5)\\n  move (10) steps\\nend",
+      "explanation": "Moves 10 steps x5 = 50 steps.",
+      "choices": [
+        { "text": "Moves 50 steps", "is_correct": true },
+        { "text": "Moves 10 steps" }
+      ]
+    },
+    {
+      "prompt": "Add-on: what is shown?",
+      "question_type": "blockly",
+      "blockly_xml": "<xml><block type='text_print'><value name='TEXT'><shadow type='text'><field name='TEXT'>Hello</field></shadow></value></block></xml>",
+      "choices": [
+        { "text": "Hello", "is_correct": true },
+        { "text": "Hi" }
+      ]
+    }
+  ]
+}</pre>
+        </div>
+        <div class="wg-tabpanel" data-tab-panel="modal-python">
+          <pre class="wg-code">{
+  "questions": [
+    {
+      "prompt": "Python: what is the output?",
+      "question_type": "code",
+      "difficulty": "easy",
+      "code_language": "python",
+      "code_text": "x = 2\\nprint(x * 5)",
+      "explanation": "2 * 5 = 10.",
+      "choices": [
+        { "text": "10", "is_correct": true },
+        { "text": "25" }
+      ]
+    },
+    {
+      "prompt": "Python: which line is correct?",
+      "code_language": "python",
+      "code_text": "items = [1, 2, 3]\\nprint(len(items))",
+      "choices": [
+        { "text": "3", "is_correct": true },
+        { "text": "2" }
+      ]
+    }
+  ]
+}</pre>
+        </div>
+
+        <form class="row g-2 mt-2" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="import_questions">
+          <div class="col-12 col-md-5">
+            <label class="form-label small mb-1">{% trans "Target quiz" %}</label>
+            <select class="form-select" name="quiz_id" required>
+              {% for quiz in quizzes %}
+                <option value="{{ quiz.id }}">{{ quiz.title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-md-7">
+            <label class="form-label small mb-1">{% trans "Questions (JSON or YAML)" %}</label>
+            <textarea class="form-control" name="questions" rows="4" placeholder='[{ "prompt": "...", "choices": [{"text":"A","is_correct":true},{"text":"B"}] }]'></textarea>
+          </div>
+          <div class="col-12 d-flex justify-content-between align-items-center">
+            <label class="form-check">
+              <input class="form-check-input" type="checkbox" name="replace_existing" value="1">
+              <span class="form-check-label">{% trans "Replace existing questions" %}</span>
+            </label>
+            <div class="d-flex gap-2">
+              <button class="button button-ghost" type="button" data-close-dialog>{% trans "Cancel" %}</button>
+              <button class="button" type="submit">{% trans "Import now" %}</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </dialog>
+  {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const activateTabs = (scope) => {
+        scope.querySelectorAll("[data-tab-group]").forEach((group) => {
+          const tabs = group.querySelectorAll(".wg-tab");
+          const panels = group.parentElement.querySelectorAll(".wg-tabpanel");
+          tabs.forEach((tab) => {
+            tab.addEventListener("click", () => {
+              const target = tab.getAttribute("data-tab-target");
+              tabs.forEach((t) => t.classList.remove("is-active"));
+              panels.forEach((p) => p.classList.remove("is-active"));
+              tab.classList.add("is-active");
+              group.parentElement.querySelector(`[data-tab-panel=\"${target}\"]`)?.classList.add("is-active");
+            });
+          });
+        });
+      };
+
+      activateTabs(document);
+
+      document.querySelectorAll("[data-open-dialog]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-open-dialog");
+          const dialog = document.getElementById(id);
+          if (dialog && typeof dialog.showModal === "function") {
+            dialog.showModal();
+            activateTabs(dialog);
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-close-dialog]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const dialog = btn.closest("dialog");
+          if (dialog) {
+            dialog.close();
+          }
+        });
+      });
+    });
+  </script>
 {% endblock %}

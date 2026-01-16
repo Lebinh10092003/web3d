@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core import signing
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction, models
 from django.db.models import Count, Exists, OuterRef, Q
@@ -20,6 +21,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 
+from .importer import import_questions_into_quiz, parse_bulk_questions
 from .models import (
     Attempt,
     AttemptAnswer,
@@ -103,6 +105,25 @@ def _ensure_session_key(request) -> str:
         return session_key
     request.session.save()
     return request.session.session_key or ""
+
+
+def _resolve_assignment_for_request(request, quiz: Quiz, *, assignment_id):
+    if not assignment_id:
+        return None
+    try:
+        assignment = QuizAssignment.objects.select_related("classroom").get(
+            id=int(assignment_id), quiz=quiz
+        )
+    except (QuizAssignment.DoesNotExist, ValueError, TypeError):
+        return None
+    if _user_is_teacher(request.user):
+        return assignment
+    if not request.user.is_authenticated:
+        return None
+    is_member = ClassroomMembership.objects.filter(
+        classroom=assignment.classroom, user=request.user
+    ).exists()
+    return assignment if is_member else None
 
 
 def _parse_int(raw, *, default: int, min_value: int | None = None, max_value: int | None = None) -> int:
@@ -440,6 +461,10 @@ def attempt_export_csv(request):
 @login_required
 def classroom_list(request):
     can_create = _user_is_teacher(request.user)
+    is_staff_like = request.user.is_staff or request.user.is_superuser
+    has_membership = ClassroomMembership.objects.filter(user=request.user).exists()
+    if not (can_create or is_staff_like or has_membership):
+        raise Http404
     if request.method == "POST":
         if not can_create:
             raise Http404
@@ -457,9 +482,13 @@ def classroom_list(request):
             messages.success(request, _("Classroom created."))
             return redirect("blockly_quiz:classroom-detail", slug=slug)
 
-    classrooms = Classroom.objects.filter(
-        models.Q(owner=request.user) | models.Q(memberships__user=request.user)
-    ).distinct()
+    base_qs = Classroom.objects.all()
+    if can_create or is_staff_like:
+        classrooms = base_qs.filter(
+            models.Q(owner=request.user) | models.Q(memberships__user=request.user)
+        ).distinct()
+    else:
+        classrooms = base_qs.filter(memberships__user=request.user).distinct()
     return render(
         request,
         "blockly_quiz/classroom_list.html",
@@ -476,11 +505,69 @@ def classroom_detail(request, slug):
             classroom=classroom, user=request.user, role="teacher"
         ).exists()
     )
-    if not is_teacher and not request.user.is_staff:
+    membership = None
+    if request.user.is_authenticated:
+        membership = (
+            ClassroomMembership.objects.filter(classroom=classroom, user=request.user)
+            .select_related("user")
+            .first()
+        )
+    is_member = bool(membership)
+
+    if not (is_teacher or is_member or request.user.is_staff or request.user.is_superuser):
         raise Http404
 
     if request.method == "POST":
+        if not (is_teacher or request.user.is_staff or request.user.is_superuser):
+            raise Http404
         action = (request.POST.get("action") or "").strip()
+        if action == "create_quiz":
+            title = (request.POST.get("title") or "").strip()
+            description = (request.POST.get("description") or "").strip()
+            if not title:
+                messages.error(request, _("Quiz title is required."))
+                return redirect(classroom.get_absolute_url())
+            base_slug = slugify(title) or "quiz"
+            slug = base_slug
+            suffix = 1
+            while Quiz.objects.filter(slug=slug).exists():
+                suffix += 1
+                slug = f"{base_slug}-{suffix}"
+            quiz = Quiz.objects.create(
+                title=title,
+                slug=slug,
+                description=description,
+                is_published=False,
+            )
+            QuizAssignment.objects.get_or_create(
+                quiz=quiz,
+                classroom=classroom,
+                defaults={"title": title or quiz.title},
+            )
+            messages.success(request, _("Quiz created and added to this class."))
+            return redirect(classroom.get_absolute_url())
+        if action == "import_questions":
+            quiz_id = request.POST.get("quiz_id")
+            raw_text = request.POST.get("questions") or ""
+            replace_existing = request.POST.get("replace_existing") == "1"
+            try:
+                quiz = Quiz.objects.get(id=int(quiz_id))
+            except Exception:
+                quiz = None
+            if not quiz:
+                messages.error(request, _("Quiz not found."))
+                return redirect(classroom.get_absolute_url())
+            try:
+                questions = parse_bulk_questions(raw_text)
+                import_questions_into_quiz(
+                    quiz=quiz, questions=questions, replace_existing=replace_existing
+                )
+                messages.success(request, _("Questions imported successfully."))
+            except ValidationError as exc:
+                messages.error(request, str(exc))
+            except Exception:
+                messages.error(request, _("Could not import questions."))
+            return redirect(classroom.get_absolute_url())
         if action == "create_assignment":
             quiz_id = request.POST.get("quiz_id")
             title = (request.POST.get("title") or "").strip()
@@ -581,6 +668,9 @@ def classroom_detail(request, slug):
             "students": students,
             "gradebook_rows": gradebook_rows,
             "quizzes": Quiz.objects.all().order_by("title"),
+            "is_teacher": is_teacher or request.user.is_staff or request.user.is_superuser,
+            "is_member": is_member,
+            "membership_role": getattr(membership, "role", ""),
         },
     )
 
@@ -1015,6 +1105,11 @@ def quiz_detail(request, slug):
 @ensure_csrf_cookie
 def quiz_play(request, slug):
     quiz = _get_playable_quiz_or_404(request, slug, include_type_flags=True)
+    assignment = _resolve_assignment_for_request(
+        request,
+        quiz,
+        assignment_id=request.GET.get("assignment_id"),
+    )
     context = {
         "quiz": quiz,
         "initial_name": (request.GET.get("name") or "").strip(),
@@ -1022,6 +1117,7 @@ def quiz_play(request, slug):
         "initial_campus": (request.GET.get("campus") or "").strip(),
         "api_quiz_url": reverse("blockly_quiz:api-quiz", kwargs={"slug": quiz.slug}),
         "api_submit_url": reverse("blockly_quiz:api-submit", kwargs={"slug": quiz.slug}),
+        "assignment_id": assignment.id if assignment else "",
         "canonical_url": request.build_absolute_uri(request.path),
     }
     return render(request, "blockly_quiz/quiz_play.html", context)
@@ -1037,21 +1133,11 @@ def quiz_start(request, slug):
     participant_name = (request.POST.get("name") or "").strip()
     participant_dob = (request.POST.get("dob") or "").strip()
     participant_campus = (request.POST.get("campus") or "").strip()
-    assignment_id = request.POST.get("assignment_id") or request.GET.get("assignment_id")
-    assignment = None
-    if assignment_id:
-        try:
-            assignment = QuizAssignment.objects.select_related("classroom").get(
-                id=int(assignment_id), quiz=quiz
-            )
-        except (QuizAssignment.DoesNotExist, ValueError, TypeError):
-            assignment = None
-    if assignment and not _user_is_teacher(request.user):
-        is_member = ClassroomMembership.objects.filter(
-            classroom=assignment.classroom, user=request.user
-        ).exists()
-        if not is_member and not request.user.is_staff:
-            assignment = None
+    assignment = _resolve_assignment_for_request(
+        request,
+        quiz,
+        assignment_id=request.POST.get("assignment_id") or request.GET.get("assignment_id"),
+    )
 
     attempt = Attempt.objects.create(
         quiz=quiz,
@@ -1418,21 +1504,11 @@ def api_quiz_submit(request, slug):
     participant_name = payload.get("name")
     participant_dob = payload.get("dob")
     participant_campus = payload.get("campus")
-    assignment = None
-    assignment_id = payload.get("assignment_id")
-    if assignment_id:
-        try:
-            assignment = QuizAssignment.objects.select_related("classroom").get(
-                id=int(assignment_id), quiz=quiz
-            )
-        except (QuizAssignment.DoesNotExist, ValueError, TypeError):
-            assignment = None
-    if assignment and request.user.is_authenticated and not _user_is_teacher(request.user):
-        is_member = ClassroomMembership.objects.filter(
-            classroom=assignment.classroom, user=request.user
-        ).exists()
-        if not is_member:
-            assignment = None
+    assignment = _resolve_assignment_for_request(
+        request,
+        quiz,
+        assignment_id=payload.get("assignment_id"),
+    )
 
     attempt = Attempt.objects.create(
         quiz=quiz,

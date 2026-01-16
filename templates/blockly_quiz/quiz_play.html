@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container py-4" data-blockly-quiz data-quiz-play data-quiz-slug="{{ quiz.slug }}" data-api-quiz-url="{{ api_quiz_url }}" data-api-submit-url="{{ api_submit_url }}">
+  <div class="container py-4" data-blockly-quiz data-quiz-play data-quiz-slug="{{ quiz.slug }}" data-api-quiz-url="{{ api_quiz_url }}" data-api-submit-url="{{ api_submit_url }}" data-assignment-id="{{ assignment_id }}">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 quiz-play-topbar">
       <div class="d-flex flex-wrap align-items-center gap-2">
         {% if quiz.is_temporary %}
