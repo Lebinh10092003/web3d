@@ -364,12 +364,31 @@ def quiz_list(request):
 @login_required
 @require_GET
 def attempt_list(request):
-    attempts = (
+    attempts_qs = (
         Attempt.objects.filter(user=request.user, completed_at__isnull=False)
         .select_related("quiz", "assignment", "assignment__classroom")
         .order_by("-completed_at", "-started_at", "-id")
     )
-    paginator = Paginator(attempts, getattr(settings, "QUIZ_ATTEMPT_PAGE_SIZE", 10))
+    stats_row = attempts_qs.aggregate(
+        total=models.Count("id"),
+        avg_score=models.Avg("score_percent"),
+        best_score=models.Max("score_percent"),
+        total_correct=models.Sum("correct_count"),
+        total_questions=models.Sum("total_questions"),
+    )
+    total_questions = stats_row.get("total_questions") or 0
+    total_correct = stats_row.get("total_correct") or 0
+    accuracy_percent = int(round((total_correct / total_questions) * 100)) if total_questions else 0
+    latest_attempt = attempts_qs.first()
+    attempt_stats = {
+        "total": stats_row.get("total") or 0,
+        "avg_score": int(round(stats_row.get("avg_score") or 0)),
+        "best_score": stats_row.get("best_score") or 0,
+        "accuracy": accuracy_percent,
+        "last_played_at": attempts_qs.values_list("completed_at", flat=True).first(),
+        "last_quiz": latest_attempt.quiz.title if latest_attempt else "",
+    }
+    paginator = Paginator(attempts_qs, getattr(settings, "QUIZ_ATTEMPT_PAGE_SIZE", 10))
     page_obj = paginator.get_page(request.GET.get("page"))
     return render(
         request,
@@ -378,6 +397,7 @@ def attempt_list(request):
             "attempts": page_obj.object_list,
             "page_obj": page_obj,
             "page_query_prefix": _build_page_query_prefix(request, "page"),
+            "attempt_stats": attempt_stats,
         },
     )
 

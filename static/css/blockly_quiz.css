@@ -123,10 +123,59 @@ body.random-quiz-page .modal-backdrop {
   margin-top: auto;
 }
 
+[data-blockly-quiz] .score-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+[data-blockly-quiz] .score-summary-card {
+  border-radius: 14px;
+  border: 1px solid var(--quiz-border);
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
+  padding: 12px 14px;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 6px;
+}
+
+[data-blockly-quiz] .score-summary-card--accent {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.14), rgba(34, 197, 94, 0.08));
+  border-color: color-mix(in srgb, var(--primary) 36%, var(--quiz-border));
+}
+
+[data-blockly-quiz] .score-summary-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+[data-blockly-quiz] .score-summary-value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+[data-blockly-quiz] .score-summary-sub {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+[data-blockly-quiz] .score-card__top {
+  flex-wrap: wrap;
+}
+
+[data-blockly-quiz] .score-card__actions {
+  flex-wrap: wrap;
+}
+
 [data-blockly-quiz] .scores-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
 }
 
 [data-blockly-quiz] .classroom-grid {
@@ -251,8 +300,8 @@ body.random-quiz-page .modal-backdrop {
 
 [data-blockly-quiz] .scores-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
 }
 
 [data-blockly-quiz] .quiz-hero {
@@ -858,6 +907,22 @@ body.random-quiz-page .modal-backdrop {
 }
 
 @media (max-width: 576px) {
+  [data-blockly-quiz] .score-summary {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  [data-blockly-quiz] .score-card__top {
+    gap: 8px;
+  }
+
+  [data-blockly-quiz] .score-card__score {
+    text-align: left;
+  }
+
+  [data-blockly-quiz] .score-card__actions {
+    flex-direction: column;
+  }
+
   [data-blockly-quiz] .quiz-hero {
     padding: 14px 14px;
   }

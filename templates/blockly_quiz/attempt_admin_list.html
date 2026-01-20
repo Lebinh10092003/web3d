@@ -90,13 +90,21 @@
       <nav class="d-flex justify-content-center mt-3" aria-label="{% trans 'Attempt pagination' %}">
         <ul class="pagination">
           <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
-            <a class="page-link" href="?{{ page_query_prefix }}page={{ page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}">&laquo;</a>
+            {% if page_obj.has_previous %}
+              <a class="page-link" href="?{{ page_query_prefix }}page={{ page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}" rel="prev">&laquo;</a>
+            {% else %}
+              <span class="page-link" aria-disabled="true">&laquo;</span>
+            {% endif %}
           </li>
           <li class="page-item disabled">
             <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
           </li>
           <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
-            <a class="page-link" href="?{{ page_query_prefix }}page={{ page_obj.next_page_number }}" aria-label="{% trans 'Next' %}">&raquo;</a>
+            {% if page_obj.has_next %}
+              <a class="page-link" href="?{{ page_query_prefix }}page={{ page_obj.next_page_number }}" aria-label="{% trans 'Next' %}" rel="next">&raquo;</a>
+            {% else %}
+              <span class="page-link" aria-disabled="true">&raquo;</span>
+            {% endif %}
           </li>
         </ul>
       </nav>

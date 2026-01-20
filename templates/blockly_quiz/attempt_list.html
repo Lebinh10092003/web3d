@@ -17,6 +17,36 @@
       <a class="pill-link" href="{% url 'blockly_quiz:list' %}">&larr; {% trans "All quizzes" %}</a>
     </div>
 
+    <div class="score-summary" aria-label="{% trans 'Score summary' %}">
+      <div class="score-summary-card">
+        <div class="score-summary-label">{% trans "Total attempts" %}</div>
+        <div class="score-summary-value">{{ attempt_stats.total|default:0 }}</div>
+        <div class="score-summary-sub">{% trans "All time" %}</div>
+      </div>
+      <div class="score-summary-card score-summary-card--accent">
+        <div class="score-summary-label">{% trans "Average score" %}</div>
+        <div class="score-summary-value">{{ attempt_stats.avg_score|default:0 }}%</div>
+        <div class="score-summary-sub">{% trans "Across all quizzes" %}</div>
+      </div>
+      <div class="score-summary-card">
+        <div class="score-summary-label">{% trans "Best score" %}</div>
+        <div class="score-summary-value">{{ attempt_stats.best_score|default:0 }}%</div>
+        <div class="score-summary-sub">{% trans "Highest attempt" %}</div>
+      </div>
+      <div class="score-summary-card">
+        <div class="score-summary-label">{% trans "Answer accuracy" %}</div>
+        <div class="score-summary-value">{{ attempt_stats.accuracy|default:0 }}%</div>
+        {% if attempt_stats.last_played_at %}
+          <div class="score-summary-sub">
+            {% trans "Last played" %}: {{ attempt_stats.last_played_at|date:"Y-m-d H:i" }}
+            {% if attempt_stats.last_quiz %}<br>{% trans "Quiz" %}: {{ attempt_stats.last_quiz }}{% endif %}
+          </div>
+        {% else %}
+          <div class="score-summary-sub">{% trans "No attempts yet" %}</div>
+        {% endif %}
+      </div>
+    </div>
+
     {% if attempts %}
       <div class="scores-grid">
         {% for attempt in attempts %}
@@ -55,13 +85,21 @@
         <nav class="d-flex justify-content-center mt-3" aria-label="{% trans 'Score pagination' %}">
           <ul class="pagination">
             <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
-              <a class="page-link" href="?{{ page_query_prefix }}page={{ page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}">&laquo;</a>
+              {% if page_obj.has_previous %}
+                <a class="page-link" href="?{{ page_query_prefix }}page={{ page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}" rel="prev">&laquo;</a>
+              {% else %}
+                <span class="page-link" aria-disabled="true">&laquo;</span>
+              {% endif %}
             </li>
             <li class="page-item disabled">
               <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
             </li>
             <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
-              <a class="page-link" href="?{{ page_query_prefix }}page={{ page_obj.next_page_number }}" aria-label="{% trans 'Next' %}">&raquo;</a>
+              {% if page_obj.has_next %}
+                <a class="page-link" href="?{{ page_query_prefix }}page={{ page_obj.next_page_number }}" aria-label="{% trans 'Next' %}" rel="next">&raquo;</a>
+              {% else %}
+                <span class="page-link" aria-disabled="true">&raquo;</span>
+              {% endif %}
             </li>
           </ul>
         </nav>
