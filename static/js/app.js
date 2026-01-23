@@ -513,7 +513,7 @@ function bindNavToggle() {
   const header = document.querySelector("[data-site-header]");
   const toggle = document.querySelector("[data-nav-toggle]");
   const nav = document.querySelector("[data-nav-panel]");
-  const NAV_COLLAPSE_BREAKPOINT = 1200;
+  const NAV_COLLAPSE_BREAKPOINT = 1440;
   if (!header || !toggle || !nav) {
     return;
   }

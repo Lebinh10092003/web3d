@@ -4297,7 +4297,7 @@ textarea:focus {
   }
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1440px) {
   .site-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
