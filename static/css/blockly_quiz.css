@@ -29,6 +29,372 @@ body.random-quiz-page .modal-backdrop {
   --bs-body-bg: transparent;
 }
 
+[data-blockly-quiz] .classroom-shell {
+  display: grid;
+  gap: 18px;
+  padding: 12px 0 28px;
+}
+
+[data-blockly-quiz] .classroom-hero {
+  border: 1px solid var(--quiz-border);
+  border-radius: var(--quiz-radius);
+  background: linear-gradient(135deg, rgba(69, 224, 107, 0.14), rgba(76, 110, 245, 0.08)),
+    rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 34px var(--shadow);
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+[data-blockly-quiz] .classroom-hero--detail {
+  background: linear-gradient(135deg, rgba(69, 224, 107, 0.12), rgba(76, 110, 245, 0.1)),
+    rgba(255, 255, 255, 0.94);
+}
+
+[data-blockly-quiz] .classroom-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+[data-blockly-quiz] .classroom-hero__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+[data-blockly-quiz] .classroom-stat {
+  border: 1px solid var(--quiz-border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 6px;
+}
+
+[data-blockly-quiz] .classroom-stat__label {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+[data-blockly-quiz] .classroom-stat__value {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+[data-blockly-quiz] .classroom-stat__hint {
+  color: var(--muted);
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+[data-blockly-quiz] .classroom-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+[data-blockly-quiz] .classroom-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--quiz-border);
+  background: rgba(0, 0, 0, 0.03);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+[data-blockly-quiz] .classroom-chip--soft {
+  background: rgba(0, 0, 0, 0.02);
+  color: var(--muted);
+}
+
+[data-blockly-quiz] .classroom-lead {
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+[data-blockly-quiz] .classroom-subnote {
+  margin-top: 4px;
+}
+
+[data-blockly-quiz] .classroom-section {
+  display: grid;
+  gap: 12px;
+}
+
+[data-blockly-quiz] .section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+[data-blockly-quiz] .section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+[data-blockly-quiz] .classroom-compact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+[data-blockly-quiz] .classroom-card {
+  border: 1px solid var(--quiz-border);
+  border-radius: 16px;
+  padding: 14px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 8px;
+}
+
+[data-blockly-quiz] .classroom-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+[data-blockly-quiz] .classroom-card__title {
+  margin: 0;
+}
+
+[data-blockly-quiz] .classroom-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+[data-blockly-quiz] .classroom-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+[data-blockly-quiz] .classroom-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+[data-blockly-quiz] .assignment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+[data-blockly-quiz] .assignment-card {
+  border: 1px solid var(--quiz-border);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.06);
+  display: grid;
+  gap: 8px;
+}
+
+[data-blockly-quiz] .assignment-card__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+[data-blockly-quiz] .assignment-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+[data-blockly-quiz] .assignment-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+[data-blockly-quiz] .classroom-panel {
+  border: 1px solid var(--quiz-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.1);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+[data-blockly-quiz] .classroom-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+[data-blockly-quiz] .panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+[data-blockly-quiz] .member-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+[data-blockly-quiz] .member-card {
+  border: 1px solid var(--quiz-border);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+[data-blockly-quiz] .empty-state {
+  border: 1px dashed var(--quiz-border);
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  text-align: left;
+}
+
+[data-blockly-quiz] .classroom-dialog {
+  border: 1px solid var(--quiz-border);
+  border-radius: 18px;
+  padding: 0;
+  max-width: min(840px, 96vw);
+  width: 100%;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 22px 52px rgba(21, 20, 19, 0.18);
+}
+
+[data-blockly-quiz] .classroom-dialog--wide {
+  max-width: min(960px, 98vw);
+}
+
+[data-blockly-quiz] .classroom-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
+}
+
+[data-blockly-quiz] .classroom-dialog__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--quiz-border);
+}
+
+[data-blockly-quiz] .classroom-dialog__body {
+  padding: 14px 16px 16px;
+  display: grid;
+  gap: 10px;
+}
+
+[data-blockly-quiz] .classroom-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+[data-blockly-quiz] .classroom-tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--quiz-border);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-blockly-quiz] .classroom-tab {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  padding: 8px 12px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+[data-blockly-quiz] .classroom-tab.is-active {
+  background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+  color: #fff;
+  border-color: rgba(37, 197, 86, 0.4);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+[data-blockly-quiz] .classroom-tabpanel {
+  display: none;
+  margin-top: 6px;
+}
+
+[data-blockly-quiz] .classroom-tabpanel.is-active {
+  display: block;
+}
+
+[data-blockly-quiz] .classroom-code {
+  border: 1px solid var(--quiz-border);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.04);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow: auto;
+}
+
+[data-blockly-quiz] .classroom-table {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+[data-blockly-quiz] .classroom-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+[data-blockly-quiz] .classroom-panel--table {
+  overflow: hidden;
+}
+
+[data-blockly-quiz] .classroom-hero h1 {
+  margin: 0;
+}
+
+[data-blockly-quiz] .classroom-hero__text {
+  display: grid;
+  gap: 6px;
+}
+
+[data-blockly-quiz] .classroom-desc {
+  margin: 0;
+}
+
+[data-blockly-quiz] .assignment-card__head h3 {
+  margin: 0;
+}
+
 [data-blockly-quiz] .card {
   border: 1px solid var(--quiz-border);
   border-radius: var(--quiz-radius);
@@ -964,5 +1330,14 @@ body.random-quiz-page .modal-backdrop {
 @media (min-width: 992px) {
   [data-blockly-quiz] .classroom-grid {
     grid-template-columns: minmax(0, 0.6fr) minmax(0, 1fr);
+  }
+
+  [data-blockly-quiz] .classroom-hero {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    align-items: center;
+  }
+
+  [data-blockly-quiz] .assignment-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
 }

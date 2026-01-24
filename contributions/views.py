@@ -1,7 +1,9 @@
+import logging
 import os
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
+from django.db import transaction
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -10,6 +12,8 @@ from .forms import ContributionSubmissionForm
 from .models import ContributionSubmission
 from .preview_utils import build_preview_filename, build_preview_path
 from .tasks import enqueue_preview_generation
+
+logger = logging.getLogger(__name__)
 
 
 def _build_storage_path(user_id, filename):
@@ -20,6 +24,18 @@ def _build_storage_path(user_id, filename):
 
 def _save_upload(file_obj, destination):
     return default_storage.save(destination, file_obj)
+
+
+def _cleanup_saved_files(*paths):
+    for path in paths:
+        if not path:
+            continue
+        try:
+            if default_storage.exists(path):
+                default_storage.delete(path)
+        except Exception:
+            # Best-effort clean-up; ignore failures to avoid masking the original error.
+            continue
 
 
 @login_required
@@ -67,12 +83,22 @@ def submit(request):
                 messages.error(request, _("Upload failed: %(error)s") % {"error": exc})
                 return render(request, "contributions/submit.html", {"form": form})
 
-            submission = form.save(commit=False)
-            submission.user = request.user
-            submission.content_type = content_type
-            submission.file_path = saved_path
-            submission.preview_path = saved_preview_path
-            submission.save()
+            try:
+                with transaction.atomic():
+                    submission = form.save(commit=False)
+                    submission.user = request.user
+                    submission.content_type = content_type
+                    submission.file_path = saved_path
+                    submission.preview_path = saved_preview_path
+                    submission.save()
+            except Exception as exc:
+                logger.exception("Failed to save contribution submission")
+                _cleanup_saved_files(saved_path, saved_preview_path)
+                messages.error(
+                    request,
+                    _("Could not save your submission right now. Please try again or contact support."),
+                )
+                return render(request, "contributions/submit.html", {"form": form})
             if not preview_upload and content_type in {"pdf", "lxf", "io"}:
                 enqueue_preview_generation(submission.id)
             if request.LANGUAGE_CODE == "vi":

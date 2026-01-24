@@ -8,64 +8,114 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container py-4" data-blockly-quiz>
-    <div class="page-header">
-      <div>
-        <p class="eyebrow mb-1 text-uppercase">{% trans "Quizzes" %}</p>
-        <h1 class="h3 mb-1">{% trans "Classrooms" %}</h1>
-        <p class="text-muted small mb-0">{% trans "Create and manage quiz groups for your students." %}</p>
+  <div class="container classroom-shell" data-blockly-quiz>
+    <section class="classroom-hero">
+      <div class="classroom-hero__text">
+        <p class="eyebrow mb-1 text-uppercase">{% trans "Classrooms" %}</p>
+        <h1 class="h3 mb-2">{% trans "Manage quiz classrooms" %}</h1>
+        <p class="classroom-lead">
+          {% trans "Tạo lớp, giao bài, và xem tiến độ học sinh trong cùng một nơi." %}
+        </p>
+        <div class="classroom-hero__actions">
+          {% if can_create %}
+            <button class="button" type="button" data-open-dialog="create-class-dialog">{% trans "Create class" %}</button>
+          {% endif %}
+          <a class="button button-ghost" href="{% url 'blockly_quiz:list' %}">{% trans "Back to quizzes" %}</a>
+        </div>
+        {% if not can_create %}
+          <p class="classroom-subnote text-muted small mb-0">
+            {% trans "You can join classes shared with you. Ask an admin to unlock teacher tools." %}
+          </p>
+        {% endif %}
       </div>
-      <a class="pill-link" href="{% url 'blockly_quiz:list' %}">&larr; {% trans "All quizzes" %}</a>
-    </div>
-
-    {% if can_create %}
-      <div class="panel panel-stack mb-3">
-        <div class="panel-section">
-          <h2 class="h5 mb-2">{% trans "Create a class" %}</h2>
-          <form class="row g-2 align-items-end" method="post">
-            {% csrf_token %}
-            <div class="col-12 col-md-9">
-              <label class="form-label small mb-1" for="name">{% trans "Class name" %}</label>
-              <input class="form-control" id="name" name="name" required placeholder="{% trans 'e.g. Grade 6 Robotics' %}">
-            </div>
-            <div class="col-12 col-md-3 d-flex gap-2 align-items-end">
-              <button class="button w-100" type="submit">{% trans "Create class" %}</button>
-            </div>
-          </form>
+      <div class="classroom-hero__stats">
+        <div class="classroom-stat">
+          <div class="classroom-stat__label">{% trans "Classes" %}</div>
+          <div class="classroom-stat__value">{{ classrooms|length }}</div>
+          <p class="classroom-stat__hint">{% trans "You own or joined these classrooms." %}</p>
+        </div>
+        <div class="classroom-stat">
+          <div class="classroom-stat__label">{% trans "Teacher tools" %}</div>
+          <div class="classroom-stat__value">{% if can_create %}✓{% else %}—{% endif %}</div>
+          <p class="classroom-stat__hint">
+            {% if can_create %}
+              {% trans "Create, assign, and import quizzes directly from here." %}
+            {% else %}
+              {% trans "Request teacher access to unlock class creation." %}
+            {% endif %}
+          </p>
         </div>
       </div>
-    {% endif %}
+    </section>
 
-    <div class="content-grid">
-      {% for classroom in classrooms %}
-        <article class="content-card" data-stagger="{{ forloop.counter0 }}">
-          <div class="card-body">
-            <div class="card-top">
-              <div class="card-tags">
-                <span class="tag">ID {{ classroom.id }}</span>
-              </div>
-              <span class="card-price card-price--free">{{ classroom.created_at|date:"Y-m-d" }}</span>
+    <section class="classroom-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow text-uppercase mb-1">{% trans "Overview" %}</p>
+          <h2 class="h5 mb-0">{% trans "Your classrooms" %}</h2>
+        </div>
+        {% if can_create %}
+          <button class="button button-ghost button-xs" type="button" data-open-dialog="create-class-dialog">{% trans "New class" %}</button>
+        {% endif %}
+      </div>
+
+      <div class="classroom-compact-grid">
+        {% for classroom in classrooms %}
+          <article class="classroom-card" data-stagger="{{ forloop.counter0 }}">
+            <div class="classroom-card__top">
+              <span class="classroom-chip">ID {{ classroom.id }}</span>
+              <span class="classroom-chip classroom-chip--soft">{{ classroom.created_at|date:"Y-m-d" }}</span>
             </div>
-            <h3><a href="{{ classroom.get_absolute_url }}">{{ classroom.name }}</a></h3>
-            <p class="card-desc text-muted">{% trans "Owner" %}: {{ classroom.owner.username }}</p>
-            <div class="card-meta-bar">
-              <span class="card-stat">
+            <h3 class="classroom-card__title"><a href="{{ classroom.get_absolute_url }}">{{ classroom.name }}</a></h3>
+            <p class="classroom-desc text-muted mb-2">{% trans "Owner" %}: {{ classroom.owner.username }}</p>
+            <div class="classroom-card__meta">
+              <span class="classroom-meta">
                 <i class="ri-group-line" aria-hidden="true"></i>
                 {% blocktrans with count=classroom.memberships.count %}{{ count }} members{% endblocktrans %}
               </span>
+              <span class="classroom-meta">
+                <i class="ri-link" aria-hidden="true"></i>
+                {{ classroom.slug }}
+              </span>
             </div>
-            <div class="d-flex gap-2 mt-2">
-              <a class="button button-ghost button-xs" href="{{ classroom.get_absolute_url }}">{% trans "View class" %}</a>
+            <div class="classroom-card__actions">
+              <a class="button button-ghost button-xs" href="{{ classroom.get_absolute_url }}">{% trans "Open classroom" %}</a>
             </div>
+          </article>
+        {% empty %}
+          <div class="empty-state">
+            <p class="mb-1">{% trans "No classes yet." %}</p>
+            {% if can_create %}
+              <p class="text-muted small mb-2">{% trans "Start by creating a classroom and add your students." %}</p>
+              <button class="button button-xs" type="button" data-open-dialog="create-class-dialog">{% trans "Create the first class" %}</button>
+            {% else %}
+              <p class="text-muted small mb-0">{% trans "Ask your teacher for an invite." %}</p>
+            {% endif %}
           </div>
-        </article>
-      {% empty %}
-        <div class="content-card">
-          <div class="card-body">
-            <p class="card-desc">{% trans "No classes yet." %}</p>
-          </div>
-        </div>
-      {% endfor %}
-    </div>
+        {% endfor %}
+      </div>
+    </section>
   </div>
+
+  {% if can_create %}
+    <dialog id="create-class-dialog" class="classroom-dialog">
+      <div class="classroom-dialog__header">
+        <div>
+          <p class="eyebrow text-uppercase mb-1">{% trans "New classroom" %}</p>
+          <h2 class="h6 mb-0">{% trans "Set a clear name" %}</h2>
+        </div>
+        <button type="button" class="button button-ghost button-xs" data-close-dialog aria-label="{% trans 'Close' %}">&times;</button>
+      </div>
+      <form method="post" class="classroom-dialog__body">
+        {% csrf_token %}
+        <label class="form-label small mb-1" for="name">{% trans "Class name" %}</label>
+        <input class="form-control" id="name" name="name" required placeholder="{% trans 'e.g. Grade 6 Robotics' %}">
+        <p class="text-muted small mb-3">{% trans "The slug is created automatically when you save." %}</p>
+        <div class="classroom-dialog__actions">
+          <button type="button" class="button button-ghost button-xs" data-close-dialog>{% trans "Cancel" %}</button>
+          <button class="button" type="submit">{% trans "Create class" %}</button>
+        </div>
+      </form>
+    </dialog>
+  {% endif %}
 {% endblock %}
