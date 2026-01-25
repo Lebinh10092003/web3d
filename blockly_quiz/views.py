@@ -438,13 +438,21 @@ def attempt_admin_list(request):
         best_score=models.Max("score_percent"),
         unique_students=models.Count("user_id", distinct=True),
         quizzes_count=models.Count("quiz_id", distinct=True),
+        total_questions=models.Sum("total_questions"),
+        total_correct=models.Sum("correct_count"),
     )
+    total_questions = stats_row.get("total_questions") or 0
+    total_correct = stats_row.get("total_correct") or 0
+    accuracy_percent = int(round((total_correct / total_questions) * 100)) if total_questions else 0
     stats = {
         "total": stats_row.get("total") or 0,
         "avg_score": int(round(stats_row.get("avg_score") or 0)),
         "best_score": stats_row.get("best_score") or 0,
         "unique_students": stats_row.get("unique_students") or 0,
         "quizzes_count": stats_row.get("quizzes_count") or 0,
+        "total_questions": total_questions,
+        "total_correct": total_correct,
+        "accuracy_percent": accuracy_percent,
     }
     attempts = attempts_qs.order_by("-completed_at", "-started_at", "-id")
     paginator = Paginator(attempts, getattr(settings, "QUIZ_ADMIN_PAGE_SIZE", 25))

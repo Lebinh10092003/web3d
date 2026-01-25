@@ -279,21 +279,22 @@ body.random-quiz-page .modal-backdrop {
 }
 
 [data-blockly-quiz] .classroom-dialog {
-  border: 1px solid var(--quiz-border);
-  border-radius: 18px;
+  border: none;
+  outline: none;
+  border-radius: 20px;
   padding: 0;
-  max-width: min(840px, 96vw);
+  max-width: min(1100px, 98vw);
   width: 100%;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 22px 52px rgba(21, 20, 19, 0.18);
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(21, 20, 19, 0.14);
 }
 
 [data-blockly-quiz] .classroom-dialog--wide {
-  max-width: min(960px, 98vw);
+  max-width: min(1280px, 98vw);
 }
 
 [data-blockly-quiz] .classroom-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.18);
   backdrop-filter: blur(4px);
 }
 
@@ -662,6 +663,111 @@ body.random-quiz-page .modal-backdrop {
 
 [data-blockly-quiz] .gradebook-table td {
   border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* Admin modal styles */
+.admin-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px 18px;
+  max-height: 84vh;
+  overflow: auto;
+}
+
+.admin-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 4px;
+}
+
+.admin-modal__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.admin-stat {
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.08), rgba(111, 66, 193, 0.08));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.admin-stat--wide {
+  grid-column: 1 / -1;
+}
+
+.admin-stat__label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.admin-stat__value {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.admin-stat__hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.admin-stat__bar {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+  height: 6px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.admin-stat__bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #0d6efd, #6f42c1);
+}
+
+.admin-modal__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-field__label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.admin-field--compact input {
+  max-width: 120px;
+}
+
+.admin-field--actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.admin-modal__table {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.admin-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 [data-blockly-quiz] .scores-grid {

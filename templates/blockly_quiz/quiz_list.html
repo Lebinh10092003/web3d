@@ -230,15 +230,39 @@
           });
         };
 
-        const fetchAdminScores = async () => {
+        const fetchAdminScores = async (url = "{% url 'blockly_quiz:scores-admin' %}?modal=1") => {
           body.innerHTML = '<div class="p-4 text-center text-muted small">{% trans "Loading admin scores..." %}</div>';
           try {
-            const resp = await fetch("{% url 'blockly_quiz:scores-admin' %}?modal=1");
+            const resp = await fetch(url);
             body.innerHTML = await resp.text();
             wireClosers();
+            wireForm();
+            wirePagination();
           } catch (err) {
             body.innerHTML = '<div class="p-4 text-center text-danger small">{% trans "Could not load scores. Please try again." %}</div>';
           }
+        };
+
+        const wireForm = () => {
+          const form = body.querySelector("[data-admin-scores-form]");
+          if (!form) return;
+          form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            fetchAdminScores("{% url 'blockly_quiz:scores-admin' %}?" + params.toString());
+          });
+        };
+
+        const wirePagination = () => {
+          body.querySelectorAll("[data-admin-scores-link]").forEach((link) => {
+            link.addEventListener("click", (e) => {
+              e.preventDefault();
+              const url = link.getAttribute("href");
+              if (!url) return;
+              fetchAdminScores(url);
+            });
+          });
         };
 
         openBtn.addEventListener("click", () => {

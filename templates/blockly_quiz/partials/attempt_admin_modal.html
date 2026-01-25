@@ -1,87 +1,83 @@
 {% load i18n %}
-<div class="classroom-dialog__header">
-  <div>
-    <p class="eyebrow text-uppercase mb-1">{% trans "Admin" %}</p>
-    <h2 class="h6 mb-0">{% trans "Quiz attempts" %}</h2>
+<div class="admin-modal" data-blockly-quiz>
+  <div class="admin-modal__header">
+    <div>
+      <p class="eyebrow text-uppercase mb-1">{% trans "Admin" %}</p>
+      <h2 class="h5 mb-0">{% trans "Quiz attempts" %}</h2>
+    </div>
+    <button type="button" class="button button-ghost button-xs" data-close-dialog aria-label="{% trans 'Close' %}">&times;</button>
   </div>
-  <button type="button" class="button button-ghost button-xs" data-close-dialog aria-label="{% trans 'Close' %}">&times;</button>
-</div>
 
-<div class="classroom-dialog__body" data-blockly-quiz>
-  <div class="row g-3 mb-3">
-    <div class="col-6 col-lg-3">
-      <div class="panel panel-stack h-100">
-        <div class="panel-section py-3">
-          <div class="text-muted small">{% trans "Total attempts" %}</div>
-          <div class="fs-4 fw-semibold">{{ stats.total }}</div>
-          <div class="text-muted small">{{ stats.quizzes_count }} {% trans "quizzes" %}</div>
-        </div>
+  <div class="admin-modal__stats">
+    <div class="admin-stat">
+      <div class="admin-stat__label">{% trans "Total attempts" %}</div>
+      <div class="admin-stat__value">{{ stats.total }}</div>
+      <div class="admin-stat__hint">{{ stats.quizzes_count }} {% trans "quizzes" %}</div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat__label">{% trans "Average score" %}</div>
+      <div class="admin-stat__value">{{ stats.avg_score }}%</div>
+      <div class="admin-stat__bar">
+        <span style="width: {{ stats.avg_score }}%"></span>
       </div>
     </div>
-    <div class="col-6 col-lg-3">
-      <div class="panel panel-stack h-100">
-        <div class="panel-section py-3">
-          <div class="text-muted small">{% trans "Average score" %}</div>
-          <div class="fs-4 fw-semibold">{{ stats.avg_score }}%</div>
-          <div class="text-muted small">{% trans "Filtered attempts" %}</div>
-        </div>
-      </div>
+    <div class="admin-stat">
+      <div class="admin-stat__label">{% trans "Best score" %}</div>
+      <div class="admin-stat__value">{{ stats.best_score }}%</div>
+      <div class="admin-stat__hint">{% trans "Highest attempt" %}</div>
     </div>
-    <div class="col-6 col-lg-3">
-      <div class="panel panel-stack h-100">
-        <div class="panel-section py-3">
-          <div class="text-muted small">{% trans "Best score" %}</div>
-          <div class="fs-4 fw-semibold">{{ stats.best_score }}%</div>
-          <div class="text-muted small">{% trans "Highest attempt" %}</div>
-        </div>
-      </div>
+    <div class="admin-stat">
+      <div class="admin-stat__label">{% trans "Unique users" %}</div>
+      <div class="admin-stat__value">{{ stats.unique_students }}</div>
+      <div class="admin-stat__hint">{% trans "Students" %}</div>
     </div>
-    <div class="col-6 col-lg-3">
-      <div class="panel panel-stack h-100">
-        <div class="panel-section py-3">
-          <div class="text-muted small">{% trans "Students" %}</div>
-          <div class="fs-4 fw-semibold">{{ stats.unique_students }}</div>
-          <div class="text-muted small">{% trans "Unique users" %}</div>
-        </div>
+    <div class="admin-stat admin-stat--wide">
+      <div class="admin-stat__label d-flex justify-content-between">
+        <span>{% trans "Overall accuracy" %}</span>
+        <span class="text-muted small">{{ stats.total_correct }} / {{ stats.total_questions }}</span>
+      </div>
+      <div class="admin-stat__value">{{ stats.accuracy_percent }}%</div>
+      <div class="admin-stat__bar">
+        <span style="width: {{ stats.accuracy_percent }}%"></span>
       </div>
     </div>
   </div>
 
-  <form class="row g-2 align-items-end mb-3" method="get">
+  <form class="admin-modal__filters" method="get" data-admin-scores-form>
     <input type="hidden" name="modal" value="1">
-    <div class="col-12 col-md-4">
-      <label class="form-label small mb-1">{% trans "Search" %}</label>
-      <input class="form-control form-control-sm" type="text" name="q" placeholder="{% trans 'Username, name, or quiz' %}" value="{{ filter_search }}">
-    </div>
-    <div class="col-12 col-md-3">
-      <label class="form-label small mb-1">{% trans "Quiz" %}</label>
+    <label class="admin-field">
+      <span class="admin-field__label">{% trans "Search by user or name" %}</span>
+      <input class="form-control form-control-sm" type="text" name="q" placeholder="{% trans 'Username, participant name, or quiz title' %}" value="{{ filter_search }}">
+    </label>
+    <label class="admin-field">
+      <span class="admin-field__label">{% trans "Quiz" %}</span>
       <select class="form-select form-select-sm" name="quiz">
         <option value="">{% trans "All" %}</option>
         {% for quiz in quizzes %}
           <option value="{{ quiz.id }}" {% if filter_quiz == quiz.id|stringformat:"s" %}selected{% endif %}>{{ quiz.title }}</option>
         {% endfor %}
       </select>
-    </div>
-    <div class="col-12 col-md-3">
-      <label class="form-label small mb-1">{% trans "Classroom" %}</label>
+    </label>
+    <label class="admin-field">
+      <span class="admin-field__label">{% trans "Classroom" %}</span>
       <select class="form-select form-select-sm" name="classroom">
         <option value="">{% trans "All" %}</option>
         {% for classroom in classrooms %}
           <option value="{{ classroom.slug }}" {% if filter_classroom == classroom.slug %}selected{% endif %}>{{ classroom.name }}</option>
         {% endfor %}
       </select>
-    </div>
-    <div class="col-6 col-md-1">
-      <label class="form-label small mb-1">{% trans "User ID" %}</label>
+    </label>
+    <label class="admin-field admin-field--compact">
+      <span class="admin-field__label">{% trans "User ID" %}</span>
       <input class="form-control form-control-sm" type="text" name="user" value="{{ filter_user }}">
-    </div>
-    <div class="col-6 col-md-1 d-flex gap-1">
+    </label>
+    <div class="admin-field admin-field--actions">
       <button class="button button-xs w-100" type="submit">{% trans "Filter" %}</button>
       <a class="button button-ghost button-xs w-100" href="{% url 'blockly_quiz:scores-admin' %}?modal=1">{% trans "Reset" %}</a>
     </div>
   </form>
 
-  <div class="panel panel-stack">
+  <div class="admin-modal__table panel panel-stack">
     <div class="panel-section p-0">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0 gradebook-table">
@@ -136,16 +132,14 @@
     </div>
   </div>
 
-  <div class="d-flex justify-content-between align-items-center mt-2">
-    <div>
-      <a class="button button-ghost button-xs" href="{% url 'blockly_quiz:scores-export' %}?{{ request.GET.urlencode }}">{% trans "Export CSV" %}</a>
-    </div>
+  <div class="admin-modal__footer">
+    <a class="button button-ghost button-xs" href="{% url 'blockly_quiz:scores-export' %}?{{ request.GET.urlencode }}">{% trans "Export CSV" %}</a>
     {% if page_obj.paginator.num_pages > 1 %}
       <nav aria-label="{% trans 'Attempt pagination' %}">
         <ul class="pagination mb-0">
           <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
             {% if page_obj.has_previous %}
-              <a class="page-link" href="?{{ page_query_prefix }}modal=1&page={{ page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}" rel="prev">&laquo;</a>
+              <a class="page-link" href="?{{ page_query_prefix }}modal=1&page={{ page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}" rel="prev" data-admin-scores-link>&laquo;</a>
             {% else %}
               <span class="page-link" aria-disabled="true">&laquo;</span>
             {% endif %}
@@ -155,7 +149,7 @@
           </li>
           <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
             {% if page_obj.has_next %}
-              <a class="page-link" href="?{{ page_query_prefix }}modal=1&page={{ page_obj.next_page_number }}" aria-label="{% trans 'Next' %}" rel="next">&raquo;</a>
+              <a class="page-link" href="?{{ page_query_prefix }}modal=1&page={{ page_obj.next_page_number }}" aria-label="{% trans 'Next' %}" rel="next" data-admin-scores-link>&raquo;</a>
             {% else %}
               <span class="page-link" aria-disabled="true">&raquo;</span>
             {% endif %}
