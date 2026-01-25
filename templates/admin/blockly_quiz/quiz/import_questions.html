@@ -241,6 +241,115 @@
     <div class="quiz-import__examples">
       <div class="quiz-import-example">
         <div class="quiz-import-example__header">
+          <h2 class="quiz-import-example__title">{% trans "Prompt for AI (Blockly)" %}</h2>
+          <div class="quiz-import-example__actions">
+            <button type="button" class="button" data-import-fill="quiz-import-prompt-blockly">{% trans "Use" %}</button>
+            <button type="button" class="button" data-import-copy="quiz-import-prompt-blockly">{% trans "Copy" %}</button>
+          </div>
+        </div>
+        <pre class="quiz-import-example__pre" data-import-pre data-import-target="quiz-import-prompt-blockly"></pre>
+        <div class="quiz-import-example__note">
+          {% trans "Default is 30 questions at HKICO national-final difficulty (use difficulty 'hard')." %}
+        </div>
+        <script type="text/plain" id="quiz-import-prompt-blockly">
+You are an HKICO national-final problem setter.
+Return ONLY JSON with exactly [QUESTION_COUNT=30] Blockly multiple-choice questions unless another count is provided.
+Use difficulty "hard" for every question to represent HKICO finals.
+Structure:
+{
+  "questions": [
+    {
+      "prompt": "...",
+      "question_type": "blockly",
+      "difficulty": "hard",
+      "blockly_state": {...} OR "blockly_xml": "<xml...>",
+      "choices": [
+        {"text": "...", "is_correct": true},
+        {"text": "..."}
+      ],
+      "explanation": "..."
+    }
+  ]
+}
+No text outside the JSON.
+        </script>
+      </div>
+
+      <div class="quiz-import-example">
+        <div class="quiz-import-example__header">
+          <h2 class="quiz-import-example__title">{% trans "Prompt for AI (Scratch)" %}</h2>
+          <div class="quiz-import-example__actions">
+            <button type="button" class="button" data-import-fill="quiz-import-prompt-scratch">{% trans "Use" %}</button>
+            <button type="button" class="button" data-import-copy="quiz-import-prompt-scratch">{% trans "Copy" %}</button>
+          </div>
+        </div>
+        <pre class="quiz-import-example__pre" data-import-pre data-import-target="quiz-import-prompt-scratch"></pre>
+        <div class="quiz-import-example__note">
+          {% trans "Scratch-only: keep question_type as 'scratch' with HKICO finals difficulty ('hard')." %}
+        </div>
+        <script type="text/plain" id="quiz-import-prompt-scratch">
+You are an HKICO national-final problem setter.
+Return ONLY JSON with [QUESTION_COUNT=30] Scratch multiple-choice questions (no Blockly/Python mixed here).
+Every question uses question_type "scratch" and difficulty "hard".
+Structure:
+{
+  "questions": [
+    {
+      "prompt": "...",
+      "question_type": "scratch",
+      "difficulty": "hard",
+      "scratchblocks_text": "when green flag clicked\nrepeat (10)\n  move (10) steps\nend",
+      "choices": [
+        {"text": "...", "is_correct": true},
+        {"text": "..."}
+      ],
+      "explanation": "..."
+    }
+  ]
+}
+Ensure exactly one correct choice; output JSON only.
+        </script>
+      </div>
+
+      <div class="quiz-import-example">
+        <div class="quiz-import-example__header">
+          <h2 class="quiz-import-example__title">{% trans "Prompt for AI (Python)" %}</h2>
+          <div class="quiz-import-example__actions">
+            <button type="button" class="button" data-import-fill="quiz-import-prompt-python">{% trans "Use" %}</button>
+            <button type="button" class="button" data-import-copy="quiz-import-prompt-python">{% trans "Copy" %}</button>
+          </div>
+        </div>
+        <pre class="quiz-import-example__pre" data-import-pre data-import-target="quiz-import-prompt-python"></pre>
+        <div class="quiz-import-example__note">
+          {% trans "Python-only: set question_type to 'code', code_language to 'python', difficulty to 'hard' (HKICO finals)." %}
+        </div>
+        <script type="text/plain" id="quiz-import-prompt-python">
+You are an HKICO national-final problem setter for Python.
+Return ONLY JSON with exactly [QUESTION_COUNT=30] multiple-choice Python questions unless another count is given.
+Use question_type "code", code_language "python", and difficulty "hard" on every item.
+Structure:
+{
+  "questions": [
+    {
+      "prompt": "...",
+      "question_type": "code",
+      "difficulty": "hard",
+      "code_language": "python",
+      "code_text": "print('Hello')",
+      "choices": [
+        {"text": "...", "is_correct": true},
+        {"text": "..."}
+      ],
+      "explanation": "..."
+    }
+  ]
+}
+Do not add any text outside the JSON; one correct choice per question.
+        </script>
+      </div>
+
+      <div class="quiz-import-example">
+        <div class="quiz-import-example__header">
           <h2 class="quiz-import-example__title">{% trans "Example (YAML)" %}</h2>
           <div class="quiz-import-example__actions">
             <button type="button" class="button" data-import-fill="quiz-import-example-yaml">{% trans "Use" %}</button>

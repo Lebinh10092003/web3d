@@ -354,90 +354,78 @@
           <button type="button" class="classroom-tab" data-tab-target="modal-python">Python</button>
         </div>
         <div class="classroom-tabpanel is-active" data-tab-panel="modal-blockly">
-          <pre class="classroom-code">{
+          <pre class="classroom-code">Prompt (Blockly):
+- You are creating HKICO national-final level questions.
+- Produce exactly [QUESTION_COUNT=30] multiple-choice Blockly questions unless another count is given.
+- Use difficulty "hard" for every question to reflect HKICO finals.
+- Return only valid JSON:
+{
   "questions": [
     {
-      "prompt": "Blockly: How many times does this loop run?",
+      "prompt": "...",
       "question_type": "blockly",
-      "difficulty": "easy",
-      "blockly_state": {
-        "blocks": {
-          "languageVersion": 0,
-          "blocks": [
-            {
-              "type": "controls_repeat_ext",
-              "x": 10,
-              "y": 10,
-              "inputs": {
-                "TIMES": {
-                  "shadow": { "type": "math_number", "fields": { "NUM": 5 } }
-                }
-              }
-            }
-          ]
-        }
-      },
-      "explanation": "Repeats 5 times.",
+      "difficulty": "hard",
+      "blockly_state": {...} or "blockly_xml": "<xml...>",
       "choices": [
-        { "text": "5 times", "is_correct": true },
-        { "text": "10 times" }
-      ]
+        {"text": "...", "is_correct": true},
+        {"text": "..."}
+      ],
+      "explanation": "..."
     }
   ]
-}</pre>
+}
+- One correct choice per question, no extra text outside the JSON.</pre>
         </div>
         <div class="classroom-tabpanel" data-tab-panel="modal-scratch">
-          <pre class="classroom-code">{
+          <pre class="classroom-code">Prompt (Scratch only):
+- Role: HKICO national-final question setter.
+- Output: JSON file only, following the structure below.
+- Count: exactly [QUESTION_COUNT=30] questions by default.
+- Difficulty: set every question to "hard" to represent HKICO finals.
+- No Blockly/Python mixed in this prompt.
+
+JSON shape:
+{
   "questions": [
     {
-      "prompt": "Scratch: what does the sprite do?",
+      "prompt": "...",
       "question_type": "scratch",
-      "difficulty": "medium",
-      "scratchblocks_text": "when green flag clicked\nrepeat (5)\n  move (10) steps\nend",
-      "explanation": "Moves 10 steps x5 = 50 steps.",
+      "difficulty": "hard",
+      "scratchblocks_text": "when green flag clicked\nrepeat (10)\n  move (10) steps\nend",
       "choices": [
-        { "text": "Moves 50 steps", "is_correct": true },
-        { "text": "Moves 10 steps" }
-      ]
-    },
-    {
-      "prompt": "Add-on: what is shown?",
-      "question_type": "blockly",
-      "blockly_xml": "<xml><block type='text_print'><value name='TEXT'><shadow type='text'><field name='TEXT'>Hello</field></shadow></value></block></xml>",
-      "choices": [
-        { "text": "Hello", "is_correct": true },
-        { "text": "Hi" }
-      ]
+        {"text": "...", "is_correct": true},
+        {"text": "..."}
+      ],
+      "explanation": "..."
     }
   ]
 }</pre>
         </div>
         <div class="classroom-tabpanel" data-tab-panel="modal-python">
-          <pre class="classroom-code">{
+          <pre class="classroom-code">Prompt (Python only):
+- Role: HKICO national-final question setter for Python.
+- Output: only JSON with exactly [QUESTION_COUNT=30] questions if no count is specified.
+- Difficulty: use "hard" for every question to mirror HKICO finals.
+- Use question_type "code" and code_language "python" for all items.
+
+JSON shape:
+{
   "questions": [
     {
-      "prompt": "Python: what is the output?",
+      "prompt": "...",
       "question_type": "code",
-      "difficulty": "easy",
+      "difficulty": "hard",
       "code_language": "python",
-      "code_text": "x = 2\nprint(x * 5)",
-      "explanation": "2 * 5 = 10.",
+      "code_text": "print('Hello')",
       "choices": [
-        { "text": "10", "is_correct": true },
-        { "text": "25" }
-      ]
-    },
-    {
-      "prompt": "Python: which line is correct?",
-      "code_language": "python",
-      "code_text": "items = [1, 2, 3]\nprint(len(items))",
-      "choices": [
-        { "text": "3", "is_correct": true },
-        { "text": "2" }
-      ]
+        {"text": "...", "is_correct": true},
+        {"text": "..."}
+      ],
+      "explanation": "..."
     }
   ]
-}</pre>
+}
+- Exactly one correct choice per question, no text outside the JSON.</pre>
         </div>
 
         <form class="row g-2 mt-2" method="post">

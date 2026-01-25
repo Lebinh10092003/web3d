@@ -17,7 +17,50 @@
       </div>
     </div>
 
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="text-muted small">{% trans "Total attempts" %}</div>
+            <div class="fs-4 fw-semibold">{{ stats.total }}</div>
+            <div class="text-muted small">{{ stats.quizzes_count }} {% trans "quizzes" %}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="text-muted small">{% trans "Average score" %}</div>
+            <div class="fs-4 fw-semibold">{{ stats.avg_score }}%</div>
+            <div class="text-muted small">{% trans "across filtered attempts" %}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="text-muted small">{% trans "Best score" %}</div>
+            <div class="fs-4 fw-semibold">{{ stats.best_score }}%</div>
+            <div class="text-muted small">{% trans "highest attempt" %}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="text-muted small">{% trans "Students" %}</div>
+            <div class="fs-4 fw-semibold">{{ stats.unique_students }}</div>
+            <div class="text-muted small">{% trans "unique users" %}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <form class="filter-pill-row mb-3" method="get">
+      <div class="col-12 col-md-4">
+        <label class="form-label small mb-1">{% trans "Search" %}</label>
+        <input class="form-control form-control-sm filter-pill" type="text" name="q" placeholder="{% trans 'Username, name, or quiz' %}" value="{{ filter_search }}">
+      </div>
       <div class="col-12 col-md-4">
         <label class="form-label small mb-1">{% trans "Quiz" %}</label>
         <select class="form-select form-select-sm filter-pill" name="quiz">
@@ -43,6 +86,9 @@
       <div class="col-12 col-md-1">
         <button class="btn btn-primary w-100 btn-sm" type="submit">{% trans "Filter" %}</button>
       </div>
+      <div class="col-12 col-md-1">
+        <a class="btn btn-outline-secondary w-100 btn-sm" href="{% url 'blockly_quiz:scores-admin' %}">{% trans "Reset" %}</a>
+      </div>
     </form>
 
     <div class="card shadow-sm">
@@ -65,7 +111,19 @@
               <tr>
                 <td>{{ attempt.id }}</td>
                 <td>{{ attempt.quiz.title }}</td>
-                <td>{{ attempt.user.username }}</td>
+                <td>
+                  {% if attempt.user %}
+                    <div class="fw-semibold">{{ attempt.user.username }}</div>
+                    {% if attempt.participant_name %}
+                      <div class="text-muted small">{{ attempt.participant_name }}</div>
+                    {% endif %}
+                  {% elif attempt.participant_name %}
+                    <div class="fw-semibold">{{ attempt.participant_name }}</div>
+                    <div class="text-muted small">{% trans "Guest attempt" %}</div>
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
                 <td class="text-center">{{ attempt.score_percent }}%</td>
                 <td class="text-center">{{ attempt.correct_count }}/{{ attempt.total_questions }}</td>
                 <td>

@@ -98,6 +98,15 @@
         </svg>
         <span>{% trans "Quizzes" %}</span>
       </a>
+      {% if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser or request.user|has_group:"Teacher V") %}
+        <a class="nav-link{% if view_name == 'blockly_quiz:scores-admin' %} is-active{% endif %}" href="{% url 'blockly_quiz:scores-admin' %}">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 5h16v14H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M8 15v-4M12 17v-6M16 13V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>{% trans "Quiz admin" %}</span>
+        </a>
+      {% endif %}
       {% if request.user.is_authenticated %}
         <a class="nav-link{% if view_name|slice:':22' == 'blockly_quiz:classroom' %} is-active{% endif %}" href="{% url 'blockly_quiz:classroom-list' %}">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">

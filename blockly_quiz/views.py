@@ -208,14 +208,14 @@ def _get_attempt_or_404(request, attempt_id: int) -> Attempt:
         Attempt.objects.select_related("quiz", "user", "assignment", "assignment__classroom"),
         pk=attempt_id,
     )
+    if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+        return attempt
     if attempt.user_id:
         if request.user.is_authenticated and request.user.id == attempt.user_id:
             if not _user_can_access_quiz(request.user, attempt.quiz):
                 raise Http404
             return attempt
         if request.user.is_authenticated:
-            if request.user.is_staff or request.user.is_superuser:
-                return attempt
             classroom = getattr(attempt.assignment, "classroom", None)
             if classroom:
                 is_teacher = ClassroomMembership.objects.filter(
@@ -407,24 +407,54 @@ def attempt_list(request):
 def attempt_admin_list(request):
     if not _user_is_teacher(request.user):
         raise Http404
-    attempts = Attempt.objects.filter(completed_at__isnull=False).select_related(
+    attempts_qs = Attempt.objects.filter(completed_at__isnull=False).select_related(
         "quiz", "user", "assignment", "assignment__classroom"
     )
-    quiz_id = request.GET.get("quiz")
-    classroom_slug = request.GET.get("classroom")
-    user_id = request.GET.get("user")
+    quiz_id = (request.GET.get("quiz") or "").strip()
+    classroom_slug = (request.GET.get("classroom") or "").strip()
+    user_id_raw = (request.GET.get("user") or "").strip()
+    search_query = (request.GET.get("q") or "").strip()
     if quiz_id:
-        attempts = attempts.filter(quiz_id=quiz_id)
+        attempts_qs = attempts_qs.filter(quiz_id=quiz_id)
     if classroom_slug:
-        attempts = attempts.filter(assignment__classroom__slug=classroom_slug)
-    if user_id:
-        attempts = attempts.filter(user_id=user_id)
-    attempts = attempts.order_by("-completed_at", "-started_at", "-id")
+        attempts_qs = attempts_qs.filter(assignment__classroom__slug=classroom_slug)
+    if user_id_raw:
+        try:
+            user_id = int(user_id_raw)
+        except (TypeError, ValueError):
+            user_id = None
+        if user_id:
+            attempts_qs = attempts_qs.filter(user_id=user_id)
+    if search_query:
+        attempts_qs = attempts_qs.filter(
+            Q(user__username__icontains=search_query)
+            | Q(user__email__icontains=search_query)
+            | Q(participant_name__icontains=search_query)
+            | Q(quiz__title__icontains=search_query)
+        )
+    stats_row = attempts_qs.aggregate(
+        total=models.Count("id"),
+        avg_score=models.Avg("score_percent"),
+        best_score=models.Max("score_percent"),
+        unique_students=models.Count("user_id", distinct=True),
+        quizzes_count=models.Count("quiz_id", distinct=True),
+    )
+    stats = {
+        "total": stats_row.get("total") or 0,
+        "avg_score": int(round(stats_row.get("avg_score") or 0)),
+        "best_score": stats_row.get("best_score") or 0,
+        "unique_students": stats_row.get("unique_students") or 0,
+        "quizzes_count": stats_row.get("quizzes_count") or 0,
+    }
+    attempts = attempts_qs.order_by("-completed_at", "-started_at", "-id")
     paginator = Paginator(attempts, getattr(settings, "QUIZ_ADMIN_PAGE_SIZE", 25))
     page_obj = paginator.get_page(request.GET.get("page"))
-    classrooms = Classroom.objects.filter(
-        models.Q(owner=request.user) | models.Q(memberships__user=request.user, memberships__role="teacher")
-    ).distinct()
+    classrooms_qs = Classroom.objects.all()
+    if not (request.user.is_staff or request.user.is_superuser):
+        classrooms_qs = classrooms_qs.filter(
+            models.Q(owner=request.user) | models.Q(memberships__user=request.user, memberships__role="teacher")
+        )
+    classrooms = classrooms_qs.distinct().order_by("name")
     quizzes = Quiz.objects.all().order_by("title")
     return render(
         request,
@@ -437,7 +467,9 @@ def attempt_admin_list(request):
             "classrooms": classrooms,
             "filter_quiz": quiz_id or "",
             "filter_classroom": classroom_slug or "",
-            "filter_user": user_id or "",
+            "filter_user": user_id_raw,
+            "filter_search": search_query,
+            "stats": stats,
         },
     )
 
@@ -450,12 +482,28 @@ def attempt_export_csv(request):
     attempts = Attempt.objects.filter(completed_at__isnull=False).select_related(
         "quiz", "user", "assignment", "assignment__classroom"
     )
-    quiz_id = request.GET.get("quiz")
-    classroom_slug = request.GET.get("classroom")
+    quiz_id = (request.GET.get("quiz") or "").strip()
+    classroom_slug = (request.GET.get("classroom") or "").strip()
+    user_id_raw = (request.GET.get("user") or "").strip()
+    search_query = (request.GET.get("q") or "").strip()
     if quiz_id:
         attempts = attempts.filter(quiz_id=quiz_id)
     if classroom_slug:
         attempts = attempts.filter(assignment__classroom__slug=classroom_slug)
+    if user_id_raw:
+        try:
+            user_id = int(user_id_raw)
+        except (TypeError, ValueError):
+            user_id = None
+        if user_id:
+            attempts = attempts.filter(user_id=user_id)
+    if search_query:
+        attempts = attempts.filter(
+            Q(user__username__icontains=search_query)
+            | Q(user__email__icontains=search_query)
+            | Q(participant_name__icontains=search_query)
+            | Q(quiz__title__icontains=search_query)
+        )
     rows = [
         ["Attempt ID", "Quiz", "User", "Score %", "Correct", "Total", "Completed at", "Classroom"]
     ]
