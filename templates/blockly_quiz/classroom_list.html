@@ -119,3 +119,38 @@
     </dialog>
   {% endif %}
 {% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const openers = document.querySelectorAll("[data-open-dialog]");
+      const closers = document.querySelectorAll("[data-close-dialog]");
+
+      openers.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-open-dialog");
+          const dialog = document.getElementById(id);
+          if (!dialog) return;
+          if (typeof dialog.showModal === "function") {
+            dialog.showModal();
+          } else {
+            dialog.setAttribute("open", "open");
+          }
+        });
+      });
+
+      closers.forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const dialog = btn.closest("dialog");
+          if (!dialog) return;
+          if (typeof dialog.close === "function") {
+            dialog.close();
+          } else {
+            dialog.removeAttribute("open");
+          }
+        });
+      });
+    });
+  </script>
+{% endblock %}

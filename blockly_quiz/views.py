@@ -456,9 +456,12 @@ def attempt_admin_list(request):
         )
     classrooms = classrooms_qs.distinct().order_by("name")
     quizzes = Quiz.objects.all().order_by("title")
+    template_name = "blockly_quiz/attempt_admin_list.html"
+    if (request.GET.get("modal") or "").strip() == "1":
+        template_name = "blockly_quiz/partials/attempt_admin_modal.html"
     return render(
         request,
-        "blockly_quiz/attempt_admin_list.html",
+        template_name,
         {
             "attempts": page_obj.object_list,
             "page_obj": page_obj,

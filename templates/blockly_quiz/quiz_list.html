@@ -45,6 +45,9 @@
         <div class="d-flex flex-wrap gap-2">
           {% if request.user.is_authenticated %}
             <a class="button button-ghost" href="{% url 'blockly_quiz:classroom-list' %}">{% trans "View classrooms" %}</a>
+            {% if request.user.is_staff or request.user.is_superuser or request.user|has_group:"Teacher V" %}
+              <button class="button" type="button" data-open-admin-scores>{% trans "Admin scores" %}</button>
+            {% endif %}
           {% else %}
             <a class="button button-ghost" href="{% url 'accounts:login' %}?next={% url 'blockly_quiz:classroom-list' %}">{% trans "Login to access" %}</a>
           {% endif %}
@@ -175,8 +178,75 @@
       <div class="alert alert-info">{% trans "No quizzes available yet." %}</div>
     {% endif %}
   </div>
+
+  {% if request.user.is_authenticated %}
+    {% if request.user.is_staff or request.user.is_superuser or request.user|has_group:"Teacher V" %}
+    <dialog id="admin-scores-dialog" class="classroom-dialog classroom-dialog--wide">
+      <div id="admin-scores-body">
+        <div class="p-4 text-center text-muted small">
+          {% trans "Loading admin scores..." %}
+        </div>
+      </div>
+    </dialog>
+    {% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block extra_scripts %}
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% if request.user.is_authenticated %}
+    {% if request.user.is_staff or request.user.is_superuser or request.user|has_group:"Teacher V" %}
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const openBtn = document.querySelector("[data-open-admin-scores]");
+        const dialog = document.getElementById("admin-scores-dialog");
+        const body = document.getElementById("admin-scores-body");
+        if (!openBtn || !dialog || !body) return;
+
+        const closeBtns = () => dialog.querySelectorAll("[data-close-dialog]");
+
+        const openDialog = () => {
+          if (typeof dialog.showModal === "function") {
+            dialog.showModal();
+          } else {
+            dialog.setAttribute("open", "open");
+          }
+        };
+
+        const closeDialog = () => {
+          if (typeof dialog.close === "function") {
+            dialog.close();
+          } else {
+            dialog.removeAttribute("open");
+          }
+        };
+
+        const wireClosers = () => {
+          closeBtns().forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              e.preventDefault();
+              closeDialog();
+            });
+          });
+        };
+
+        const fetchAdminScores = async () => {
+          body.innerHTML = '<div class="p-4 text-center text-muted small">{% trans "Loading admin scores..." %}</div>';
+          try {
+            const resp = await fetch("{% url 'blockly_quiz:scores-admin' %}?modal=1");
+            body.innerHTML = await resp.text();
+            wireClosers();
+          } catch (err) {
+            body.innerHTML = '<div class="p-4 text-center text-danger small">{% trans "Could not load scores. Please try again." %}</div>';
+          }
+        };
+
+        openBtn.addEventListener("click", () => {
+          openDialog();
+          fetchAdminScores();
+        });
+      });
+    </script>
+    {% endif %}
+  {% endif %}
 {% endblock %}
