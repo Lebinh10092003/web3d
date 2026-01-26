@@ -150,16 +150,16 @@
 
 <div class="mobile-download-bar" aria-label="{% trans 'Unlock & download' %}">
   <div class="mobile-download-bar-inner">
-    {% if request.user.is_authenticated %}
-      <button class="button" type="submit" form="download-form-{{ content.id }}">
-        {% if is_unlocked %}{% trans "Download now" %}{% else %}{% trans "Unlock with points" %}{% endif %}
-      </button>
-      {% if not is_unlocked and content.download_cost_points > 0 and request.user.points_balance < content.download_cost_points %}
-        <button class="button button-ghost" type="button" data-points-modal-open>
+      {% if request.user.is_authenticated %}
+        <button class="button" type="submit" form="download-form-{{ content.id }}">
+          {% if is_unlocked %}{% trans "Download now" %}{% else %}{% trans "Unlock with points" %}{% endif %}
+        </button>
+        {% if not is_unlocked and content.download_cost_points > 0 and request.user.points_balance < content.download_cost_points %}
+        <button class="button button-ghost" type="button" data-points-modal-open data-bs-toggle="modal" data-bs-target="#points-modal">
           {% trans "Get more points" %}
         </button>
-      {% endif %}
-    {% else %}
+        {% endif %}
+      {% else %}
       <a
         class="button"
         href="{% url 'accounts:login' %}"
@@ -172,46 +172,56 @@
   </div>
 </div>
 
-<section class="detail-comments">
-  <div class="panel comment-card">
-    <div class="comment-card-header">
+<section class="detail-comments section">
+  <div class="card comment-card mazer-comment-card shadow-sm">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-3 border-0 bg-transparent pb-0">
       <div>
-        <p class="eyebrow">{% trans "Community notes" %}</p>
-        <h2 class="comment-title">{% trans "Share tips or feedback" %}</h2>
+        <p class="eyebrow text-uppercase text-muted mb-1">{% trans "Community notes" %}</p>
+        <h2 class="comment-title mb-0">{% trans "Share tips or feedback" %}</h2>
       </div>
-      <div class="comment-count-badge">
-        <span>{% trans "Comments" %}</span>
+      <span class="badge text-bg-primary-subtle text-primary-emphasis comment-count-badge">
+        <i class="bi bi-chat-dots me-2" aria-hidden="true"></i>
+        <span class="me-1">{% trans "Comments" %}</span>
         <strong id="comment-count">{{ comments|length }}</strong>
-      </div>
+      </span>
     </div>
-    {% if request.user.is_authenticated %}
-      <form
-        class="form"
-        method="post"
-        hx-post="{% url 'interactions:comment' content.id %}"
-        hx-target="#comment-list"
-        hx-swap="outerHTML"
-      >
-        {% csrf_token %}
-        <textarea name="body" rows="4" placeholder="{% trans 'Share tips, feedback, or build notes' %}" required></textarea>
-        <div class="comment-actions">
-          <button class="button" type="submit">{% trans "Post comment" %}</button>
+    <div class="card-body">
+      {% if request.user.is_authenticated %}
+        <form
+          class="form comment-form"
+          method="post"
+          hx-post="{% url 'interactions:comment' content.id %}"
+          hx-target="#comment-list"
+          hx-swap="outerHTML"
+        >
+          {% csrf_token %}
+          <label class="form-label fw-semibold" for="comment-body">{% trans "Share tips, feedback, or build notes" %}</label>
+          <textarea id="comment-body" class="form-control" name="body" rows="4" required placeholder="{% trans 'Share tips, feedback, or build notes' %}"></textarea>
+          <div class="comment-actions d-flex justify-content-end gap-2 mt-3">
+            <button class="btn btn-primary text-nowrap" type="submit">
+              <i class="bi bi-send-fill me-1" aria-hidden="true"></i>{% trans "Post comment" %}
+            </button>
+          </div>
+        </form>
+      {% else %}
+        <div class="alert alert-info d-flex align-items-center gap-2 mb-0">
+          <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+          <div>
+            <a
+              class="btn btn-primary btn-sm me-2"
+              href="{% url 'accounts:login' %}"
+              hx-get="{% url 'accounts:login' %}?modal=1"
+              hx-target="#auth-modal-body"
+              hx-swap="innerHTML"
+            >{% trans "Login" %}</a>
+            <span class="text-muted">{% trans "to join the discussion." %}</span>
+          </div>
         </div>
-      </form>
-    {% else %}
-      <p>
-        <a
-          class="button button-ghost"
-          href="{% url 'accounts:login' %}"
-          hx-get="{% url 'accounts:login' %}?modal=1"
-          hx-target="#auth-modal-body"
-          hx-swap="innerHTML"
-        >{% trans "Login" %}</a> {% trans "to join the discussion." %}
-      </p>
-    {% endif %}
+      {% endif %}
+    </div>
   </div>
 
-{% include "interactions/_comment_list.html" %}
+  {% include "interactions/_comment_list.html" %}
 </section>
 {% endblock %}
 

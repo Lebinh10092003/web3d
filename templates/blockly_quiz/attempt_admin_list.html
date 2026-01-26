@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container py-4" data-blockly-quiz>
+  <div class="container py-4 quiz-admin-shell" data-blockly-quiz>
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
       <h1 class="h4 mb-0">{% trans "All attempts" %}</h1>
       <div class="d-flex gap-2">
@@ -17,77 +17,104 @@
       </div>
     </div>
 
-    <div class="row g-3 mb-3">
-      <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body py-3">
-            <div class="text-muted small">{% trans "Total attempts" %}</div>
-            <div class="fs-4 fw-semibold">{{ stats.total }}</div>
-            <div class="text-muted small">{{ stats.quizzes_count }} {% trans "quizzes" %}</div>
+    <div class="quiz-metrics mb-3">
+      {% if stats.total %}
+        <div class="row g-3 quiz-metric-row">
+          <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100 metric-card">
+              <div class="card-body py-3">
+                <div class="text-muted small text-uppercase fw-semibold">{% trans "Total attempts" %}</div>
+                <div class="fs-4 fw-semibold">{{ stats.total }}</div>
+                <div class="text-muted small">{% blocktrans %}Across {{ stats.quizzes_count }} quizzes{% endblocktrans %}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100 metric-card">
+              <div class="card-body py-3">
+                <div class="text-muted small text-uppercase fw-semibold">{% trans "Average score" %}</div>
+                <div class="fs-4 fw-semibold">{{ stats.avg_score }}%</div>
+                <div class="text-muted small">{% trans "Across current filters" %}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100 metric-card">
+              <div class="card-body py-3">
+                <div class="text-muted small text-uppercase fw-semibold">{% trans "Best score" %}</div>
+                <div class="fs-4 fw-semibold">{{ stats.best_score }}%</div>
+                <div class="text-muted small">{% trans "Highest attempt" %}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100 metric-card">
+              <div class="card-body py-3">
+                <div class="text-muted small text-uppercase fw-semibold">{% trans "Students" %}</div>
+                <div class="fs-4 fw-semibold">{{ stats.unique_students }}</div>
+                <div class="text-muted small">{% trans "Unique users" %}</div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body py-3">
-            <div class="text-muted small">{% trans "Average score" %}</div>
-            <div class="fs-4 fw-semibold">{{ stats.avg_score }}%</div>
-            <div class="text-muted small">{% trans "across filtered attempts" %}</div>
+      {% else %}
+        <div class="card shadow-sm quiz-metric-empty">
+          <div class="quiz-metric-empty__icon" aria-hidden="true"></div>
+          <div>
+            <div class="h6 mb-1">{% trans "No attempts yet" %}</div>
+            <p class="text-muted small mb-2">{% trans "When students submit quizzes, key stats will appear here." %}</p>
+            <div class="d-flex flex-wrap gap-2">
+              <a class="btn btn-primary btn-sm" href="{% url 'blockly_quiz:list' %}">{% trans "View quizzes" %}</a>
+              <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:scores-admin' %}">{% trans "Reset filters" %}</a>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body py-3">
-            <div class="text-muted small">{% trans "Best score" %}</div>
-            <div class="fs-4 fw-semibold">{{ stats.best_score }}%</div>
-            <div class="text-muted small">{% trans "highest attempt" %}</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body py-3">
-            <div class="text-muted small">{% trans "Students" %}</div>
-            <div class="fs-4 fw-semibold">{{ stats.unique_students }}</div>
-            <div class="text-muted small">{% trans "unique users" %}</div>
-          </div>
-        </div>
-      </div>
+      {% endif %}
     </div>
 
-    <form class="filter-pill-row mb-3" method="get">
-      <div class="col-12 col-md-4">
-        <label class="form-label small mb-1">{% trans "Search" %}</label>
-        <input class="form-control form-control-sm filter-pill" type="text" name="q" placeholder="{% trans 'Username, name, or quiz' %}" value="{{ filter_search }}">
+    <form class="filter-panel mb-3" method="get">
+      <div class="filter-panel__header">
+        <div>
+          <div class="text-uppercase text-muted fw-semibold small mb-1">{% trans "Filters" %}</div>
+          <div class="text-muted small mb-0">{% trans "Search across attempts or narrow by quiz and classroom." %}</div>
+        </div>
+        <div class="filter-panel__meta text-muted small">
+          {% blocktrans with count=page_obj.paginator.count %}Results: {{ count }}{% endblocktrans %}
+        </div>
       </div>
-      <div class="col-12 col-md-4">
-        <label class="form-label small mb-1">{% trans "Quiz" %}</label>
-        <select class="form-select form-select-sm filter-pill" name="quiz">
-          <option value="">{% trans "All" %}</option>
-          {% for quiz in quizzes %}
-            <option value="{{ quiz.id }}" {% if filter_quiz == quiz.id|stringformat:"s" %}selected{% endif %}>{{ quiz.title }}</option>
-          {% endfor %}
-        </select>
+
+      <div class="filter-grid">
+        <div class="filter-field">
+          <label class="form-label small mb-1" for="filter-search">{% trans "Search" %}</label>
+          <input id="filter-search" class="form-control form-control-sm filter-pill" type="text" name="q" placeholder="{% trans 'Username, name, or quiz' %}" value="{{ filter_search }}">
+        </div>
+        <div class="filter-field">
+          <label class="form-label small mb-1" for="filter-student">{% trans "Student name" %}</label>
+          <input id="filter-student" class="form-control form-control-sm filter-pill" type="text" name="participant_name" placeholder="{% trans 'Search by student name' %}" value="{{ filter_participant_name }}">
+        </div>
+        <div class="filter-field">
+          <label class="form-label small mb-1" for="filter-quiz">{% trans "Quiz" %}</label>
+          <select id="filter-quiz" class="form-select form-select-sm filter-pill" name="quiz">
+            <option value="">{% trans "All" %}</option>
+            {% for quiz in quizzes %}
+              <option value="{{ quiz.id }}" {% if filter_quiz == quiz.id|stringformat:"s" %}selected{% endif %}>{{ quiz.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="filter-field">
+          <label class="form-label small mb-1" for="filter-classroom">{% trans "Classroom" %}</label>
+          <select id="filter-classroom" class="form-select form-select-sm filter-pill" name="classroom">
+            <option value="">{% trans "All" %}</option>
+            {% for classroom in classrooms %}
+              <option value="{{ classroom.slug }}" {% if filter_classroom == classroom.slug %}selected{% endif %}>{{ classroom.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
-      <div class="col-12 col-md-4">
-        <label class="form-label small mb-1">{% trans "Classroom" %}</label>
-        <select class="form-select form-select-sm filter-pill" name="classroom">
-          <option value="">{% trans "All" %}</option>
-          {% for classroom in classrooms %}
-            <option value="{{ classroom.slug }}" {% if filter_classroom == classroom.slug %}selected{% endif %}>{{ classroom.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-12 col-md-3">
-        <label class="form-label small mb-1">{% trans "User ID" %}</label>
-        <input class="form-control form-control-sm filter-pill" type="text" name="user" value="{{ filter_user }}">
-      </div>
-      <div class="col-12 col-md-1">
-        <button class="btn btn-primary w-100 btn-sm" type="submit">{% trans "Filter" %}</button>
-      </div>
-      <div class="col-12 col-md-1">
-        <a class="btn btn-outline-secondary w-100 btn-sm" href="{% url 'blockly_quiz:scores-admin' %}">{% trans "Reset" %}</a>
+
+      <div class="filter-actions filter-actions-bar">
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:scores-admin' %}">{% trans "Reset filters" %}</a>
+        <button class="btn btn-primary btn-sm" type="submit">{% trans "Apply filters" %}</button>
       </div>
     </form>
 
@@ -136,7 +163,19 @@
               </tr>
             {% empty %}
               <tr>
-                <td colspan="8" class="text-center text-muted py-3">{% trans "No attempts found." %}</td>
+                <td colspan="8">
+                  <div class="table-empty">
+                    <div class="table-empty__icon" aria-hidden="true"></div>
+                    <div class="table-empty__copy">
+                      <div class="fw-semibold mb-1">{% trans "No attempts match your filters" %}</div>
+                      <p class="text-muted small mb-3">{% trans "Try a broader search or clear filters to see all attempts." %}</p>
+                      <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <a class="btn btn-primary btn-sm" href="{% url 'blockly_quiz:scores-admin' %}">{% trans "Reset filters" %}</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:list' %}">{% trans "Back to quizzes" %}</a>
+                      </div>
+                    </div>
+                  </div>
+                </td>
               </tr>
             {% endfor %}
           </tbody>

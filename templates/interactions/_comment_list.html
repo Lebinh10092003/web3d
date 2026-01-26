@@ -2,175 +2,207 @@
 <div id="comment-list" class="comment-list">
   {% for comment in comments %}
     {% if not comment.is_deleted or editing_comment_id == comment.id %}
-    <div class="comment">
-      <div class="comment-header">
-        <div class="comment-avatar">
-          {% if comment.user.avatar_path %}
-            <img src="{{ comment.user.avatar_path }}" alt="{% trans 'Avatar' %}" loading="lazy">
-          {% else %}
-            <img src="{% static 'img/avatar.jpg' %}" alt="{% trans 'Avatar' %}" loading="lazy">
-          {% endif %}
-        </div>
-        <div class="comment-info">
-          <div class="comment-author">{{ comment.user.display_name|default:comment.user.username }}</div>
-          <div class="comment-meta-line">
-            <span class="comment-date">{{ comment.created_at|date:"DATE_FORMAT" }}</span>
-            {% if comment.updated_at and comment.updated_at != comment.created_at %}
-              <span class="comment-edited">{% trans "Edited" %} {{ comment.updated_at|date:"DATE_FORMAT" }}</span>
-            {% endif %}
+      <div class="comment card border-0 shadow-sm mazer-comment-item">
+        <div class="comment-header d-flex gap-3">
+          <div class="comment-avatar">
+            <span class="avatar avatar-lg bg-light-subtle text-primary-emphasis">
+              {% if comment.user.avatar_path %}
+                <img src="{{ comment.user.avatar_path }}" alt="{% trans 'Avatar' %}" loading="lazy">
+              {% else %}
+                <img src="{% static 'img/avatar.jpg' %}" alt="{% trans 'Avatar' %}" loading="lazy">
+              {% endif %}
+            </span>
+          </div>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+              <div>
+                <div class="comment-author fw-semibold">{{ comment.user.display_name|default:comment.user.username }}</div>
+                <div class="comment-meta-line small text-muted d-flex flex-wrap gap-2 align-items-center">
+                  <span class="comment-date">
+                    {{ comment.created_at|date:"DATE_FORMAT" }}
+                  </span>
+                  {% if comment.updated_at and comment.updated_at != comment.created_at %}
+                    <span class="badge bg-light text-secondary-emphasis border">{% trans "Edited" %} {{ comment.updated_at|date:"DATE_FORMAT" }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% if request.user.is_authenticated %}
+                {% if request.user.is_staff or request.user.id == comment.user_id %}
+                  <div class="comment-actions d-flex flex-wrap gap-2">
+                    <button
+                      class="btn btn-light btn-sm"
+                      type="button"
+                      hx-get="{% url 'interactions:comment-edit' content.id comment.id %}"
+                      hx-target="#comment-list"
+                      hx-swap="outerHTML"
+                    >
+                      <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{% trans "Edit" %}
+                    </button>
+                    <form
+                      method="post"
+                      hx-post="{% url 'interactions:comment-delete' content.id comment.id %}"
+                      hx-target="#comment-list"
+                      hx-swap="outerHTML"
+                      class="d-inline"
+                    >
+                      {% csrf_token %}
+                      <button class="btn btn-outline-danger btn-sm" type="submit">
+                        <i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}
+                      </button>
+                    </form>
+                  </div>
+                {% endif %}
+              {% endif %}
+            </div>
+            <div class="comment-body mt-2">
+              {% if editing_comment_id == comment.id %}
+                <form
+                  method="post"
+                  class="form comment-edit-form d-flex flex-column gap-2"
+                  hx-post="{% url 'interactions:comment-edit' content.id comment.id %}"
+                  hx-target="#comment-list"
+                  hx-swap="outerHTML"
+                >
+                  {% csrf_token %}
+                  {{ edit_form.body.errors }}
+                  {{ edit_form.body }}
+                  <div class="comment-actions d-flex flex-wrap gap-2">
+                    <button class="btn btn-primary btn-sm" type="submit">
+                      <i class="bi bi-check2 me-1" aria-hidden="true"></i>{% trans "Save" %}
+                    </button>
+                    <button
+                      class="btn btn-outline-secondary btn-sm"
+                      type="button"
+                      hx-get="{% url 'interactions:comment-edit' content.id comment.id %}?cancel=1"
+                      hx-target="#comment-list"
+                      hx-swap="outerHTML"
+                    >{% trans "Cancel" %}</button>
+                  </div>
+                </form>
+              {% else %}
+                <p class="mb-0">{{ comment.body }}</p>
+              {% endif %}
+            </div>
           </div>
         </div>
+
+        {% if comment.replies.all %}
+          <div class="comment-replies border-start ps-4 ms-4 mt-3 d-flex flex-column gap-3">
+            {% for reply in comment.replies.all %}
+              {% if not reply.is_deleted or editing_comment_id == reply.id %}
+                <div class="comment comment-reply card border-0 shadow-none">
+                  <div class="comment-header d-flex gap-3">
+                    <div class="comment-avatar">
+                      <span class="avatar bg-light text-primary-emphasis">
+                        {% if reply.user.avatar_path %}
+                          <img src="{{ reply.user.avatar_path }}" alt="{% trans 'Avatar' %}" loading="lazy">
+                        {% else %}
+                          <img src="{% static 'img/avatar.jpg' %}" alt="{% trans 'Avatar' %}" loading="lazy">
+                        {% endif %}
+                      </span>
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                        <div>
+                          <div class="comment-author fw-semibold">{{ reply.user.display_name|default:reply.user.username }}</div>
+                          <div class="comment-meta-line small text-muted d-flex flex-wrap gap-2 align-items-center">
+                            <span class="comment-date">{{ reply.created_at|date:"DATE_FORMAT" }}</span>
+                            {% if reply.updated_at and reply.updated_at != reply.created_at %}
+                              <span class="badge bg-light text-secondary-emphasis border">{% trans "Edited" %} {{ reply.updated_at|date:"DATE_FORMAT" }}</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                        {% if request.user.is_authenticated %}
+                          {% if request.user.is_staff or request.user.id == reply.user_id %}
+                            <div class="comment-actions d-flex flex-wrap gap-2">
+                              <button
+                                class="btn btn-light btn-sm"
+                                type="button"
+                                hx-get="{% url 'interactions:comment-edit' content.id reply.id %}"
+                                hx-target="#comment-list"
+                                hx-swap="outerHTML"
+                              >
+                                <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{% trans "Edit" %}
+                              </button>
+                              <form
+                                method="post"
+                                hx-post="{% url 'interactions:comment-delete' content.id reply.id %}"
+                                hx-target="#comment-list"
+                                hx-swap="outerHTML"
+                                class="d-inline"
+                              >
+                                {% csrf_token %}
+                                <button class="btn btn-outline-danger btn-sm" type="submit">
+                                  <i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}
+                                </button>
+                              </form>
+                            </div>
+                          {% endif %}
+                        {% endif %}
+                      </div>
+                      <div class="comment-body mt-2">
+                        {% if editing_comment_id == reply.id %}
+                          <form
+                            method="post"
+                            class="form comment-edit-form d-flex flex-column gap-2"
+                            hx-post="{% url 'interactions:comment-edit' content.id reply.id %}"
+                            hx-target="#comment-list"
+                            hx-swap="outerHTML"
+                          >
+                            {% csrf_token %}
+                            {{ edit_form.body.errors }}
+                            {{ edit_form.body }}
+                            <div class="comment-actions d-flex flex-wrap gap-2">
+                              <button class="btn btn-primary btn-sm" type="submit">
+                                <i class="bi bi-check2 me-1" aria-hidden="true"></i>{% trans "Save" %}
+                              </button>
+                              <button
+                                class="btn btn-outline-secondary btn-sm"
+                                type="button"
+                                hx-get="{% url 'interactions:comment-edit' content.id reply.id %}?cancel=1"
+                                hx-target="#comment-list"
+                                hx-swap="outerHTML"
+                              >{% trans "Cancel" %}</button>
+                            </div>
+                          </form>
+                        {% else %}
+                          <p class="mb-0">{{ reply.body }}</p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
+
         {% if request.user.is_authenticated %}
-          {% if request.user.is_staff or request.user.id == comment.user_id %}
-            <div class="comment-actions comment-actions-header">
-              <button
-                class="button button-ghost"
-                type="button"
-                hx-get="{% url 'interactions:comment-edit' content.id comment.id %}"
-                hx-target="#comment-list"
-                hx-swap="outerHTML"
-              >{% trans "Edit" %}</button>
+          <div class="comment-reply-toggle mt-3">
+            <details class="comment-reply-accordion">
+              <summary class="text-primary fw-semibold">{% trans "Reply" %}</summary>
               <form
                 method="post"
-                hx-post="{% url 'interactions:comment-delete' content.id comment.id %}"
+                class="form comment-reply-form mt-2"
+                hx-post="{% url 'interactions:comment' content.id %}"
                 hx-target="#comment-list"
                 hx-swap="outerHTML"
               >
                 {% csrf_token %}
-                <button class="button button-ghost" type="submit">{% trans "Delete" %}</button>
+                <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                <textarea class="form-control" name="body" rows="3" placeholder="{% trans 'Write a reply' %}" required></textarea>
+                <div class="comment-actions d-flex gap-2 mt-2">
+                  <button class="btn btn-outline-primary btn-sm" type="submit">
+                    <i class="bi bi-arrow-return-left me-1" aria-hidden="true"></i>{% trans "Reply" %}
+                  </button>
+                </div>
               </form>
-            </div>
-          {% endif %}
+            </details>
+          </div>
         {% endif %}
       </div>
-
-      <div class="comment-body">
-        {% if editing_comment_id == comment.id %}
-          <form
-            method="post"
-            class="form comment-edit-form"
-            hx-post="{% url 'interactions:comment-edit' content.id comment.id %}"
-            hx-target="#comment-list"
-            hx-swap="outerHTML"
-          >
-            {% csrf_token %}
-            {{ edit_form.body.errors }}
-            {{ edit_form.body }}
-            <div class="comment-actions comment-actions-inline">
-              <button class="button button-ghost" type="submit">{% trans "Save" %}</button>
-              <button
-                class="button button-ghost"
-                type="button"
-                hx-get="{% url 'interactions:comment-edit' content.id comment.id %}?cancel=1"
-                hx-target="#comment-list"
-                hx-swap="outerHTML"
-              >{% trans "Cancel" %}</button>
-            </div>
-          </form>
-        {% else %}
-          <p>{{ comment.body }}</p>
-        {% endif %}
-      </div>
-
-      {% if comment.replies.all %}
-        <div class="comment-replies">
-          {% for reply in comment.replies.all %}
-            {% if not reply.is_deleted or editing_comment_id == reply.id %}
-            <div class="comment comment-reply">
-              <div class="comment-header">
-                <div class="comment-avatar">
-                  {% if reply.user.avatar_path %}
-                    <img src="{{ reply.user.avatar_path }}" alt="{% trans 'Avatar' %}" loading="lazy">
-                  {% else %}
-                    <img src="{% static 'img/avatar.jpg' %}" alt="{% trans 'Avatar' %}" loading="lazy">
-                  {% endif %}
-                </div>
-                <div class="comment-info">
-                  <div class="comment-author">{{ reply.user.display_name|default:reply.user.username }}</div>
-                  <div class="comment-meta-line">
-                    <span class="comment-date">{{ reply.created_at|date:"DATE_FORMAT" }}</span>
-                    {% if reply.updated_at and reply.updated_at != reply.created_at %}
-                      <span class="comment-edited">{% trans "Edited" %} {{ reply.updated_at|date:"DATE_FORMAT" }}</span>
-                    {% endif %}
-                  </div>
-                </div>
-                {% if request.user.is_authenticated %}
-                  {% if request.user.is_staff or request.user.id == reply.user_id %}
-                    <div class="comment-actions comment-actions-header">
-                      <button
-                        class="button button-ghost"
-                        type="button"
-                        hx-get="{% url 'interactions:comment-edit' content.id reply.id %}"
-                        hx-target="#comment-list"
-                        hx-swap="outerHTML"
-                      >{% trans "Edit" %}</button>
-                      <form
-                        method="post"
-                        hx-post="{% url 'interactions:comment-delete' content.id reply.id %}"
-                        hx-target="#comment-list"
-                        hx-swap="outerHTML"
-                      >
-                        {% csrf_token %}
-                        <button class="button button-ghost" type="submit">{% trans "Delete" %}</button>
-                      </form>
-                    </div>
-                  {% endif %}
-                {% endif %}
-              </div>
-
-              <div class="comment-body">
-                {% if editing_comment_id == reply.id %}
-                  <form
-                    method="post"
-                    class="form comment-edit-form"
-                    hx-post="{% url 'interactions:comment-edit' content.id reply.id %}"
-                    hx-target="#comment-list"
-                    hx-swap="outerHTML"
-                  >
-                    {% csrf_token %}
-                    {{ edit_form.body.errors }}
-                    {{ edit_form.body }}
-                    <div class="comment-actions comment-actions-inline">
-                      <button class="button button-ghost" type="submit">{% trans "Save" %}</button>
-                      <button
-                        class="button button-ghost"
-                        type="button"
-                        hx-get="{% url 'interactions:comment-edit' content.id reply.id %}?cancel=1"
-                        hx-target="#comment-list"
-                        hx-swap="outerHTML"
-                      >{% trans "Cancel" %}</button>
-                    </div>
-                  </form>
-                {% else %}
-                  <p>{{ reply.body }}</p>
-                {% endif %}
-              </div>
-            </div>
-            {% endif %}
-          {% endfor %}
-        </div>
-      {% endif %}
-
-      {% if request.user.is_authenticated %}
-        <details class="comment-reply-toggle">
-          <summary>{% trans "Reply" %}</summary>
-          <form
-            method="post"
-            class="form comment-reply-form"
-            hx-post="{% url 'interactions:comment' content.id %}"
-            hx-target="#comment-list"
-            hx-swap="outerHTML"
-          >
-            {% csrf_token %}
-            <input type="hidden" name="parent_id" value="{{ comment.id }}">
-            <textarea name="body" rows="3" placeholder="{% trans 'Write a reply' %}" required></textarea>
-            <button class="button button-ghost" type="submit">{% trans "Reply" %}</button>
-          </form>
-        </details>
-      {% endif %}
-    </div>
     {% endif %}
   {% empty %}
-    <div class="empty-state">{% trans "No comments yet. Be the first to share tips." %}</div>
+    <div class="empty-state alert alert-light border">{% trans "No comments yet. Be the first to share tips." %}</div>
   {% endfor %}
 </div>

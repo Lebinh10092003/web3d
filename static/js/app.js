@@ -11,20 +11,6 @@ function getAuthModal() {
   return document.getElementById("auth-modal");
 }
 
-function openAuthModal() {
-  const modal = getAuthModal();
-  if (modal && !modal.open) {
-    modal.showModal();
-  }
-}
-
-function closeAuthModal() {
-  const modal = getAuthModal();
-  if (modal && modal.open) {
-    modal.close();
-  }
-}
-
 function getContactModal() {
   return document.getElementById("contact-modal");
 }
@@ -37,39 +23,105 @@ function getOwnerModal() {
   return document.getElementById("owner-modal");
 }
 
-function openContactModal() {
-  const modal = getContactModal();
-  if (modal && !modal.open) {
-    modal.showModal();
+function resolveModalElement(target) {
+  if (typeof target === "string") {
+    return document.getElementById(target);
   }
+  return target || null;
+}
+
+function getModalController(target) {
+  const modal = resolveModalElement(target);
+  if (!modal) {
+    return null;
+  }
+  if (window.bootstrap && bootstrap.Modal) {
+    return bootstrap.Modal.getOrCreateInstance(modal);
+  }
+  if (typeof modal.showModal === "function") {
+    return {
+      show: () => modal.showModal(),
+      hide: () => modal.close()
+    };
+  }
+  return null;
+}
+
+function cleanupModalArtifacts() {
+  const anyOpenModal = document.querySelector(".modal.show");
+  if (!anyOpenModal) {
+    document.querySelectorAll(".modal-backdrop").forEach((backdrop) => backdrop.remove());
+    document.body.classList.remove("modal-open");
+    document.body.style.removeProperty("padding-right");
+  }
+}
+
+function showModal(target) {
+  const modal = resolveModalElement(target);
+  if (!modal) {
+    return;
+  }
+  const controller = getModalController(modal);
+  if (controller && typeof controller.show === "function") {
+    controller.show();
+    return;
+  }
+    modal.classList.add("show");
+    modal.style.display = "block";
+    modal.removeAttribute("aria-hidden");
+    document.body.classList.add("modal-open");
+  }
+
+function hideModal(target) {
+  const modal = resolveModalElement(target);
+  if (!modal) {
+    return;
+  }
+  const controller = getModalController(modal);
+  if (controller && typeof controller.hide === "function") {
+    controller.hide();
+    return;
+  }
+  if (modal.classList.contains("show")) {
+    modal.classList.remove("show");
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+    cleanupModalArtifacts();
+    return;
+  }
+  if (typeof modal.close === "function") {
+    modal.close();
+  }
+  cleanupModalArtifacts();
+}
+
+function openAuthModal() {
+  showModal(getAuthModal());
+}
+
+function closeAuthModal() {
+  hideModal(getAuthModal());
+}
+
+function openContactModal() {
+  showModal(getContactModal());
 }
 
 function openPointsModal() {
-  const modal = getPointsModal();
-  if (modal && !modal.open) {
-    modal.showModal();
-  }
+  showModal(getPointsModal());
 }
 
 function openOwnerModal() {
-  const modal = getOwnerModal();
-  if (modal && !modal.open) {
-    modal.showModal();
-  }
+  showModal(getOwnerModal());
 }
 
 function closeOwnerModal() {
-  const modal = getOwnerModal();
-  if (modal && modal.open) {
-    modal.close();
-  }
+  hideModal(getOwnerModal());
 }
 
 function closeContactModal() {
-  const modal = getContactModal();
-  if (modal && modal.open) {
-    modal.close();
-  }
+  hideModal(getContactModal());
 }
 
 function resolveAlertIcon(tags) {
@@ -214,7 +266,7 @@ function handleHtmxTriggerHeaders(xhr) {
 }
 
 function bindBackdropClose(modal) {
-  if (!modal) {
+  if (!modal || typeof modal.showModal !== "function") {
     return;
   }
 
@@ -457,8 +509,12 @@ let userMenuDocBound = false;
 function setUserMenuOpen(menu, open) {
   menu.classList.toggle("is-open", open);
   const toggle = menu.querySelector("[data-user-menu-toggle]");
+  const dropdown = menu.querySelector("[data-user-menu-dropdown]");
   if (toggle) {
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  if (dropdown) {
+    dropdown.classList.toggle("show", open);
   }
 }
 
@@ -467,6 +523,7 @@ function bindUserMenu() {
   if (!menus.length) {
     return;
   }
+  const hasBootstrapDropdown = Boolean(window.bootstrap && bootstrap.Dropdown);
   menus.forEach((menu) => {
     if (menu.dataset.userMenuBound === "true") {
       return;
@@ -477,6 +534,20 @@ function bindUserMenu() {
       return;
     }
     menu.dataset.userMenuBound = "true";
+    if (hasBootstrapDropdown) {
+      const dropdownInstance = bootstrap.Dropdown.getOrCreateInstance(toggle, {
+        popperConfig: {
+          strategy: "fixed"
+        }
+      });
+      dropdown.addEventListener("click", (event) => {
+        const action = event.target.closest(".user-menu-link, button");
+        if (action) {
+          dropdownInstance.hide();
+        }
+      });
+      return;
+    }
     toggle.addEventListener("click", (event) => {
       event.preventDefault();
       const isOpen = menu.classList.contains("is-open");
@@ -489,7 +560,7 @@ function bindUserMenu() {
       }
     });
   });
-  if (userMenuDocBound) {
+  if (hasBootstrapDropdown || userMenuDocBound) {
     return;
   }
   userMenuDocBound = true;
@@ -985,6 +1056,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindDownloadBanner();
   bindPolicyTabs();
   bindOwnerTriggers();
+  document.addEventListener("hidden.bs.modal", cleanupModalArtifacts);
   if (window.__djangoMessages) {
     showSweetAlerts(window.__djangoMessages);
   }
@@ -1004,6 +1076,7 @@ document.addEventListener("htmx:afterSwap", (event) => {
       openAuthModal();
     }
   }
+  cleanupModalArtifacts();
   bindRecapLibrary();
   bindDownloadBanner();
   bindPointsTriggers();
@@ -1022,6 +1095,7 @@ document.addEventListener("htmx:beforeRequest", (event) => {
   }
   cancelOwnerModalOpen();
   closeOwnerModal();
+  cleanupModalArtifacts();
 });
 
 document.addEventListener("click", (event) => {
@@ -1032,9 +1106,9 @@ document.addEventListener("click", (event) => {
     }
     return;
   }
-  const dialog = closeButton.closest("dialog");
-  if (dialog && dialog.open) {
-    dialog.close();
+  const modalRoot = closeButton.closest(".modal, dialog");
+  if (modalRoot) {
+    hideModal(modalRoot);
     return;
   }
   closeAuthModal();

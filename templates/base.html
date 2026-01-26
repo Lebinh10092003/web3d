@@ -25,7 +25,9 @@
   <meta name="twitter:title" content="{% block twitter_title %}{{ DEFAULT_META_TITLE }}{% endblock %}">
   <meta name="twitter:description" content="{% block twitter_description %}{{ DEFAULT_META_DESCRIPTION }}{% endblock %}">
   <meta name="twitter:image" content="{% block twitter_image %}{{ DEFAULT_OG_IMAGE }}{% endblock %}">
+  <link rel="stylesheet" href="{% static 'css/bootstrap_layered.css' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   {% if ADSENSE_CLIENT %}
@@ -115,9 +117,17 @@
         <span>{% trans "About" %}</span>
       </a>
       {% if request.user.is_authenticated %}
-        <div class="user-menu" data-user-menu>
-          <button class="user-chip user-menu-toggle" type="button" aria-haspopup="menu" aria-expanded="false" data-user-menu-toggle>
-            <span class="user-avatar">
+        <div class="dropdown user-menu" data-user-menu>
+          <button
+            class="btn btn-light user-chip user-menu-toggle dropdown-toggle"
+            type="button"
+            id="userMenuDropdown"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            data-user-menu-toggle
+            data-bs-toggle="dropdown"
+          >
+            <span class="avatar avatar-sm user-avatar">
               {% if request.user.avatar_path %}
                 <img src="{{ request.user.avatar_path }}" alt="Avatar">
               {% else %}
@@ -130,43 +140,52 @@
                 {% blocktrans with points=request.user.points_balance %}{{ points }} pts{% endblocktrans %}
               </span>
             </span>
-            <svg class="icon user-menu-caret" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
           </button>
-          <div class="user-menu-dropdown" role="menu" data-user-menu-dropdown>
-            <a
-              class="user-menu-link"
-              role="menuitem"
-              href="{% url 'accounts:profile' %}?section=personal"
-            >{% trans "Your profile" %}</a>
-            <a
-              class="user-menu-link"
-              role="menuitem"
-              href="{% url 'accounts:profile' %}?section=public"
-            >{% trans "Your published items" %}</a>
-            <a
-              class="user-menu-link"
-              role="menuitem"
-              href="{% url 'accounts:profile' %}?section=favorites"
-            >{% trans "Favorite models" %}</a>
-            <a
-              class="user-menu-link"
-              role="menuitem"
-              href="{% url 'accounts:profile' %}?section=courses"
-            >{% trans "My library" %}</a>
-            <div class="user-menu-divider" aria-hidden="true"></div>
-            <form action="{% url 'accounts:logout' %}" method="post" class="user-menu-form">
-              {% csrf_token %}
-              <button class="user-menu-link" type="submit" role="menuitem">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M16 17l5-5-5-5M21 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M13 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>{% trans "Logout" %}</span>
-              </button>
-            </form>
-          </div>
+          <ul
+            class="dropdown-menu dropdown-menu-end user-menu-dropdown shadow"
+            role="menu"
+            aria-labelledby="userMenuDropdown"
+            data-user-menu-dropdown
+          >
+            <li>
+              <a
+                class="dropdown-item user-menu-link"
+                role="menuitem"
+                href="{% url 'accounts:profile' %}?section=personal"
+              >{% trans "Your profile" %}</a>
+            </li>
+            <li>
+              <a
+                class="dropdown-item user-menu-link"
+                role="menuitem"
+                href="{% url 'accounts:profile' %}?section=public"
+              >{% trans "Your published items" %}</a>
+            </li>
+            <li>
+              <a
+                class="dropdown-item user-menu-link"
+                role="menuitem"
+                href="{% url 'accounts:profile' %}?section=favorites"
+              >{% trans "Favorite models" %}</a>
+            </li>
+            <li>
+              <a
+                class="dropdown-item user-menu-link"
+                role="menuitem"
+                href="{% url 'accounts:profile' %}?section=courses"
+              >{% trans "My library" %}</a>
+            </li>
+            <li><hr class="dropdown-divider" aria-hidden="true"></li>
+            <li>
+              <form action="{% url 'accounts:logout' %}" method="post" class="user-menu-form">
+                {% csrf_token %}
+                <button class="dropdown-item user-menu-link" type="submit" role="menuitem">
+                  <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>
+                  <span>{% trans "Logout" %}</span>
+                </button>
+              </form>
+            </li>
+          </ul>
         </div>
       {% else %}
         <div class="auth-cta">
@@ -367,19 +386,30 @@
     </div>
   </footer>
 
-  <a class="contact-fab" href="{% url 'contact' %}" aria-label="{% trans 'Contact' %}" aria-haspopup="dialog" aria-controls="contact-modal" data-contact-modal-open>
+  <a
+    class="contact-fab"
+    href="{% url 'contact' %}"
+    aria-label="{% trans 'Contact' %}"
+    aria-haspopup="dialog"
+    aria-controls="contact-modal"
+    data-contact-modal-open
+    data-bs-toggle="modal"
+    data-bs-target="#contact-modal"
+  >
     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M21 12a8 8 0 0 1-8 8H5l2-3a8 8 0 1 1 14-5z" fill="currentColor"/>
     </svg>
     <span>{% trans "Contact" %}</span>
   </a>
 
-  <dialog id="contact-modal" class="auth-modal contact-modal">
-    <div class="auth-modal-content contact-modal-content">
-      <button class="modal-close" type="button" data-modal-close>&times;</button>
-      <div class="contact-modal-body">
-        <div>
-          <h2>{% trans "Contact" %}</h2>
+  <div class="modal fade modal-mazer text-left" id="contact-modal" tabindex="-1" aria-labelledby="contact-modal-title" aria-hidden="true" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="contact-modal-title">{% trans "Contact" %}</h5>
+          <button class="btn-close btn-close-white" type="button" data-bs-dismiss="modal" data-modal-close aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body contact-modal-body">
           <p class="contact-modal-text">
             {% if request.LANGUAGE_CODE == "vi" %}
               Tôi đến từ Việt Nam
@@ -398,132 +428,110 @@
               {% trans "and this website is a place to connect, share, and exchange ideas about STEAM, robotics, and learning resources." %}
             {% endif %}
           </p>
+          {% include "partials/_contact_links.html" %}
         </div>
-        {% comment %}
-        <div class="contact-modal-grid">
-          <a class="contact-item" href="https://www.facebook.com/VPlusSteamLab" target="_blank" rel="noopener noreferrer">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
-            </svg>
-            <div>
-              <div class="contact-label">V+ STEAM LAB Library</div>
-              <div class="contact-value">/VPlusSteamLab</div>
-            </div>
-          </a>
-          <a class="contact-item" href="https://www.facebook.com/lebinh.24082003/" target="_blank" rel="noopener noreferrer">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M15 3h4v4h-4c-1.1 0-2 .9-2 2v3h5l-1 4h-4v8h-4v-8H6v-4h3V9a6 6 0 0 1 6-6z" fill="currentColor"/>
-            </svg>
-            <div>
-              {% if request.LANGUAGE_CODE == "vi" %}
-                <div class="contact-label">Facebook cá nhân</div>
-              {% else %}
-                <div class="contact-label">Personal Facebook</div>
-              {% endif %}
-              <div class="contact-value">/lebinh.24082003</div>
-            </div>
-          </a>
-          <a class="contact-item" href="https://www.tiktok.com/@lebinh240803" target="_blank" rel="noopener noreferrer">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M15 3a6 6 0 0 0 4 2v4a9.6 9.6 0 0 1-4-1v8a6 6 0 1 1-6-6h1v4h-1a2 2 0 1 0 2 2V3h4z" fill="currentColor"/>
-            </svg>
-            <div>
-              <div class="contact-label">{% trans "TikTok" %}</div>
-              <div class="contact-value">@lebinh240803</div>
-            </div>
-          </a>
-          <a class="contact-item" href="https://zalo.me/0374202948" target="_blank" rel="noopener noreferrer">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M21 12a8 8 0 0 1-8 8H5l2-3a8 8 0 1 1 14-5z" fill="currentColor"/>
-            </svg>
-            <div>
-              <div class="contact-label">{% trans "Zalo chat" %}</div>
-              <div class="contact-value">zalo.me/0374202948</div>
-            </div>
-          </a>
-          <a class="contact-item" href="tel:0374202948">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 5a2 2 0 0 1 2-2h2l2 5-2 1a12 12 0 0 0 6 6l1-2 5 2v2a2 2 0 0 1-2 2A16 16 0 0 1 4 5z" fill="currentColor"/>
-            </svg>
-            <div>
-              <div class="contact-label">{% trans "Phone" %}</div>
-              <div class="contact-value">0374202948</div>
-            </div>
-          </a>
-        </div>
-        {% endcomment %}
-        {% include "partials/_contact_links.html" %}
-      </div>
-    </div>
-  </dialog>
-
-  <dialog id="points-modal" class="auth-modal points-modal">
-    <div class="auth-modal-content points-modal-content">
-      <button class="modal-close" type="button" data-modal-close>&times;</button>
-      <div class="points-modal-body">
-        <h2>{% trans "Get more points" %}</h2>
-        <p class="points-modal-note">
-          {% trans "Choose a quick action to earn or top up points." %}
-        </p>
-        <div class="points-options">
-          <a class="points-option" href="{% url 'contributions:submit' %}">
-            <div class="points-option-title">{% trans "Upload learning material" %}</div>
-            <div class="points-option-desc">
-              {% trans "Submit a PDF or 3D file to earn points after approval." %}
-            </div>
-          </a>
-          <a class="points-option" href="{% url 'gating:points' %}">
-            <div class="points-option-title">{% trans "Buy points" %}</div>
-            <div class="points-option-desc">
-              {% trans "Top up instantly via ZaloPay." %}
-            </div>
-          </a>
+        <div class="modal-footer border-0 pt-0">
+          <button class="btn btn-light" type="button" data-bs-dismiss="modal" data-modal-close>{% trans "Close" %}</button>
         </div>
       </div>
     </div>
-  </dialog>
+  </div>
 
-  <dialog
+  <div class="modal fade modal-mazer text-left" id="points-modal" tabindex="-1" aria-labelledby="points-modal-title" aria-hidden="true" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="points-modal-title">{% trans "Get more points" %}</h5>
+          <button class="btn-close btn-close-white" type="button" data-bs-dismiss="modal" data-modal-close aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body points-modal-body">
+          <p class="points-modal-note mb-3">
+            {% trans "Choose a quick action to earn or top up points." %}
+          </p>
+          <div class="points-options">
+            <a class="points-option" href="{% url 'contributions:submit' %}">
+              <div class="points-option-title">{% trans "Upload learning material" %}</div>
+              <div class="points-option-desc">
+                {% trans "Submit a PDF or 3D file to earn points after approval." %}
+              </div>
+            </a>
+            <a class="points-option" href="{% url 'gating:points' %}">
+              <div class="points-option-title">{% trans "Buy points" %}</div>
+              <div class="points-option-desc">
+                {% trans "Top up instantly via ZaloPay." %}
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button class="btn btn-light" type="button" data-bs-dismiss="modal" data-modal-close>{% trans "Close" %}</button>
+          <a class="btn btn-primary" href="{% url 'gating:points' %}">{% trans "View plans" %}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="modal fade modal-mazer text-left"
     id="owner-modal"
-    class="auth-modal owner-modal"
+    tabindex="-1"
+    aria-labelledby="owner-modal-title"
+    aria-hidden="true"
+    role="dialog"
     data-owner-name-empty="{% if request.LANGUAGE_CODE == 'vi' %}Người dùng{% else %}User{% endif %}"
     data-owner-role-empty="{% if request.LANGUAGE_CODE == 'vi' %}Thành viên cộng đồng{% else %}Community member{% endif %}"
     data-owner-bio-empty="{% if request.LANGUAGE_CODE == 'vi' %}Chưa có giới thiệu.{% else %}No bio yet.{% endif %}"
     data-owner-links-empty="{% if request.LANGUAGE_CODE == 'vi' %}Chưa có liên kết.{% else %}No links yet.{% endif %}"
   >
-    <div class="auth-modal-content owner-modal-content">
-      <button class="modal-close" type="button" data-modal-close>&times;</button>
-      <div class="owner-modal-body">
-        <div class="owner-modal-header">
-          <div class="owner-modal-avatar" aria-hidden="true">
-            <img id="owner-modal-avatar-img" alt="">
-            <span id="owner-modal-avatar-initial" class="owner-modal-initial"></span>
-          </div>
-          <div>
-            <h2 id="owner-modal-name"></h2>
-            <p id="owner-modal-username" class="owner-modal-username"></p>
-            <p id="owner-modal-role" class="owner-modal-role"></p>
-          </div>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title" id="owner-modal-title">{% trans "Owner" %}</h5>
+          <button class="btn-close btn-close-white" type="button" data-bs-dismiss="modal" data-modal-close aria-label="{% trans 'Close' %}"></button>
         </div>
-        <p id="owner-modal-bio" class="owner-modal-bio"></p>
-        <div id="owner-modal-links" class="owner-modal-links"></div>
-        <p id="owner-modal-links-empty" class="owner-modal-empty"></p>
-      </div>
-    </div>
-  </dialog>
-
-  <dialog id="auth-modal" class="auth-modal">
-    <div class="auth-modal-content">
-      <button class="modal-close" type="button" data-modal-close>&times;</button>
-      <div id="auth-modal-body">
-        {% block auth_modal_body %}
-          <div class="modal-placeholder">
-            {% trans "Loading..." %}
+        <div class="modal-body owner-modal-body">
+          <div class="owner-modal-header">
+            <div class="owner-modal-avatar" aria-hidden="true">
+              <img id="owner-modal-avatar-img" alt="">
+              <span id="owner-modal-avatar-initial" class="owner-modal-initial"></span>
+            </div>
+            <div>
+              <h2 id="owner-modal-name"></h2>
+              <p id="owner-modal-username" class="owner-modal-username"></p>
+              <p id="owner-modal-role" class="owner-modal-role"></p>
+            </div>
           </div>
-        {% endblock %}
+          <p id="owner-modal-bio" class="owner-modal-bio"></p>
+          <div id="owner-modal-links" class="owner-modal-links"></div>
+          <p id="owner-modal-links-empty" class="owner-modal-empty"></p>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button class="btn btn-light" type="button" data-bs-dismiss="modal" data-modal-close>{% trans "Close" %}</button>
+        </div>
       </div>
     </div>
-  </dialog>
+  </div>
+
+  <div class="modal fade modal-mazer text-left" id="auth-modal" tabindex="-1" aria-labelledby="auth-modal-title" aria-hidden="true" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="auth-modal-title">{% trans "Account" %}</h5>
+          <button class="btn-close btn-close-white" type="button" data-bs-dismiss="modal" data-modal-close aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body" id="auth-modal-body">
+          {% block auth_modal_body %}
+            <div class="modal-placeholder">
+              {% trans "Loading..." %}
+            </div>
+          {% endblock %}
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button class="btn btn-light" type="button" data-bs-dismiss="modal" data-modal-close>{% trans "Close" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   {% block structured_data %}
   <script type="application/ld+json">
@@ -542,6 +550,7 @@
   {% endblock %}
 
   {% block extra_scripts %}{% endblock %}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{% static 'js/app.js' %}"></script>
 </body>
 </html>

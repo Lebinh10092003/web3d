@@ -1,4 +1,7 @@
 import os
+from urllib.parse import urlparse
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -25,6 +28,10 @@ from library.models import (
 
 from .forms import ProfileForm, UserRegistrationForm
 from .groups import sync_user_role_from_groups
+
+
+ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp"}
+MAX_AVATAR_BYTES = 2 * 1024 * 1024  # 2 MB
 
 
 def _is_modal_request(request):
@@ -90,6 +97,45 @@ def _upload_avatar(file_obj, user_id):
     storage_path = f"avatars/{user_id}/{timestamp}_{safe_name}"
     saved_path = default_storage.save(storage_path, file_obj)
     return default_storage.url(saved_path)
+
+
+def _remove_existing_avatar(user):
+    existing = getattr(user, "avatar_path", "")
+    if not existing:
+        return
+
+    base_url = getattr(default_storage, "base_url", getattr(settings, "MEDIA_URL", "")) or ""
+    candidate_path = ""
+
+    if base_url and existing.startswith(base_url):
+        candidate_path = existing[len(base_url) :].lstrip("/")
+    else:
+        parsed = urlparse(existing)
+        media_url = getattr(settings, "MEDIA_URL", "") or ""
+        if parsed.scheme and parsed.netloc:
+            if media_url and parsed.path.startswith(media_url):
+                candidate_path = parsed.path[len(media_url) :].lstrip("/")
+        elif parsed.path:
+            candidate_path = parsed.path.lstrip("/")
+
+    if candidate_path:
+        try:
+            default_storage.delete(candidate_path)
+        except Exception:
+            # Swallow cleanup errors; do not block the request.
+            pass
+
+
+def _validate_avatar(upload):
+    content_type = getattr(upload, "content_type", "") or ""
+    if content_type and content_type not in ALLOWED_AVATAR_TYPES:
+        return False, _("Please upload a JPG, PNG, or WebP image.")
+
+    size = getattr(upload, "size", 0) or 0
+    if size and size > MAX_AVATAR_BYTES:
+        return False, _("Avatar file is too large (max 2 MB).")
+
+    return True, ""
 
 
 def _attach_previews(contents):
@@ -214,7 +260,12 @@ def _build_course_overview(user, *, request=None, per_page=5, page_param="lesson
         for course_id in course_ids:
             total = total_map.get(course_id, 0)
             done = completed_map.get(course_id, 0)
-            percent = int((done / total) * 100) if total else 0
+            percent = 0
+            if total:
+                raw = round((done / total) * 100)
+                if done and raw == 0:
+                    raw = 1
+                percent = min(100, raw)
             course_stats[course_id] = {
                 "total": total,
                 "completed": done,
@@ -269,43 +320,26 @@ def profile(request):
             user = form.save(commit=False)
             upload = form.cleaned_data.get("file_upload")
             if upload:
-                try:
-                    upload.seek(0)
-                    user.avatar_path = _upload_avatar(upload, user.id)
-                except Exception as exc:
-                    form.add_error(
-                        None,
-                        _("Avatar upload failed: %(error)s") % {"error": exc},
-                    )
-                    context = _build_profile_lists(request.user)
-                    (
-                        favorite_courses,
-                        recent_lessons,
-                        course_stats,
-                        recent_lessons_page,
-                        lesson_page_query_prefix,
-                        lesson_pagination,
-                    ) = _build_course_overview(request.user, request=request)
-                    context.update(
-                        {
-                            "form": form,
-                            "section": section,
-                            "favorite_courses": favorite_courses,
-                            "recent_lessons": recent_lessons,
-                            "recent_lessons_page": recent_lessons_page,
-                            "lesson_page_query_prefix": lesson_page_query_prefix,
-                            "lesson_pagination": lesson_pagination,
-                            "course_stats": course_stats,
-                        }
-                    )
-                    return render(request, "accounts/profile.html", context)
-            user.save()
-            messages.success(request, _("Profile updated."))
-            return redirect(f"{reverse('accounts:profile')}?section=personal")
+                is_valid, error = _validate_avatar(upload)
+                if not is_valid:
+                    form.add_error(None, error)
+                else:
+                    try:
+                        upload.seek(0)
+                        _remove_existing_avatar(user)
+                        user.avatar_path = _upload_avatar(upload, user.id)
+                    except Exception as exc:
+                        form.add_error(
+                            None,
+                            _("Avatar upload failed: %(error)s") % {"error": exc},
+                        )
+            if not form.errors:
+                user.save()
+                messages.success(request, _("Profile updated."))
+                return redirect(f"{reverse('accounts:profile')}?section=personal")
     else:
         form = ProfileForm(instance=request.user)
 
-    context = _build_profile_lists(request.user)
     (
         favorite_courses,
         recent_lessons,
@@ -314,6 +348,7 @@ def profile(request):
         lesson_page_query_prefix,
         lesson_pagination,
     ) = _build_course_overview(request.user, request=request)
+    context = _build_profile_lists(request.user)
     context.update(
         {
             "form": form,
@@ -344,20 +379,23 @@ def profile_section(request, section):
                 user = form.save(commit=False)
                 upload = form.cleaned_data.get("file_upload")
                 if upload:
-                    try:
-                        upload.seek(0)
-                        user.avatar_path = _upload_avatar(upload, user.id)
-                    except Exception as exc:
-                        form.add_error(
-                            None,
-                            _("Avatar upload failed: %(error)s") % {"error": exc},
-                        )
-                        context = _build_profile_lists(request.user)
-                        context.update({"form": form, "section": section})
-                        return render(request, "accounts/profile_modal.html", context)
-                user.save()
-                messages.success(request, _("Profile updated."))
-                form = ProfileForm(instance=request.user)
+                    is_valid, error = _validate_avatar(upload)
+                    if not is_valid:
+                        form.add_error(None, error)
+                    else:
+                        try:
+                            upload.seek(0)
+                            _remove_existing_avatar(user)
+                            user.avatar_path = _upload_avatar(upload, user.id)
+                        except Exception as exc:
+                            form.add_error(
+                                None,
+                                _("Avatar upload failed: %(error)s") % {"error": exc},
+                            )
+                if not form.errors:
+                    user.save()
+                    messages.success(request, _("Profile updated."))
+                    form = ProfileForm(instance=request.user)
         else:
             form = ProfileForm(instance=request.user)
     elif request.method == "POST" and not is_htmx:

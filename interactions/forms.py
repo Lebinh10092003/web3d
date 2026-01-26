@@ -5,8 +5,9 @@ class CommentForm(forms.Form):
     body = forms.CharField(
         widget=forms.Textarea(
             attrs={
-                "rows": 4,
+                "rows": 3,
                 "placeholder": "Share a constructive note",
+                "class": "form-control",
             }
         )
     )

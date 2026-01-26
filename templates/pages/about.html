@@ -120,10 +120,14 @@
   <div class="brand-card">
     {% if request.LANGUAGE_CODE == "vi" %}
       <h2>Logo & màu thương hiệu</h2>
-      <p class="brand-note">Bộ nhận diện sử dụng màu xanh làm điểm nhấn cho tinh thần “tươi – hiện đại – công nghệ”.</p>
+      <p class="brand-note">
+        V trong V+ là Việt Nam: mang ý nghĩa “tự hào nguồn gốc, hướng ra thế giới”. Màu xanh lá chủ đạo tượng trưng cho sự sáng tạo, bền vững và tinh thần khám phá STEAM.
+      </p>
     {% else %}
       <h2>Logo & brand colors</h2>
-      <p class="brand-note">Our identity uses vibrant greens to reflect a fresh, modern, tech-forward spirit.</p>
+      <p class="brand-note">
+        The “V” in V+ stands for Vietnam—proud roots with a global outlook. The primary green signals creativity, sustainability, and the exploratory spirit of STEAM.
+      </p>
     {% endif %}
 
     <div class="brand-assets">
@@ -136,14 +140,14 @@
           <span class="brand-swatch-color brand-swatch-color--accent"></span>
           <div>
             {% if request.LANGUAGE_CODE == "vi" %}<div class="brand-swatch-label">Màu nhấn</div>{% else %}<div class="brand-swatch-label">Accent</div>{% endif %}
-            <div class="brand-swatch-value">#45E06B</div>
+            <div class="brand-swatch-value">#1F6FD5</div>
           </div>
         </div>
         <div class="brand-swatch">
           <span class="brand-swatch-color brand-swatch-color--secondary"></span>
           <div>
             {% if request.LANGUAGE_CODE == "vi" %}<div class="brand-swatch-label">Màu phụ</div>{% else %}<div class="brand-swatch-label">Secondary</div>{% endif %}
-            <div class="brand-swatch-value">#39D2C2</div>
+            <div class="brand-swatch-value">#0F3C88</div>
           </div>
         </div>
       </div>

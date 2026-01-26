@@ -610,18 +610,183 @@ body.random-quiz-page .modal-backdrop {
   border-radius: 10px;
 }
 
-[data-blockly-quiz] .filter-pill-row {
+[data-blockly-quiz] .quiz-admin-shell {
+  max-width: 1240px;
+}
+
+[data-blockly-quiz] .quiz-metric-row .card {
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.12);
+}
+
+[data-blockly-quiz] .metric-card .card-body {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 4px;
+}
+
+[data-blockly-quiz] .metric-card .fs-4 {
+  line-height: 1.1;
+}
+
+[data-blockly-quiz] .quiz-metric-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px dashed var(--quiz-border);
+  background: #f8fafc;
+  border-radius: 16px;
+}
+
+[data-blockly-quiz] .quiz-metric-empty__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(69, 224, 107, 0.18), rgba(76, 110, 245, 0.16));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 10px 24px rgba(15, 23, 42, 0.12);
+  flex: 0 0 auto;
+}
+
+[data-blockly-quiz] .filter-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--quiz-border);
+  background: #fff;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.1);
+}
+
+[data-blockly-quiz] .filter-panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 10px;
-  margin-bottom: 12px;
+}
+
+[data-blockly-quiz] .filter-panel__meta {
+  font-weight: 700;
+}
+
+[data-blockly-quiz] .filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+[data-blockly-quiz] .filter-field {
+  display: grid;
+  gap: 6px;
+}
+
+[data-blockly-quiz] .filter-field label {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #1f2a37;
 }
 
 [data-blockly-quiz] .filter-pill {
   border-radius: 12px;
-  border: 1px solid var(--quiz-border);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+  border: 1px solid #dfe3eb;
+  background: #fff;
+  box-shadow: none;
+  padding: 10px 12px;
+  min-height: 44px;
+  font-weight: 600;
+  color: #0f172a;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+[data-blockly-quiz] .filter-pill:focus {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+[data-blockly-quiz] .filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+[data-blockly-quiz] .filter-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 10px 12px;
+  min-height: 42px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease,
+    background 120ms ease, color 120ms ease;
+}
+
+[data-blockly-quiz] .filter-actions .btn-primary {
+  background: linear-gradient(120deg, var(--accent-strong), var(--accent));
+  border-color: rgba(37, 197, 86, 0.45);
+  box-shadow: 0 12px 26px rgba(37, 197, 86, 0.22);
+}
+
+[data-blockly-quiz] .filter-actions .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(37, 197, 86, 0.28);
+}
+
+[data-blockly-quiz] .filter-actions .btn-outline-secondary {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #1f2a37;
+  background: #fff;
+}
+
+[data-blockly-quiz] .filter-actions .btn-outline-secondary:hover {
+  border-color: rgba(37, 197, 86, 0.45);
+  color: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+[data-blockly-quiz] .filter-actions-bar {
+  padding-top: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+[data-blockly-quiz] .table-empty {
+  padding: 16px;
+  margin: 8px 0;
+  text-align: center;
+  border-radius: 14px;
+  border: 1px dashed var(--quiz-border);
+  background: #f8fafc;
+}
+
+[data-blockly-quiz] .table-empty__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  margin: 0 auto 8px;
+  background: linear-gradient(135deg, rgba(76, 110, 245, 0.16), rgba(69, 224, 107, 0.18));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+[data-blockly-quiz] .table-empty__copy {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+@media (max-width: 576px) {
+  [data-blockly-quiz] .filter-panel {
+    padding: 14px;
+  }
+}
+
+@media (min-width: 992px) {
+  [data-blockly-quiz] .filter-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 [data-blockly-quiz] .table th {

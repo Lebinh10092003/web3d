@@ -40,9 +40,12 @@ RANDOM_QUIZ_DEFAULT_TYPE = "blockly"
 TEACHER_GROUP_NAME = "Teacher V"
 
 
-def _build_page_query_prefix(request, param_name: str) -> str:
+def _build_page_query_prefix(request, param_name: str, *, exclude: set[str] | None = None) -> str:
     params = request.GET.copy()
     params.pop(param_name, None)
+    if exclude:
+        for key in exclude:
+            params.pop(key, None)
     base = params.urlencode()
     return f"{base}&" if base else ""
 
@@ -414,6 +417,7 @@ def attempt_admin_list(request):
     classroom_slug = (request.GET.get("classroom") or "").strip()
     user_id_raw = (request.GET.get("user") or "").strip()
     search_query = (request.GET.get("q") or "").strip()
+    participant_name = (request.GET.get("participant_name") or "").strip()
     if quiz_id:
         attempts_qs = attempts_qs.filter(quiz_id=quiz_id)
     if classroom_slug:
@@ -425,6 +429,8 @@ def attempt_admin_list(request):
             user_id = None
         if user_id:
             attempts_qs = attempts_qs.filter(user_id=user_id)
+    if participant_name:
+        attempts_qs = attempts_qs.filter(participant_name__icontains=participant_name)
     if search_query:
         attempts_qs = attempts_qs.filter(
             Q(user__username__icontains=search_query)
@@ -465,7 +471,13 @@ def attempt_admin_list(request):
     classrooms = classrooms_qs.distinct().order_by("name")
     quizzes = Quiz.objects.all().order_by("title")
     template_name = "blockly_quiz/attempt_admin_list.html"
-    if (request.GET.get("modal") or "").strip() == "1":
+    is_modal = (request.GET.get("modal") or "").strip() == "1"
+    page_query_prefix = _build_page_query_prefix(
+        request,
+        "page",
+        exclude={"modal"} if is_modal else None,
+    )
+    if is_modal:
         template_name = "blockly_quiz/partials/attempt_admin_modal.html"
     return render(
         request,
@@ -473,13 +485,14 @@ def attempt_admin_list(request):
         {
             "attempts": page_obj.object_list,
             "page_obj": page_obj,
-            "page_query_prefix": _build_page_query_prefix(request, "page"),
+            "page_query_prefix": page_query_prefix,
             "quizzes": quizzes,
             "classrooms": classrooms,
             "filter_quiz": quiz_id or "",
             "filter_classroom": classroom_slug or "",
             "filter_user": user_id_raw,
             "filter_search": search_query,
+            "filter_participant_name": participant_name,
             "stats": stats,
         },
     )

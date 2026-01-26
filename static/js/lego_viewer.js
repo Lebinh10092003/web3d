@@ -302,6 +302,8 @@ async function initViewer(root) {
   const partsPath = ensureTrailingSlash(root.dataset.partsPath);
   const zoomEnabled = root.dataset.zoomEnabled !== "false";
   const threeBase = root.dataset.threeBase;
+  const userMinDistance = parseNumber(root.dataset.legoMinDistance, 10);
+  const userMaxDistance = parseNumber(root.dataset.legoMaxDistance, 6000);
   const fitOffset = Math.max(
     0.4,
     parseNumber(root.dataset.legoFitOffset, zoomEnabled ? 0.9 : 2.2)
@@ -386,14 +388,14 @@ async function initViewer(root) {
   camera.position.set(camPosX, camPosY, camPosZ);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
+  controls.enableDamping = true;
   controls.dampingFactor = parseNumber(root.dataset.legoDamping, 0.04);
   controls.rotateSpeed = parseNumber(root.dataset.legoRotateSpeed, 1.1);
   controls.enableZoom = zoomEnabled;
   controls.zoomSpeed = parseNumber(root.dataset.legoZoomSpeed, 1.8);
   controls.panSpeed = parseNumber(root.dataset.legoPanSpeed, 1.2);
-  controls.minDistance = parseNumber(root.dataset.legoMinDistance, 10);
-  controls.maxDistance = parseNumber(root.dataset.legoMaxDistance, 6000);
+  controls.minDistance = userMinDistance;
+  controls.maxDistance = userMaxDistance;
 
     setRendererSize(renderer, canvas, camera);
 
@@ -425,6 +427,27 @@ async function initViewer(root) {
     let numSteps = 1;
     let currentStep = 1;
     let viewMode = legoStartModes.get(root) || (root.dataset.legoStartMode === "step" ? "step" : "full");
+    const updateZoomClamp = (distanceHint) => {
+      if (!zoomEnabled) {
+        return;
+      }
+      const dist =
+        Math.max(
+          0.1,
+          Number.isFinite(distanceHint)
+            ? distanceHint
+            : camera.position.distanceTo(controls.target) || 1
+        );
+      let min = Math.max(userMinDistance, dist * 0.25);
+      let max = Math.min(userMaxDistance, dist * 4);
+      if (min >= max) {
+        const mid = Math.max(userMinDistance, Math.min(userMaxDistance, dist || 1));
+        min = Math.max(userMinDistance, mid * 0.5);
+        max = Math.min(userMaxDistance, mid * 2);
+      }
+      controls.minDistance = Math.max(0.1, Math.min(min, max));
+      controls.maxDistance = Math.max(controls.minDistance * 1.1, max);
+    };
 
     const stepTemplate = root.dataset.msgStepLabel || "Step {current}/{total}";
 
@@ -635,7 +658,8 @@ async function initViewer(root) {
 
         applyTransform();
         scene.add(group);
-        fitCamera(THREE, camera, controls, group, fitOffset);
+        const fitResult = fitCamera(THREE, camera, controls, group, fitOffset);
+        updateZoomClamp(fitResult?.distance);
         initialCamera = {
           position: camera.position.clone(),
           target: controls.target.clone(),
@@ -651,7 +675,8 @@ async function initViewer(root) {
             }
             flipped = !flipped;
             applyTransform();
-            fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+            const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+            updateZoomClamp(fitResult?.distance);
             initialCamera = {
               position: camera.position.clone(),
               target: controls.target.clone(),
@@ -676,10 +701,12 @@ async function initViewer(root) {
               if (viewMode === "step") {
                 currentStep = Math.min(Math.max(currentStep, 1), numSteps);
                 applyVisibilityForStep(currentStep);
-                fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+                const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+                updateZoomClamp(fitResult?.distance);
               } else {
                 applyVisibilityForStep(numSteps);
-                fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+                const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+                updateZoomClamp(fitResult?.distance);
               }
               setModeButtons();
               updateStepUI();
@@ -698,7 +725,8 @@ async function initViewer(root) {
             currentStep = clampStep(value);
             applyVisibilityForStep(currentStep);
             updateStepUI();
-            fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+            const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+            updateZoomClamp(fitResult?.distance);
           });
         }
 
@@ -710,7 +738,8 @@ async function initViewer(root) {
             currentStep = clampStep(currentStep - 1);
             applyVisibilityForStep(currentStep);
             updateStepUI();
-            fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+            const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+            updateZoomClamp(fitResult?.distance);
           });
         }
 
@@ -722,7 +751,8 @@ async function initViewer(root) {
             currentStep = clampStep(currentStep + 1);
             applyVisibilityForStep(currentStep);
             updateStepUI();
-            fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+            const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+            updateZoomClamp(fitResult?.distance);
           });
         }
 
@@ -762,7 +792,8 @@ async function initViewer(root) {
         if (!modelGroup) {
           return;
         }
-        fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+        const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
+        updateZoomClamp(fitResult?.distance);
       });
     }
 
@@ -773,6 +804,7 @@ async function initViewer(root) {
         }
         camera.position.copy(initialCamera.position);
         controls.target.copy(initialCamera.target);
+        updateZoomClamp(camera.position.distanceTo(controls.target));
         controls.update();
       });
     }

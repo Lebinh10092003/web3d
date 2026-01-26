@@ -68,8 +68,8 @@
       </select>
     </label>
     <label class="admin-field admin-field--compact">
-      <span class="admin-field__label">{% trans "User ID" %}</span>
-      <input class="form-control form-control-sm" type="text" name="user" value="{{ filter_user }}">
+      <span class="admin-field__label">{% trans "Student name" %}</span>
+      <input class="form-control form-control-sm" type="text" name="participant_name" placeholder="{% trans 'Search by student name' %}" value="{{ filter_participant_name }}">
     </label>
     <div class="admin-field admin-field--actions">
       <button class="button button-xs w-100" type="submit">{% trans "Filter" %}</button>
