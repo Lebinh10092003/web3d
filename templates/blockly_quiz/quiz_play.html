@@ -32,13 +32,13 @@
       <div class="d-flex flex-wrap align-items-center justify-content-end gap-2">
         <div class="quiz-brand-icons quiz-brand-icons--sm" aria-hidden="true">
           {% if quiz.has_blockly %}
-            <img class="quiz-brand-icon" src="{% static 'img/brands/blockly.svg' %}" alt="">
+            <img class="quiz-brand-icon" src="{% static 'img/logo_Blockly.png' %}" alt="Blockly">
           {% endif %}
           {% if quiz.has_scratch %}
-            <img class="quiz-brand-icon" src="{% static 'img/brands/scratch.svg' %}" alt="">
+            <img class="quiz-brand-icon" src="{% static 'img/logo_Scratch.png' %}" alt="Scratch">
           {% endif %}
           {% if quiz.has_code %}
-            <img class="quiz-brand-icon" src="{% static 'img/brands/python.svg' %}" alt="">
+            <img class="quiz-brand-icon" src="{% static 'img/logo_Python.png' %}" alt="Python">
           {% endif %}
         </div>
         <div class="text-muted small" data-quiz-progress-text></div>
@@ -50,13 +50,13 @@
         <h1 class="h4 mb-2">{{ quiz.title }}</h1>
         <div class="quiz-brand-icons quiz-brand-icons--lg mb-3" aria-hidden="true">
           {% if quiz.has_blockly %}
-            <img class="quiz-brand-icon" src="{% static 'img/brands/blockly.svg' %}" alt="">
+            <img class="quiz-brand-icon" src="{% static 'img/logo_Blockly.png' %}" alt="Blockly">
           {% endif %}
           {% if quiz.has_scratch %}
-            <img class="quiz-brand-icon" src="{% static 'img/brands/scratch.svg' %}" alt="">
+            <img class="quiz-brand-icon" src="{% static 'img/logo_Scratch.png' %}" alt="Scratch">
           {% endif %}
           {% if quiz.has_code %}
-            <img class="quiz-brand-icon" src="{% static 'img/brands/python.svg' %}" alt="">
+            <img class="quiz-brand-icon" src="{% static 'img/logo_Python.png' %}" alt="Python">
           {% endif %}
         </div>
         {% if quiz.description %}

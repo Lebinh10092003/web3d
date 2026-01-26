@@ -1,162 +1,191 @@
 {% load i18n %}
-<div class="admin-modal" data-blockly-quiz>
-  <div class="admin-modal__header">
-    <div>
-      <p class="eyebrow text-uppercase mb-1">{% trans "Admin" %}</p>
-      <h2 class="h5 mb-0">{% trans "Quiz attempts" %}</h2>
-    </div>
-    <button type="button" class="button button-ghost button-xs" data-close-dialog aria-label="{% trans 'Close' %}">&times;</button>
-  </div>
+<div
+  class="modal fade"
+  id="adminScoresModal"
+  tabindex="-1"
+  aria-labelledby="adminScoresModalLabel"
+  aria-hidden="true"
+  data-blockly-quiz
+>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow text-uppercase mb-1">{% trans "Admin" %}</p>
+          <h2 class="h5 mb-0" id="adminScoresModalLabel">{% trans "Quiz attempts" %}</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
 
-  <div class="admin-modal__stats">
-    <div class="admin-stat">
-      <div class="admin-stat__label">{% trans "Total attempts" %}</div>
-      <div class="admin-stat__value">{{ stats.total }}</div>
-      <div class="admin-stat__hint">{{ stats.quizzes_count }} {% trans "quizzes" %}</div>
-    </div>
-    <div class="admin-stat">
-      <div class="admin-stat__label">{% trans "Average score" %}</div>
-      <div class="admin-stat__value">{{ stats.avg_score }}%</div>
-      <div class="admin-stat__bar">
-        <span style="width: {{ stats.avg_score }}%"></span>
+      <div class="modal-body">
+        <div class="admin-modal__stats mb-3">
+          <div class="admin-stat">
+            <div class="admin-stat__label">{% trans "Total attempts" %}</div>
+            <div class="admin-stat__value">{{ stats.total }}</div>
+            <div class="admin-stat__hint">{{ stats.quizzes_count }} {% trans "quizzes" %}</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat__label">{% trans "Average score" %}</div>
+            <div class="admin-stat__value">{{ stats.avg_score }}%</div>
+            <div class="admin-stat__bar">
+              <span style="width: {{ stats.avg_score }}%"></span>
+            </div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat__label">{% trans "Best score" %}</div>
+            <div class="admin-stat__value">{{ stats.best_score }}%</div>
+            <div class="admin-stat__hint">{% trans "Highest attempt" %}</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat__label">{% trans "Unique users" %}</div>
+            <div class="admin-stat__value">{{ stats.unique_students }}</div>
+            <div class="admin-stat__hint">{% trans "Students" %}</div>
+          </div>
+          <div class="admin-stat admin-stat--wide">
+            <div class="admin-stat__label d-flex justify-content-between">
+              <span>{% trans "Overall accuracy" %}</span>
+              <span class="text-muted small">{{ stats.total_correct }} / {{ stats.total_questions }}</span>
+            </div>
+            <div class="admin-stat__value">{{ stats.accuracy_percent }}%</div>
+            <div class="admin-stat__bar">
+              <span style="width: {{ stats.accuracy_percent }}%"></span>
+            </div>
+          </div>
+        </div>
+
+        <form class="admin-modal__filters mb-3" method="get" data-admin-scores-form>
+          <input type="hidden" name="modal" value="1">
+          <label class="admin-field">
+            <span class="admin-field__label">{% trans "Search by user or name" %}</span>
+            <input class="form-control form-control-sm" type="text" name="q" placeholder="{% trans 'Username, participant name, or quiz title' %}" value="{{ filter_search }}">
+          </label>
+          <label class="admin-field">
+            <span class="admin-field__label">{% trans "Quiz" %}</span>
+            <select class="form-select form-select-sm" name="quiz">
+              <option value="">{% trans "All" %}</option>
+              {% for quiz in quizzes %}
+                <option value="{{ quiz.id }}" {% if filter_quiz == quiz.id|stringformat:"s" %}selected{% endif %}>{{ quiz.title }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="admin-field">
+            <span class="admin-field__label">{% trans "Classroom" %}</span>
+            <select class="form-select form-select-sm" name="classroom">
+              <option value="">{% trans "All" %}</option>
+              {% for classroom in classrooms %}
+                <option value="{{ classroom.slug }}" {% if filter_classroom == classroom.slug %}selected{% endif %}>{{ classroom.name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="admin-field admin-field--compact">
+            <span class="admin-field__label">{% trans "Student name" %}</span>
+            <input class="form-control form-control-sm" type="text" name="participant_name" placeholder="{% trans 'Search by student name' %}" value="{{ filter_participant_name }}">
+          </label>
+          <div class="admin-field admin-field--actions">
+            <button class="btn btn-primary btn-sm w-100" type="submit">{% trans "Filter" %}</button>
+            <a class="btn btn-outline-secondary btn-sm w-100" href="{% url 'blockly_quiz:scores-admin' %}?modal=1">{% trans "Reset" %}</a>
+          </div>
+        </form>
+
+        <div class="panel panel-stack">
+          <div class="panel-section p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0 gradebook-table">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">{% trans "Quiz" %}</th>
+                    <th scope="col">{% trans "User" %}</th>
+                    <th scope="col" class="text-center">{% trans "Score" %}</th>
+                    <th scope="col" class="text-center">{% trans "Correct" %}</th>
+                    <th scope="col">{% trans "Class" %}</th>
+                    <th scope="col" class="text-end">{% trans "Completed" %}</th>
+                    <th scope="col"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for attempt in attempts %}
+                    <tr>
+                      <td>{{ attempt.id }}</td>
+                      <td>{{ attempt.quiz.title }}</td>
+                      <td>
+                        {% if attempt.user %}
+                          <div class="fw-semibold">{{ attempt.user.username }}</div>
+                          {% if attempt.participant_name %}
+                            <div class="text-muted small">{{ attempt.participant_name }}</div>
+                          {% endif %}
+                        {% elif attempt.participant_name %}
+                          <div class="fw-semibold">{{ attempt.participant_name }}</div>
+                          <div class="text-muted small">{% trans "Guest attempt" %}</div>
+                        {% else %}
+                          <span class="text-muted">-</span>
+                        {% endif %}
+                      </td>
+                      <td class="text-center">{{ attempt.score_percent }}%</td>
+                      <td class="text-center">{{ attempt.correct_count }}/{{ attempt.total_questions }}</td>
+                      <td>
+                        {% if attempt.assignment %}{{ attempt.assignment.classroom.name }}{% else %}-{% endif %}
+                      </td>
+                      <td class="text-end">{{ attempt.completed_at|date:"Y-m-d H:i" }}</td>
+                      <td class="text-end">
+                        <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:review' attempt.id %}" target="_blank" rel="noopener">{% trans "Review" %}</a>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="8" class="text-center text-muted py-3">{% trans "No attempts found." %}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:scores-export' %}?{{ request.GET.urlencode }}">{% trans "Export CSV" %}</a>
+        {% if page_obj.paginator.num_pages > 1 %}
+          <nav aria-label="{% trans 'Attempt pagination' %}">
+            <ul class="pagination mb-0">
+              <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
+                {% if page_obj.has_previous %}
+                  <a class="page-link" href="?{{ page_query_prefix }}modal=1&page={{ page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}" rel="prev" data-admin-scores-link>&laquo;</a>
+                {% else %}
+                  <span class="page-link" aria-disabled="true">&laquo;</span>
+                {% endif %}
+              </li>
+              <li class="page-item disabled">
+                <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+              </li>
+              <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
+                {% if page_obj.has_next %}
+                  <a class="page-link" href="?{{ page_query_prefix }}modal=1&page={{ page_obj.next_page_number }}" aria-label="{% trans 'Next' %}" rel="next" data-admin-scores-link>&raquo;</a>
+                {% else %}
+                  <span class="page-link" aria-disabled="true">&raquo;</span>
+                {% endif %}
+              </li>
+            </ul>
+          </nav>
+        {% endif %}
       </div>
     </div>
-    <div class="admin-stat">
-      <div class="admin-stat__label">{% trans "Best score" %}</div>
-      <div class="admin-stat__value">{{ stats.best_score }}%</div>
-      <div class="admin-stat__hint">{% trans "Highest attempt" %}</div>
-    </div>
-    <div class="admin-stat">
-      <div class="admin-stat__label">{% trans "Unique users" %}</div>
-      <div class="admin-stat__value">{{ stats.unique_students }}</div>
-      <div class="admin-stat__hint">{% trans "Students" %}</div>
-    </div>
-    <div class="admin-stat admin-stat--wide">
-      <div class="admin-stat__label d-flex justify-content-between">
-        <span>{% trans "Overall accuracy" %}</span>
-        <span class="text-muted small">{{ stats.total_correct }} / {{ stats.total_questions }}</span>
-      </div>
-      <div class="admin-stat__value">{{ stats.accuracy_percent }}%</div>
-      <div class="admin-stat__bar">
-        <span style="width: {{ stats.accuracy_percent }}%"></span>
-      </div>
-    </div>
-  </div>
-
-  <form class="admin-modal__filters" method="get" data-admin-scores-form>
-    <input type="hidden" name="modal" value="1">
-    <label class="admin-field">
-      <span class="admin-field__label">{% trans "Search by user or name" %}</span>
-      <input class="form-control form-control-sm" type="text" name="q" placeholder="{% trans 'Username, participant name, or quiz title' %}" value="{{ filter_search }}">
-    </label>
-    <label class="admin-field">
-      <span class="admin-field__label">{% trans "Quiz" %}</span>
-      <select class="form-select form-select-sm" name="quiz">
-        <option value="">{% trans "All" %}</option>
-        {% for quiz in quizzes %}
-          <option value="{{ quiz.id }}" {% if filter_quiz == quiz.id|stringformat:"s" %}selected{% endif %}>{{ quiz.title }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label class="admin-field">
-      <span class="admin-field__label">{% trans "Classroom" %}</span>
-      <select class="form-select form-select-sm" name="classroom">
-        <option value="">{% trans "All" %}</option>
-        {% for classroom in classrooms %}
-          <option value="{{ classroom.slug }}" {% if filter_classroom == classroom.slug %}selected{% endif %}>{{ classroom.name }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label class="admin-field admin-field--compact">
-      <span class="admin-field__label">{% trans "Student name" %}</span>
-      <input class="form-control form-control-sm" type="text" name="participant_name" placeholder="{% trans 'Search by student name' %}" value="{{ filter_participant_name }}">
-    </label>
-    <div class="admin-field admin-field--actions">
-      <button class="button button-xs w-100" type="submit">{% trans "Filter" %}</button>
-      <a class="button button-ghost button-xs w-100" href="{% url 'blockly_quiz:scores-admin' %}?modal=1">{% trans "Reset" %}</a>
-    </div>
-  </form>
-
-  <div class="admin-modal__table panel panel-stack">
-    <div class="panel-section p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 gradebook-table">
-          <thead>
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">{% trans "Quiz" %}</th>
-              <th scope="col">{% trans "User" %}</th>
-              <th scope="col" class="text-center">{% trans "Score" %}</th>
-              <th scope="col" class="text-center">{% trans "Correct" %}</th>
-              <th scope="col">{% trans "Class" %}</th>
-              <th scope="col" class="text-end">{% trans "Completed" %}</th>
-              <th scope="col"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for attempt in attempts %}
-              <tr>
-                <td>{{ attempt.id }}</td>
-                <td>{{ attempt.quiz.title }}</td>
-                <td>
-                  {% if attempt.user %}
-                    <div class="fw-semibold">{{ attempt.user.username }}</div>
-                    {% if attempt.participant_name %}
-                      <div class="text-muted small">{{ attempt.participant_name }}</div>
-                    {% endif %}
-                  {% elif attempt.participant_name %}
-                    <div class="fw-semibold">{{ attempt.participant_name }}</div>
-                    <div class="text-muted small">{% trans "Guest attempt" %}</div>
-                  {% else %}
-                    <span class="text-muted">-</span>
-                  {% endif %}
-                </td>
-                <td class="text-center">{{ attempt.score_percent }}%</td>
-                <td class="text-center">{{ attempt.correct_count }}/{{ attempt.total_questions }}</td>
-                <td>
-                  {% if attempt.assignment %}{{ attempt.assignment.classroom.name }}{% else %}-{% endif %}
-                </td>
-                <td class="text-end">{{ attempt.completed_at|date:"Y-m-d H:i" }}</td>
-                <td class="text-end">
-                  <a class="button button-ghost button-xs" href="{% url 'blockly_quiz:review' attempt.id %}" target="_blank" rel="noopener">{% trans "Review" %}</a>
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="8" class="text-center text-muted py-3">{% trans "No attempts found." %}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <div class="admin-modal__footer">
-    <a class="button button-ghost button-xs" href="{% url 'blockly_quiz:scores-export' %}?{{ request.GET.urlencode }}">{% trans "Export CSV" %}</a>
-    {% if page_obj.paginator.num_pages > 1 %}
-      <nav aria-label="{% trans 'Attempt pagination' %}">
-        <ul class="pagination mb-0">
-          <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
-            {% if page_obj.has_previous %}
-              <a class="page-link" href="?{{ page_query_prefix }}modal=1&page={{ page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}" rel="prev" data-admin-scores-link>&laquo;</a>
-            {% else %}
-              <span class="page-link" aria-disabled="true">&laquo;</span>
-            {% endif %}
-          </li>
-          <li class="page-item disabled">
-            <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-          </li>
-          <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
-            {% if page_obj.has_next %}
-              <a class="page-link" href="?{{ page_query_prefix }}modal=1&page={{ page_obj.next_page_number }}" aria-label="{% trans 'Next' %}" rel="next" data-admin-scores-link>&raquo;</a>
-            {% else %}
-              <span class="page-link" aria-disabled="true">&raquo;</span>
-            {% endif %}
-          </li>
-        </ul>
-      </nav>
-    {% endif %}
   </div>
 </div>
-{% load i18n %}
+
+<script>
+  (() => {
+    const modalEl = document.getElementById("adminScoresModal");
+    if (!modalEl || !window.bootstrap) return;
+    const instance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    instance.show();
+    modalEl.addEventListener(
+      "hidden.bs.modal",
+      () => {
+        instance.dispose();
+        modalEl.remove();
+      },
+      { once: true }
+    );
+  })();
+</script>
