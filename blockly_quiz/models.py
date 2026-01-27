@@ -227,6 +227,21 @@ class Attempt(models.Model):
     def __str__(self) -> str:
         return f"{self.quiz.title} (#{self.id})"
 
+    def save(self, *args, **kwargs):
+        if self.quiz_id:
+            if self._state.adding:
+                self.quiz_title_snapshot = (self.quiz.title or "")[:200]
+                self.quiz_slug_snapshot = (self.quiz.slug or "")[:220]
+                self.quiz_is_temporary_snapshot = bool(
+                    getattr(self.quiz, "is_temporary", False)
+                )
+            else:
+                if not self.quiz_title_snapshot:
+                    self.quiz_title_snapshot = (self.quiz.title or "")[:200]
+                if not self.quiz_slug_snapshot:
+                    self.quiz_slug_snapshot = (self.quiz.slug or "")[:220]
+        super().save(*args, **kwargs)
+
     @property
     def is_completed(self) -> bool:
         return bool(self.completed_at)
