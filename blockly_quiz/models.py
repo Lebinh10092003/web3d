@@ -174,6 +174,22 @@ class QuizAssignment(models.Model):
 
 class Attempt(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="attempts")
+    quiz_title_snapshot = models.CharField(
+        max_length=200,
+        blank=True,
+        default="",
+        help_text=_("Snapshot of quiz title at submission time."),
+    )
+    quiz_slug_snapshot = models.CharField(
+        max_length=220,
+        blank=True,
+        default="",
+        help_text=_("Snapshot of quiz slug at submission time."),
+    )
+    quiz_is_temporary_snapshot = models.BooleanField(
+        default=False,
+        help_text=_("Snapshot of quiz temporary status at submission time."),
+    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

@@ -1225,9 +1225,12 @@ def quiz_start(request, slug):
         slug=slug,
     )
     session_key = _ensure_session_key(request)
-    participant_name = (request.POST.get("name") or "").strip()
-    participant_dob = (request.POST.get("dob") or "").strip()
-    participant_campus = (request.POST.get("campus") or "").strip()
+    name_max = Attempt._meta.get_field("participant_name").max_length
+    dob_max = Attempt._meta.get_field("participant_dob").max_length
+    campus_max = Attempt._meta.get_field("participant_campus").max_length
+    participant_name = _trim_text(request.POST.get("name"), max_length=name_max)
+    participant_dob = _trim_text(request.POST.get("dob"), max_length=dob_max)
+    participant_campus = _trim_text(request.POST.get("campus"), max_length=campus_max)
     assignment = _resolve_assignment_for_request(
         request,
         quiz,
@@ -1242,6 +1245,7 @@ def quiz_start(request, slug):
         participant_dob=participant_dob,
         participant_campus=participant_campus,
         assignment=assignment,
+        **_build_quiz_snapshot(quiz),
     )
     return redirect("blockly_quiz:attempt", attempt_id=attempt.id)
 
@@ -1461,6 +1465,16 @@ def _trim_text(value, *, max_length: int | None = None) -> str:
     return text
 
 
+def _build_quiz_snapshot(quiz: Quiz) -> dict:
+    title_max = Attempt._meta.get_field("quiz_title_snapshot").max_length
+    slug_max = Attempt._meta.get_field("quiz_slug_snapshot").max_length
+    return {
+        "quiz_title_snapshot": _trim_text(quiz.title, max_length=title_max),
+        "quiz_slug_snapshot": _trim_text(quiz.slug, max_length=slug_max),
+        "quiz_is_temporary_snapshot": bool(getattr(quiz, "is_temporary", False)),
+    }
+
+
 def _is_truthy_param(value) -> bool:
     normalized = str(value or "").strip().lower()
     return normalized in {"1", "true", "yes", "on"}
@@ -1625,6 +1639,7 @@ def api_quiz_submit(request, slug):
                 participant_dob=participant_dob,
                 participant_campus=participant_campus,
                 assignment=assignment,
+                **_build_quiz_snapshot(quiz),
             )
 
             answer_map: dict[int, int] = {}
@@ -1667,12 +1682,28 @@ def api_quiz_submit(request, slug):
                 )
 
             _finalize_attempt(attempt, total_questions_override=len(expected_question_ids))
-    except (DataError, IntegrityError, ValidationError):
+    except (DataError, IntegrityError, ValidationError) as error:
         logger.exception("Invalid quiz submission for quiz=%s", quiz.slug)
-        return JsonResponse({"error": "invalid_submission"}, status=400)
-    except DatabaseError:
+        response = {"error": "invalid_submission"}
+        if settings.DEBUG:
+            response.update(
+                {
+                    "error_type": error.__class__.__name__,
+                    "detail": str(error),
+                }
+            )
+        return JsonResponse(response, status=400)
+    except DatabaseError as error:
         logger.exception("Database error during quiz submission for quiz=%s", quiz.slug)
-        return JsonResponse({"error": "db_error"}, status=500)
+        response = {"error": "db_error"}
+        if settings.DEBUG:
+            response.update(
+                {
+                    "error_type": error.__class__.__name__,
+                    "detail": str(error),
+                }
+            )
+        return JsonResponse(response, status=500)
 
     review_path = attempt.get_review_url()
     try:
