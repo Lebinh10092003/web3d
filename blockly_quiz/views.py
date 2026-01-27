@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.core import signing
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db import transaction, models
+from django.db import DatabaseError, DataError, IntegrityError, transaction, models
 from django.db.models import Count, Exists, OuterRef, Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1451,6 +1451,13 @@ def _parse_json_request(request):
     return payload
 
 
+def _trim_text(value, *, max_length: int | None = None) -> str:
+    text = str(value or "").strip()
+    if max_length and len(text) > max_length:
+        return text[:max_length]
+    return text
+
+
 def _is_truthy_param(value) -> bool:
     normalized = str(value or "").strip().lower()
     return normalized in {"1", "true", "yes", "on"}
@@ -1593,65 +1600,74 @@ def api_quiz_submit(request, slug):
         return JsonResponse({"error": "answers_required"}, status=400)
 
     session_key = _ensure_session_key(request)
-    participant_name = payload.get("name")
-    participant_dob = payload.get("dob")
-    participant_campus = payload.get("campus")
+    name_max = Attempt._meta.get_field("participant_name").max_length
+    dob_max = Attempt._meta.get_field("participant_dob").max_length
+    campus_max = Attempt._meta.get_field("participant_campus").max_length
+    participant_name = _trim_text(payload.get("name"), max_length=name_max)
+    participant_dob = _trim_text(payload.get("dob"), max_length=dob_max)
+    participant_campus = _trim_text(payload.get("campus"), max_length=campus_max)
     assignment = _resolve_assignment_for_request(
         request,
         quiz,
         assignment_id=payload.get("assignment_id"),
     )
 
-    attempt = Attempt.objects.create(
-        quiz=quiz,
-        user=request.user if request.user.is_authenticated else None,
-        session_key=session_key,
-        participant_name=str(participant_name or "").strip(),
-        participant_dob=str(participant_dob or "").strip(),
-        participant_campus=str(participant_campus or "").strip(),
-        assignment=assignment,
-    )
+    try:
+        with transaction.atomic():
+            attempt = Attempt.objects.create(
+                quiz=quiz,
+                user=request.user if request.user.is_authenticated else None,
+                session_key=session_key,
+                participant_name=participant_name,
+                participant_dob=participant_dob,
+                participant_campus=participant_campus,
+                assignment=assignment,
+            )
 
-    answer_map: dict[int, int] = {}
-    for entry in answers_payload:
-        if not isinstance(entry, dict):
-            continue
-        question_id = entry.get("question_id")
-        choice_id = entry.get("choice_id")
-        if question_id is None or choice_id is None:
-            continue
-        try:
-            question_id = int(question_id)
-            choice_id = int(choice_id)
-        except (TypeError, ValueError):
-            continue
-        answer_map[question_id] = choice_id
+            answer_map: dict[int, int] = {}
+            for entry in answers_payload:
+                if not isinstance(entry, dict):
+                    continue
+                question_id = entry.get("question_id")
+                choice_id = entry.get("choice_id")
+                if question_id is None or choice_id is None:
+                    continue
+                try:
+                    question_id = int(question_id)
+                    choice_id = int(choice_id)
+                except (TypeError, ValueError):
+                    continue
+                answer_map[question_id] = choice_id
 
-    expected_set = set(expected_question_ids)
-    choice_ids = [cid for qid, cid in answer_map.items() if qid in expected_set and cid]
-    choice_rows = Choice.objects.filter(
-        id__in=choice_ids,
-        question_id__in=expected_set,
-    ).values("id", "question_id", "is_correct")
-    choice_by_id = {row["id"]: row for row in choice_rows}
+            expected_set = set(expected_question_ids)
+            choice_ids = [cid for qid, cid in answer_map.items() if qid in expected_set and cid]
+            choice_rows = Choice.objects.filter(
+                id__in=choice_ids,
+                question_id__in=expected_set,
+            ).values("id", "question_id", "is_correct")
+            choice_by_id = {row["id"]: row for row in choice_rows}
 
-    for question_id in expected_question_ids:
-        choice_id = answer_map.get(question_id)
-        if not choice_id:
-            continue
-        row = choice_by_id.get(choice_id)
-        if not row or int(row["question_id"]) != int(question_id):
-            continue
-        AttemptAnswer.objects.update_or_create(
-            attempt=attempt,
-            question_id=question_id,
-            defaults={
-                "selected_choice_id": choice_id,
-                "is_correct": bool(row["is_correct"]),
-            },
-        )
+            for question_id in expected_question_ids:
+                choice_id = answer_map.get(question_id)
+                if not choice_id:
+                    continue
+                row = choice_by_id.get(choice_id)
+                if not row or int(row["question_id"]) != int(question_id):
+                    continue
+                AttemptAnswer.objects.update_or_create(
+                    attempt=attempt,
+                    question_id=question_id,
+                    defaults={
+                        "selected_choice_id": choice_id,
+                        "is_correct": bool(row["is_correct"]),
+                    },
+                )
 
-    _finalize_attempt(attempt, total_questions_override=len(expected_question_ids))
+            _finalize_attempt(attempt, total_questions_override=len(expected_question_ids))
+    except (DataError, IntegrityError, ValidationError):
+        return JsonResponse({"error": "invalid_submission"}, status=400)
+    except DatabaseError:
+        return JsonResponse({"error": "db_error"}, status=500)
     return JsonResponse(
         {
             "attempt_id": attempt.id,

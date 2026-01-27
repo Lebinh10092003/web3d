@@ -66,15 +66,15 @@
           <div class="row g-3">
             <div class="col-12 col-md-4">
               <label class="form-label" for="quiz-play-name">{% trans "Name" %}</label>
-              <input class="form-control" id="quiz-play-name" name="name" autocomplete="name" value="{{ initial_name }}">
+              <input class="form-control" id="quiz-play-name" name="name" autocomplete="name" maxlength="120" value="{{ initial_name }}">
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label" for="quiz-play-dob">{% trans "Date of birth" %}</label>
-              <input class="form-control" id="quiz-play-dob" name="dob" type="date" autocomplete="bday" value="{{ initial_dob }}">
+              <input class="form-control" id="quiz-play-dob" name="dob" type="date" autocomplete="bday" maxlength="50" value="{{ initial_dob }}">
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label" for="quiz-play-campus">{% trans "Campus" %}</label>
-              <input class="form-control" id="quiz-play-campus" name="campus" autocomplete="organization" value="{{ initial_campus }}">
+              <input class="form-control" id="quiz-play-campus" name="campus" autocomplete="organization" maxlength="120" value="{{ initial_campus }}">
             </div>
           </div>
           <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">

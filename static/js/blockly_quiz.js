@@ -52,6 +52,50 @@ function getBlocklyQuizI18nString(key, fallback) {
   return fallback;
 }
 
+function patchBlocklyVariableApis() {
+  const blockly = window.Blockly;
+  const workspaceProto = blockly && blockly.Workspace ? blockly.Workspace.prototype : null;
+  if (!workspaceProto || typeof workspaceProto.getVariableMap !== "function") {
+    return;
+  }
+
+  const getVariableMap = function () {
+    return this.getVariableMap ? this.getVariableMap() : null;
+  };
+
+  const patch = (name, resolver) => {
+    const current = workspaceProto[name];
+    if (current && current.__blocklyQuizPatched) {
+      return;
+    }
+    if (typeof resolver !== "function") {
+      return;
+    }
+    workspaceProto[name] = function (...args) {
+      return resolver.call(this, ...args);
+    };
+    workspaceProto[name].__blocklyQuizPatched = true;
+    workspaceProto[name].__blocklyQuizOriginal = current;
+  };
+
+  patch("getAllVariables", function () {
+    const map = getVariableMap.call(this);
+    return map && typeof map.getAllVariables === "function" ? map.getAllVariables() : [];
+  });
+
+  patch("getVariableById", function (id) {
+    const map = getVariableMap.call(this);
+    return map && typeof map.getVariableById === "function" ? map.getVariableById(id) : null;
+  });
+
+  patch("getVariable", function (name, type) {
+    const map = getVariableMap.call(this);
+    return map && typeof map.getVariable === "function" ? map.getVariable(name, type) : null;
+  });
+}
+
+patchBlocklyVariableApis();
+
 function showPreviewError(element, title, message) {
   if (!element) {
     return;
