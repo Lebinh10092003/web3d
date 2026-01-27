@@ -1,4 +1,5 @@
 import json
+import logging
 import random
 import secrets
 from urllib.parse import urlencode
@@ -8,7 +9,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core import signing
-from django.core.exceptions import ValidationError
+from django.core.exceptions import DisallowedHost, ValidationError
 from django.core.paginator import Paginator
 from django.db import DatabaseError, DataError, IntegrityError, transaction, models
 from django.db.models import Count, Exists, OuterRef, Q
@@ -38,6 +39,8 @@ RANDOM_QUIZ_REQUIRED_GROUP_NAME = "Student V"
 RANDOM_QUIZ_PRESET_COUNTS = {"easy": 5, "medium": 15, "hard": 10}
 RANDOM_QUIZ_DEFAULT_TYPE = "blockly"
 TEACHER_GROUP_NAME = "Teacher V"
+
+logger = logging.getLogger(__name__)
 
 
 def _build_page_query_prefix(request, param_name: str, *, exclude: set[str] | None = None) -> str:
@@ -1665,9 +1668,19 @@ def api_quiz_submit(request, slug):
 
             _finalize_attempt(attempt, total_questions_override=len(expected_question_ids))
     except (DataError, IntegrityError, ValidationError):
+        logger.exception("Invalid quiz submission for quiz=%s", quiz.slug)
         return JsonResponse({"error": "invalid_submission"}, status=400)
     except DatabaseError:
+        logger.exception("Database error during quiz submission for quiz=%s", quiz.slug)
         return JsonResponse({"error": "db_error"}, status=500)
+
+    review_path = attempt.get_review_url()
+    try:
+        review_url = request.build_absolute_uri(review_path)
+    except DisallowedHost:
+        logger.warning("Disallowed host when building review URL for quiz=%s", quiz.slug)
+        review_url = review_path
+
     return JsonResponse(
         {
             "attempt_id": attempt.id,
@@ -1675,7 +1688,7 @@ def api_quiz_submit(request, slug):
             "total_questions": attempt.total_questions,
             "correct_count": attempt.correct_count,
             "score_percent": attempt.score_percent,
-            "review_url": request.build_absolute_uri(attempt.get_review_url()),
+            "review_url": review_url,
         }
     )
 
