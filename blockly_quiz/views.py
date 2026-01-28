@@ -1,7 +1,9 @@
 import json
 import logging
+import os
 import random
 import secrets
+import textwrap
 from urllib.parse import urlencode
 from uuid import uuid4
 
@@ -33,6 +35,11 @@ from .models import (
     Quiz,
     QuizAssignment,
 )
+
+try:
+    import fitz
+except Exception:
+    fitz = None
 
 SELECTION_TOKEN_MAX_AGE_SECONDS = 2 * 60 * 60
 RANDOM_QUIZ_REQUIRED_GROUP_NAME = "Student V"
@@ -327,6 +334,63 @@ def _render_question_partial(request, *, attempt: Attempt, question: Question):
     )
 
 
+def _format_attempt_user_label(attempt: Attempt) -> str:
+    participant = (attempt.participant_name or "").strip()
+    user = attempt.user
+    if user:
+        username = (getattr(user, "username", "") or "").strip()
+        if participant and participant != username:
+            return f"{username} ({participant})"
+        return username or participant
+    return participant
+
+
+def _format_attempt_completed_at(attempt: Attempt) -> str:
+    if not attempt.completed_at:
+        return ""
+    return timezone.localtime(attempt.completed_at).strftime("%Y-%m-%d %H:%M")
+
+
+def _get_admin_attempts_queryset(request):
+    attempts_qs = Attempt.objects.filter(completed_at__isnull=False).select_related(
+        "quiz", "user", "assignment", "assignment__classroom"
+    )
+    quiz_id_raw = (request.GET.get("quiz") or "").strip()
+    classroom_slug = (request.GET.get("classroom") or "").strip()
+    user_id_raw = (request.GET.get("user") or "").strip()
+    search_query = (request.GET.get("q") or "").strip()
+    participant_name = (request.GET.get("participant_name") or "").strip()
+
+    if quiz_id_raw:
+        quiz_id = _parse_int(quiz_id_raw, default=0, min_value=1)
+        if quiz_id:
+            attempts_qs = attempts_qs.filter(quiz_id=quiz_id)
+    if classroom_slug:
+        attempts_qs = attempts_qs.filter(assignment__classroom__slug=classroom_slug)
+    if user_id_raw:
+        user_id = _parse_int(user_id_raw, default=0, min_value=1)
+        if user_id:
+            attempts_qs = attempts_qs.filter(user_id=user_id)
+    if participant_name:
+        attempts_qs = attempts_qs.filter(participant_name__icontains=participant_name)
+    if search_query:
+        attempts_qs = attempts_qs.filter(
+            Q(user__username__icontains=search_query)
+            | Q(user__email__icontains=search_query)
+            | Q(participant_name__icontains=search_query)
+            | Q(quiz__title__icontains=search_query)
+        )
+
+    filters = {
+        "quiz": quiz_id_raw,
+        "classroom": classroom_slug,
+        "user": user_id_raw,
+        "q": search_query,
+        "participant_name": participant_name,
+    }
+    return attempts_qs, filters
+
+
 @require_GET
 def quiz_list(request):
     quizzes = _filter_quiz_queryset_for_user(
@@ -413,34 +477,12 @@ def attempt_list(request):
 def attempt_admin_list(request):
     if not _user_is_teacher(request.user):
         raise Http404
-    attempts_qs = Attempt.objects.filter(completed_at__isnull=False).select_related(
-        "quiz", "user", "assignment", "assignment__classroom"
-    )
-    quiz_id = (request.GET.get("quiz") or "").strip()
-    classroom_slug = (request.GET.get("classroom") or "").strip()
-    user_id_raw = (request.GET.get("user") or "").strip()
-    search_query = (request.GET.get("q") or "").strip()
-    participant_name = (request.GET.get("participant_name") or "").strip()
-    if quiz_id:
-        attempts_qs = attempts_qs.filter(quiz_id=quiz_id)
-    if classroom_slug:
-        attempts_qs = attempts_qs.filter(assignment__classroom__slug=classroom_slug)
-    if user_id_raw:
-        try:
-            user_id = int(user_id_raw)
-        except (TypeError, ValueError):
-            user_id = None
-        if user_id:
-            attempts_qs = attempts_qs.filter(user_id=user_id)
-    if participant_name:
-        attempts_qs = attempts_qs.filter(participant_name__icontains=participant_name)
-    if search_query:
-        attempts_qs = attempts_qs.filter(
-            Q(user__username__icontains=search_query)
-            | Q(user__email__icontains=search_query)
-            | Q(participant_name__icontains=search_query)
-            | Q(quiz__title__icontains=search_query)
-        )
+    attempts_qs, filters = _get_admin_attempts_queryset(request)
+    quiz_id = filters["quiz"]
+    classroom_slug = filters["classroom"]
+    user_id_raw = filters["user"]
+    search_query = filters["q"]
+    participant_name = filters["participant_name"]
     stats_row = attempts_qs.aggregate(
         total=models.Count("id"),
         avg_score=models.Avg("score_percent"),
@@ -501,36 +543,328 @@ def attempt_admin_list(request):
     )
 
 
+def _build_attempt_filter_summary(filters: dict) -> str:
+    parts = []
+    if filters.get("quiz"):
+        parts.append(f"Quiz ID: {filters['quiz']}")
+    if filters.get("classroom"):
+        parts.append(f"Lớp: {filters['classroom']}")
+    if filters.get("user"):
+        parts.append(f"User ID: {filters['user']}")
+    if filters.get("participant_name"):
+        parts.append(f"Học sinh: {filters['participant_name']}")
+    if filters.get("q"):
+        parts.append(f"Tìm kiếm: {filters['q']}")
+    if not parts:
+        return "Bộ lọc: Tất cả kết quả"
+    return "Bộ lọc: " + "; ".join(parts)
+
+
+def _resolve_pdf_font():
+    font_path = (getattr(settings, "BLOCKLY_QUIZ_PDF_FONT_PATH", "") or "").strip()
+    candidates = [
+        font_path,
+        "C:\\Windows\\Fonts\\arial.ttf",
+        "C:\\Windows\\Fonts\\times.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    ]
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate):
+            return {"fontname": "custom", "fontfile": candidate}
+    return {"fontname": "helv", "fontfile": None}
+
+
+def _build_attempt_export_pdf(*, attempts: list[Attempt], filters: dict) -> bytes:
+    if not fitz:
+        raise RuntimeError("PyMuPDF is not available.")
+
+    page_width, page_height = 842, 595
+    margin = 32
+    header_height = 92
+    compact_header_height = 36
+    summary_height = 96
+    row_height = 18
+    table_header_height = 22
+    footer_height = 20
+
+    font_spec = _resolve_pdf_font()
+    fontname = font_spec["fontname"]
+    fontfile = font_spec["fontfile"]
+    title_font_size = 18
+    subtitle_font_size = 10
+    body_font_size = 9
+    value_font_size = 16
+
+    def _text_kwargs(font_size):
+        kwargs = {"fontsize": font_size, "fontname": fontname}
+        if fontfile:
+            kwargs["fontfile"] = fontfile
+        return kwargs
+
+    def _textbox_kwargs(font_size, align=fitz.TEXT_ALIGN_LEFT):
+        kwargs = _text_kwargs(font_size)
+        kwargs["align"] = align
+        return kwargs
+
+    def _color(rgb):
+        return tuple(channel / 255 for channel in rgb)
+
+    colors = {
+        "primary": _color((37, 197, 86)),
+        "primary_dark": _color((18, 110, 55)),
+        "primary_soft": _color((233, 250, 239)),
+        "border": _color((210, 235, 219)),
+        "ink": _color((15, 43, 29)),
+        "muted": _color((90, 102, 110)),
+        "white": (1, 1, 1),
+        "row_alt": _color((246, 251, 248)),
+    }
+
+    def _resolve_logo_bytes():
+        logo_path = (getattr(settings, "BLOCKLY_QUIZ_PDF_LOGO_PATH", "") or "").strip()
+        if logo_path and not os.path.isabs(logo_path):
+            logo_path = os.path.join(str(getattr(settings, "BASE_DIR", "")), logo_path)
+        if not logo_path:
+            logo_path = os.path.join(str(getattr(settings, "BASE_DIR", "")), "static", "img", "logoV+.png")
+        if logo_path and os.path.exists(logo_path):
+            try:
+                with open(logo_path, "rb") as handle:
+                    return handle.read()
+            except Exception:
+                return None
+        return None
+
+    logo_bytes = _resolve_logo_bytes()
+    site_name = (getattr(settings, "SITE_NAME", "") or "").strip()
+
+    total_attempts = len(attempts)
+    scores = [attempt.score_percent for attempt in attempts]
+    avg_score = int(round(sum(scores) / total_attempts)) if total_attempts else 0
+    total_questions = sum(attempt.total_questions or 0 for attempt in attempts)
+    total_correct = sum(attempt.correct_count or 0 for attempt in attempts)
+    accuracy = int(round((total_correct / total_questions) * 100)) if total_questions else 0
+    unique_students = len(
+        {
+            attempt.user_id or f"guest:{(attempt.participant_name or '').strip().lower()}"
+            for attempt in attempts
+            if attempt.user_id or (attempt.participant_name or "").strip()
+        }
+    )
+
+    summary_cards = [
+        ("Tổng lượt làm", str(total_attempts)),
+        ("Học sinh", str(unique_students)),
+        ("Điểm trung bình", f"{avg_score}%"),
+        ("Độ chính xác", f"{accuracy}%"),
+    ]
+
+    columns = [
+        {"key": "id", "label": "Mã", "width": 46, "align": fitz.TEXT_ALIGN_RIGHT, "max_chars": 6},
+        {"key": "quiz", "label": "Bài kiểm tra", "width": 200, "align": fitz.TEXT_ALIGN_LEFT, "max_chars": 42},
+        {"key": "user", "label": "Học sinh", "width": 140, "align": fitz.TEXT_ALIGN_LEFT, "max_chars": 30},
+        {"key": "score", "label": "Điểm", "width": 60, "align": fitz.TEXT_ALIGN_RIGHT, "max_chars": 6},
+        {"key": "correct", "label": "Đúng", "width": 50, "align": fitz.TEXT_ALIGN_RIGHT, "max_chars": 6},
+        {"key": "total", "label": "Tổng", "width": 50, "align": fitz.TEXT_ALIGN_RIGHT, "max_chars": 6},
+        {"key": "completed", "label": "Hoàn thành", "width": 110, "align": fitz.TEXT_ALIGN_LEFT, "max_chars": 16},
+        {"key": "classroom", "label": "Lớp", "width": 120, "align": fitz.TEXT_ALIGN_LEFT, "max_chars": 22},
+    ]
+
+    def _truncate(text: str, max_chars: int) -> str:
+        value = (text or "").strip()
+        if len(value) <= max_chars:
+            return value
+        suffix = "..."
+        if max_chars <= len(suffix):
+            return value[:max_chars]
+        return value[: max(0, max_chars - len(suffix))] + suffix
+
+    def _draw_table_header(page, y):
+        header_rect = fitz.Rect(margin, y, page_width - margin, y + table_header_height)
+        page.draw_rect(header_rect, color=colors["primary"], fill=colors["primary"])
+        x = margin
+        for col in columns:
+            rect = fitz.Rect(x + 4, y + 3, x + col["width"] - 4, y + table_header_height - 2)
+            page.insert_textbox(
+                rect,
+                col["label"],
+                **_textbox_kwargs(body_font_size, align=col["align"]),
+                color=colors["white"],
+            )
+            x += col["width"]
+        return y + table_header_height
+
+    def _draw_header(page, *, compact: bool):
+        if compact:
+            page.draw_rect(
+                fitz.Rect(0, 0, page_width, compact_header_height),
+                color=colors["primary"],
+                fill=colors["primary"],
+            )
+            title_rect = fitz.Rect(margin, 8, page_width - margin, compact_header_height - 4)
+            page.insert_textbox(
+                title_rect,
+                "BÁO CÁO KẾT QUẢ HỌC TẬP",
+                **_textbox_kwargs(12),
+                color=colors["white"],
+            )
+            return compact_header_height
+
+        page.draw_rect(
+            fitz.Rect(0, 0, page_width, header_height),
+            color=colors["primary"],
+            fill=colors["primary"],
+        )
+        page.draw_rect(
+            fitz.Rect(page_width * 0.62, 0, page_width, header_height),
+            color=colors["primary_dark"],
+            fill=colors["primary_dark"],
+        )
+        logo_size = 58
+        if logo_bytes:
+            logo_rect = fitz.Rect(margin, 16, margin + logo_size, 16 + logo_size)
+            page.insert_image(logo_rect, stream=logo_bytes, keep_proportion=True, overlay=True)
+        title_left = margin + logo_size + 14 if logo_bytes else margin
+        title_rect = fitz.Rect(title_left, 18, page_width - margin, 46)
+        page.insert_textbox(
+            title_rect,
+            "BÁO CÁO KẾT QUẢ HỌC TẬP",
+            **_textbox_kwargs(title_font_size),
+            color=colors["white"],
+        )
+        subtitle = site_name or "Quiz Report"
+        subtitle_rect = fitz.Rect(title_left, 48, page_width - margin, 68)
+        page.insert_textbox(
+            subtitle_rect,
+            subtitle,
+            **_textbox_kwargs(subtitle_font_size),
+            color=colors["white"],
+        )
+        exported_at = timezone.localtime(timezone.now()).strftime("%d/%m/%Y %H:%M")
+        exported_rect = fitz.Rect(page_width - margin - 180, 18, page_width - margin, 40)
+        page.insert_textbox(
+            exported_rect,
+            f"Xuất lúc: {exported_at}",
+            **_textbox_kwargs(subtitle_font_size, align=fitz.TEXT_ALIGN_RIGHT),
+            color=colors["white"],
+        )
+        return header_height
+
+    def _draw_summary(page, y):
+        card_gap = 12
+        available = page_width - margin * 2 - card_gap * 3
+        card_width = available / 4
+        card_height = 52
+        x = margin
+        for label, value in summary_cards:
+            card_rect = fitz.Rect(x, y, x + card_width, y + card_height)
+            page.draw_rect(card_rect, color=colors["border"], fill=colors["primary_soft"])
+            label_rect = fitz.Rect(x + 8, y + 6, x + card_width - 8, y + 22)
+            page.insert_textbox(
+                label_rect,
+                label,
+                **_textbox_kwargs(8),
+                color=colors["muted"],
+            )
+            value_rect = fitz.Rect(x + 8, y + 20, x + card_width - 8, y + card_height - 6)
+            page.insert_textbox(
+                value_rect,
+                value,
+                **_textbox_kwargs(value_font_size),
+                color=colors["ink"],
+            )
+            x += card_width + card_gap
+        filter_text = _build_attempt_filter_summary(filters)
+        filter_lines = textwrap.wrap(filter_text, width=110) or [filter_text]
+        line_y = y + card_height + 8
+        for line in filter_lines[:2]:
+            filter_rect = fitz.Rect(margin, line_y, page_width - margin, line_y + 12)
+            page.insert_textbox(
+                filter_rect,
+                line,
+                **_textbox_kwargs(8),
+                color=colors["muted"],
+            )
+            line_y += 12
+        return y + summary_height
+
+    def _start_page(doc, *, include_summary: bool):
+        page = doc.new_page(width=page_width, height=page_height)
+        header_h = _draw_header(page, compact=not include_summary)
+        y = header_h + 12
+        if include_summary:
+            y = _draw_summary(page, y)
+        y = _draw_table_header(page, y)
+        return page, y
+
+    doc = fitz.open()
+    page, y = _start_page(doc, include_summary=True)
+    max_y = page_height - margin - footer_height
+
+    if not attempts:
+        empty_rect = fitz.Rect(margin, y + 6, page_width - margin, y + row_height + 8)
+        page.insert_textbox(
+            empty_rect,
+            "Không có dữ liệu phù hợp bộ lọc.",
+            **_textbox_kwargs(body_font_size),
+            color=colors["muted"],
+        )
+    else:
+        for index, attempt in enumerate(attempts):
+            if y + row_height > max_y:
+                page, y = _start_page(doc, include_summary=False)
+            if index % 2 == 0:
+                row_rect = fitz.Rect(margin, y, page_width - margin, y + row_height)
+                page.draw_rect(row_rect, color=colors["row_alt"], fill=colors["row_alt"])
+            row = {
+                "id": str(attempt.id),
+                "quiz": attempt.quiz.title,
+                "user": _format_attempt_user_label(attempt),
+                "score": f"{attempt.score_percent}%",
+                "correct": str(attempt.correct_count),
+                "total": str(attempt.total_questions),
+                "completed": _format_attempt_completed_at(attempt),
+                "classroom": (
+                    attempt.assignment.classroom.name
+                    if attempt.assignment and attempt.assignment.classroom
+                    else ""
+                ),
+            }
+            x = margin
+            for col in columns:
+                rect = fitz.Rect(x + 4, y + 2, x + col["width"] - 4, y + row_height - 2)
+                page.insert_textbox(
+                    rect,
+                    _truncate(row[col["key"]], col["max_chars"]),
+                    **_textbox_kwargs(body_font_size, align=col["align"]),
+                    color=colors["ink"],
+                )
+                x += col["width"]
+            y += row_height
+
+    total_pages = doc.page_count
+    for index in range(total_pages):
+        page = doc[index]
+        footer_rect = fitz.Rect(margin, page_height - footer_height + 4, page_width - margin, page_height - 4)
+        page.insert_textbox(
+            footer_rect,
+            f"Trang {index + 1}/{total_pages}",
+            **_textbox_kwargs(8, align=fitz.TEXT_ALIGN_RIGHT),
+            color=colors["muted"],
+        )
+
+    pdf_bytes = doc.tobytes()
+    doc.close()
+    return pdf_bytes
+
+
 @login_required
 @require_GET
 def attempt_export_csv(request):
     if not _user_is_teacher(request.user):
         raise Http404
-    attempts = Attempt.objects.filter(completed_at__isnull=False).select_related(
-        "quiz", "user", "assignment", "assignment__classroom"
-    )
-    quiz_id = (request.GET.get("quiz") or "").strip()
-    classroom_slug = (request.GET.get("classroom") or "").strip()
-    user_id_raw = (request.GET.get("user") or "").strip()
-    search_query = (request.GET.get("q") or "").strip()
-    if quiz_id:
-        attempts = attempts.filter(quiz_id=quiz_id)
-    if classroom_slug:
-        attempts = attempts.filter(assignment__classroom__slug=classroom_slug)
-    if user_id_raw:
-        try:
-            user_id = int(user_id_raw)
-        except (TypeError, ValueError):
-            user_id = None
-        if user_id:
-            attempts = attempts.filter(user_id=user_id)
-    if search_query:
-        attempts = attempts.filter(
-            Q(user__username__icontains=search_query)
-            | Q(user__email__icontains=search_query)
-            | Q(participant_name__icontains=search_query)
-            | Q(quiz__title__icontains=search_query)
-        )
+    attempts, _ = _get_admin_attempts_queryset(request)
+    attempts = attempts.order_by("-completed_at", "-started_at", "-id")
     rows = [
         ["Attempt ID", "Quiz", "User", "Score %", "Correct", "Total", "Completed at", "Classroom"]
     ]
@@ -539,7 +873,7 @@ def attempt_export_csv(request):
             [
                 attempt.id,
                 attempt.quiz.title,
-                attempt.user.username if attempt.user else "",
+                _format_attempt_user_label(attempt),
                 attempt.score_percent,
                 attempt.correct_count,
                 attempt.total_questions,
@@ -550,6 +884,21 @@ def attempt_export_csv(request):
     csv_content = "\n".join([",".join([str(cell).replace(",", ";") for cell in row]) for row in rows])
     response = HttpResponse(csv_content, content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="quiz_attempts.csv"'
+    return response
+
+
+@login_required
+@require_GET
+def attempt_export_pdf(request):
+    if not _user_is_teacher(request.user):
+        raise Http404
+    attempts, filters = _get_admin_attempts_queryset(request)
+    attempts = list(attempts.order_by("-completed_at", "-started_at", "-id"))
+    if not fitz:
+        return HttpResponse("PDF export is unavailable on this server.", status=501)
+    pdf_bytes = _build_attempt_export_pdf(attempts=attempts, filters=filters)
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="quiz_attempts.pdf"'
     return response
 
 

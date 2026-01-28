@@ -13,7 +13,8 @@
       <h1 class="h4 mb-0">{% trans "All attempts" %}</h1>
       <div class="d-flex gap-2">
         <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:list' %}">&larr; {% trans "All quizzes" %}</a>
-        <a class="btn btn-primary btn-sm" href="{% url 'blockly_quiz:scores-export' %}?{{ request.GET.urlencode }}">{% trans "Export CSV" %}</a>
+        <a class="btn btn-primary btn-sm" href="{% url 'blockly_quiz:scores-export-pdf' %}?{{ request.GET.urlencode }}">{% trans "Export PDF" %}</a>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:scores-export' %}?{{ request.GET.urlencode }}">{% trans "Export CSV" %}</a>
       </div>
     </div>
 

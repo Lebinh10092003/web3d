@@ -10,6 +10,7 @@ urlpatterns = [
     path("scores/", views.attempt_list, name="scores"),
     path("scores/admin/", views.attempt_admin_list, name="scores-admin"),
     path("scores/export/", views.attempt_export_csv, name="scores-export"),
+    path("scores/export/pdf/", views.attempt_export_pdf, name="scores-export-pdf"),
     path("classrooms/", views.classroom_list, name="classroom-list"),
     path("classrooms/<slug:slug>/", views.classroom_detail, name="classroom-detail"),
     path("random/", views.random_quiz, name="random"),

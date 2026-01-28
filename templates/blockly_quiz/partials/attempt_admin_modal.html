@@ -144,7 +144,10 @@
       </div>
 
       <div class="modal-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:scores-export' %}?{{ request.GET.urlencode }}">{% trans "Export CSV" %}</a>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-primary btn-sm" href="{% url 'blockly_quiz:scores-export-pdf' %}?{{ request.GET.urlencode }}">{% trans "Export PDF" %}</a>
+          <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:scores-export' %}?{{ request.GET.urlencode }}">{% trans "Export CSV" %}</a>
+        </div>
         {% if page_obj.paginator.num_pages > 1 %}
           <nav aria-label="{% trans 'Attempt pagination' %}">
             <ul class="pagination mb-0">
