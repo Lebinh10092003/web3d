@@ -61,6 +61,7 @@
           <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
             <div class="text-muted small">
               {% blocktrans with n=forloop.counter total=questions|length %}Question {{ n }} / {{ total }}{% endblocktrans %}
+              &middot; ID: {{ question.id }}
             </div>
             {% if question.answer %}
               {% if question.answer.is_correct %}

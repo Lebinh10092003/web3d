@@ -21,128 +21,69 @@
           {% endif %}
         </p>
       </div>
-      <a class="pill-link" href="{% url 'blockly_quiz:classroom-list' %}">&larr; {% trans "All classes" %}</a>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        {% if is_teacher %}
+          <button class="button button-ghost button-xs" type="button" data-open-dialog="members-dialog">
+            {% trans "Members" %}
+          </button>
+        {% endif %}
+        <a class="pill-link" href="{% url 'blockly_quiz:classroom-list' %}">&larr; {% trans "All classes" %}</a>
+      </div>
     </div>
 
-    <div class="classroom-grid">
-      {% if is_teacher %}
-        <div class="panel panel-stack">
-          <div class="panel-section">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h2 class="h5 mb-0">{% trans "Members" %}</h2>
-              <span class="badge gradebook-badge">{{ member_page_obj.paginator.count }} {% trans "people" %}</span>
-            </div>
-            <div class="table-responsive">
-              <table class="table gradebook-table table-striped mb-0">
-                <thead>
-                  <tr>
-                    <th>{% trans "Username" %}</th>
-                    <th>{% trans "Email" %}</th>
-                    <th class="text-center">{% trans "Role" %}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for member in members %}
-                    <tr>
-                      <td>{{ member.user.username }}</td>
-                      <td>{{ member.user.email }}</td>
-                      <td class="text-center text-muted">{{ member.get_role_display }}</td>
-                    </tr>
-                  {% empty %}
-                    <tr>
-                      <td colspan="3" class="text-muted small">{% trans "No members yet." %}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            {% if member_page_obj.paginator.num_pages > 1 %}
-              <nav class="d-flex justify-content-end mt-2" aria-label="{% trans 'Members pagination' %}">
-                <ul class="pagination pagination-sm pager-compact mb-0">
-                  <li class="page-item{% if not member_page_obj.has_previous %} disabled{% endif %}" aria-disabled="{% if not member_page_obj.has_previous %}true{% else %}false{% endif %}">
-                    {% if member_page_obj.has_previous %}
-                      <a class="page-link" href="?{{ member_page_prefix }}member_page={{ member_page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}" rel="prev">{% trans "Previous" %}</a>
-                    {% else %}
-                      <span class="page-link" aria-hidden="true">{% trans "Previous" %}</span>
-                    {% endif %}
-                  </li>
-                  <li class="page-item disabled">
-                    <span class="page-link">{{ member_page_obj.number }} / {{ member_page_obj.paginator.num_pages }}</span>
-                  </li>
-                  <li class="page-item{% if not member_page_obj.has_next %} disabled{% endif %}" aria-disabled="{% if not member_page_obj.has_next %}true{% else %}false{% endif %}">
-                    {% if member_page_obj.has_next %}
-                      <a class="page-link" href="?{{ member_page_prefix }}member_page={{ member_page_obj.next_page_number }}" aria-label="{% trans 'Next' %}" rel="next">{% trans "Next" %}</a>
-                    {% else %}
-                      <span class="page-link" aria-hidden="true">{% trans "Next" %}</span>
-                    {% endif %}
-                  </li>
-                </ul>
-              </nav>
-            {% endif %}
-            <form method="post" class="row g-2 mt-2">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="add_member">
-              <div class="col-12 col-md-6">
-                <label class="form-label small mb-1">{% trans "Username or email" %}</label>
-                <input class="form-control" name="username" required placeholder="{% trans 'Enter username or email' %}">
-              </div>
-              <div class="col-12 col-md-3">
-                <label class="form-label small mb-1">{% trans "Role" %}</label>
-                <select class="form-select" name="role">
-                  <option value="student">{% trans "Student" %}</option>
-                  <option value="teacher">{% trans "Teacher" %}</option>
-                </select>
-              </div>
-              <div class="col-12 col-md-3 d-flex align-items-end">
-                <button class="button w-100" type="submit">{% trans "Add" %}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      {% endif %}
-
-      <div class="panel panel-stack">
+    <div class="classroom-grid classroom-grid--single">
+      <div class="panel panel-stack panel-stack--compact" data-tab-scope>
         {% if is_teacher %}
-          <div class="panel-section wg-grid">
-            <div class="wg-card">
-              <div class="wg-label">{% trans "Create a quiz" %}</div>
-              <h2 class="h5 mb-1">{% trans "Spin up a quiz for this class" %}</h2>
-              <p class="text-muted small mb-2">{% trans "New quiz will be drafted and auto-assigned here." %}</p>
-              <form class="row g-2" method="post">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="create_quiz">
-                <div class="col-12">
-                  <label class="form-label small mb-1">{% trans "Quiz title" %}</label>
-                  <input class="form-control" name="title" required placeholder="{% trans 'e.g. Robotics practice set' %}">
-                </div>
-                <div class="col-12">
-                  <label class="form-label small mb-1">{% trans "Description (optional)" %}</label>
-                  <textarea class="form-control" name="description" rows="2" placeholder="{% trans 'Short summary' %}"></textarea>
-                </div>
-                <div class="col-12 d-flex justify-content-end">
-                  <button class="button button-icon" type="submit">{% trans "Create & assign" %}</button>
-                </div>
-              </form>
+          <div class="panel-section">
+            <div class="classroom-tabs" data-tab-group="classroom-teacher-tabs">
+              <button type="button" class="classroom-tab is-active" data-tab-target="teacher-create">{% trans "Create a quiz" %}</button>
+              <button type="button" class="classroom-tab" data-tab-target="teacher-assign">{% trans "Assign quiz" %}</button>
+              <button type="button" class="classroom-tab" data-tab-target="teacher-gradebook">{% trans "Gradebook" %}</button>
             </div>
+          </div>
 
-            <div class="wg-card">
-              <div class="wg-label">{% trans "Import questions" %}</div>
-              <h2 class="h5 mb-1">{% trans "Paste JSON/YAML" %}</h2>
-              <p class="text-muted small mb-2">
-                {% if request.LANGUAGE_CODE == "vi" %}
-                  Dan JSON/YAML: prompt, choices (>=2, chi 1 dung); co the them question_type, difficulty, blockly_state/xml, scratchblocks_text, code_text + code_language, explanation.
-                {% else %}
-                  Paste JSON/YAML: prompt, choices (2+, exactly 1 correct); optional question_type, difficulty, blockly_state/xml, scratchblocks_text, code_text + code_language, explanation.
-                {% endif %}
-              </p>
-              <div class="d-flex flex-wrap gap-2 mt-2">
-                <button class="button button-icon" type="button" data-open-dialog="import-dialog">{% trans "Open import modal" %}</button>
-                <span class="wg-badge">{% trans "Includes Blockly/Scratch/Python samples" %}</span>
+          <div class="panel-section classroom-tabpanel is-active" data-tab-panel="teacher-create">
+            <div class="wg-grid">
+              <div class="wg-card">
+                <div class="wg-label">{% trans "Create a quiz" %}</div>
+                <h2 class="h5 mb-1">{% trans "Spin up a quiz for this class" %}</h2>
+                <p class="text-muted small mb-2">{% trans "New quiz will be drafted and auto-assigned here." %}</p>
+                <form class="row g-2" method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="create_quiz">
+                  <div class="col-12">
+                    <label class="form-label small mb-1">{% trans "Quiz title" %}</label>
+                    <input class="form-control" name="title" required placeholder="{% trans 'e.g. Robotics practice set' %}">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label small mb-1">{% trans "Description (optional)" %}</label>
+                    <textarea class="form-control" name="description" rows="2" placeholder="{% trans 'Short summary' %}"></textarea>
+                  </div>
+                  <div class="col-12 d-flex justify-content-end">
+                    <button class="button button-icon" type="submit">{% trans "Create & assign" %}</button>
+                  </div>
+                </form>
+              </div>
+
+              <div class="wg-card">
+                <div class="wg-label">{% trans "Import questions" %}</div>
+                <h2 class="h5 mb-1">{% trans "Paste JSON/YAML" %}</h2>
+                <p class="text-muted small mb-2">
+                  {% if request.LANGUAGE_CODE == "vi" %}
+                    Dan JSON/YAML: prompt, choices (>=2, chi 1 dung); co the them question_type, difficulty, blockly_state/xml, scratchblocks_text, code_text + code_language, explanation.
+                  {% else %}
+                    Paste JSON/YAML: prompt, choices (2+, exactly 1 correct); optional question_type, difficulty, blockly_state/xml, scratchblocks_text, code_text + code_language, explanation.
+                  {% endif %}
+                </p>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                  <button class="button button-icon" type="button" data-open-dialog="import-dialog">{% trans "Open import modal" %}</button>
+                  <span class="wg-badge">{% trans "Includes Blockly/Scratch/Python samples" %}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="panel-section">
+          <div class="panel-section classroom-tabpanel" data-tab-panel="teacher-assign">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h2 class="h5 mb-0">{% trans "Assign quiz" %}</h2>
               <span class="badge gradebook-badge">{{ assignments|length }} {% trans "assigned" %}</span>
@@ -176,7 +117,7 @@
             </form>
           </div>
 
-          <div class="panel-section">
+          <div class="panel-section classroom-tabpanel" data-tab-panel="teacher-gradebook">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h2 class="h5 mb-0">{% trans "Gradebook" %}</h2>
               <div class="d-flex gap-2">
@@ -265,6 +206,91 @@
   </div>
 
   {% if is_teacher %}
+    <dialog id="members-dialog" class="classroom-dialog classroom-dialog--wide">
+      <div class="classroom-dialog__header">
+        <div>
+          <p class="eyebrow text-uppercase mb-1">{% trans "Members" %}</p>
+          <h3 class="h6 mb-0">{{ classroom.name }}</h3>
+        </div>
+        <button type="button" class="button button-ghost button-xs" data-close-dialog aria-label="{% trans 'Close' %}">&times;</button>
+      </div>
+      <div class="classroom-dialog__body">
+        <div class="panel panel-stack panel-stack--compact">
+          <div class="panel-section">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h2 class="h5 mb-0">{% trans "Members" %}</h2>
+              <span class="badge gradebook-badge">{{ member_page_obj.paginator.count }} {% trans "people" %}</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table gradebook-table table-striped mb-0">
+                <thead>
+                  <tr>
+                    <th>{% trans "Username" %}</th>
+                    <th>{% trans "Email" %}</th>
+                    <th class="text-center">{% trans "Role" %}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for member in members %}
+                    <tr>
+                      <td>{{ member.user.username }}</td>
+                      <td>{{ member.user.email }}</td>
+                      <td class="text-center text-muted">{{ member.get_role_display }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="3" class="text-muted small">{% trans "No members yet." %}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% if member_page_obj.paginator.num_pages > 1 %}
+              <nav class="d-flex justify-content-end mt-2" aria-label="{% trans 'Members pagination' %}">
+                <ul class="pagination pagination-sm pager-compact mb-0">
+                  <li class="page-item{% if not member_page_obj.has_previous %} disabled{% endif %}" aria-disabled="{% if not member_page_obj.has_previous %}true{% else %}false{% endif %}">
+                    {% if member_page_obj.has_previous %}
+                      <a class="page-link" href="?{{ member_page_prefix }}member_page={{ member_page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}" rel="prev">{% trans "Previous" %}</a>
+                    {% else %}
+                      <span class="page-link" aria-hidden="true">{% trans "Previous" %}</span>
+                    {% endif %}
+                  </li>
+                  <li class="page-item disabled">
+                    <span class="page-link">{{ member_page_obj.number }} / {{ member_page_obj.paginator.num_pages }}</span>
+                  </li>
+                  <li class="page-item{% if not member_page_obj.has_next %} disabled{% endif %}" aria-disabled="{% if not member_page_obj.has_next %}true{% else %}false{% endif %}">
+                    {% if member_page_obj.has_next %}
+                      <a class="page-link" href="?{{ member_page_prefix }}member_page={{ member_page_obj.next_page_number }}" aria-label="{% trans 'Next' %}" rel="next">{% trans "Next" %}</a>
+                    {% else %}
+                      <span class="page-link" aria-hidden="true">{% trans "Next" %}</span>
+                    {% endif %}
+                  </li>
+                </ul>
+              </nav>
+            {% endif %}
+            <form method="post" class="row g-2 mt-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="add_member">
+              <div class="col-12 col-md-6">
+                <label class="form-label small mb-1">{% trans "Username or email" %}</label>
+                <input class="form-control" name="username" required placeholder="{% trans 'Enter username or email' %}">
+              </div>
+              <div class="col-12 col-md-3">
+                <label class="form-label small mb-1">{% trans "Role" %}</label>
+                <select class="form-select" name="role">
+                  <option value="student">{% trans "Student" %}</option>
+                  <option value="teacher">{% trans "Teacher" %}</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-3 d-flex align-items-end">
+                <button class="button w-100" type="submit">{% trans "Add" %}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
     <dialog id="import-dialog" class="wg-dialog">
       <form method="dialog" class="wg-dialog__header">
         <h2 class="h5 mb-0">{% trans "Import questions" %}</h2>
@@ -397,7 +423,7 @@ JSON shape:
     document.addEventListener("DOMContentLoaded", () => {
       const activateTabs = (scope) => {
         scope.querySelectorAll("[data-tab-group]").forEach((group) => {
-          const root = group.closest("dialog") || scope;
+          const root = group.closest("[data-tab-scope]") || group.closest("dialog") || scope;
           const tabs = group.querySelectorAll("[data-tab-target]");
           const panels = root.querySelectorAll("[data-tab-panel]");
           tabs.forEach((tab) => {

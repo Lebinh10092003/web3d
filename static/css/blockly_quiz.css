@@ -279,37 +279,41 @@ body.random-quiz-page .modal-backdrop {
 }
 
 [data-blockly-quiz] .classroom-dialog {
-  border: none;
+  border: 1px solid #d5d9e3;
   outline: none;
-  border-radius: 20px;
+  border-radius: 10px;
   padding: 0;
-  max-width: min(1100px, 98vw);
+  max-width: min(700px, 96vw);
   width: 100%;
-  background: #fff;
-  box-shadow: 0 18px 48px rgba(21, 20, 19, 0.14);
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
 }
 
 [data-blockly-quiz] .classroom-dialog--wide {
-  max-width: min(1280px, 98vw);
+  max-width: min(980px, 96vw);
 }
 
 [data-blockly-quiz] .classroom-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.18);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(3px);
 }
 
 [data-blockly-quiz] .classroom-dialog__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--quiz-border);
+  padding: 14px 18px;
+  border-bottom: 1px solid #e1e5ef;
+  background: #f5f7fb;
 }
 
 [data-blockly-quiz] .classroom-dialog__body {
-  padding: 14px 16px 16px;
+  padding: 18px 20px;
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  background: #f8f9fa;
+  max-height: calc(100vh - 140px);
+  overflow: auto;
 }
 
 [data-blockly-quiz] .classroom-dialog__actions {
@@ -1936,6 +1940,10 @@ body.random-quiz-page .modal-backdrop {
 @media (min-width: 992px) {
   [data-blockly-quiz] .classroom-grid {
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  }
+
+  [data-blockly-quiz] .classroom-grid.classroom-grid--single {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   [data-blockly-quiz] .classroom-column--full {

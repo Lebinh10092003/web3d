@@ -211,12 +211,13 @@ function renderQuestionStage(container, question, meta) {
   const codeLanguage = sanitizeLanguage(question.code_language);
   const hasPreview = hasBlockly || hasScratch || hasCode;
 
-  const questionCounter = i18n.questionCounterTemplate
+  const questionCounterBase = i18n.questionCounterTemplate
     ? formatTemplate(i18n.questionCounterTemplate, {
         n: meta.index + 1,
         total: meta.total
       })
     : `Question ${meta.index + 1} / ${meta.total}`;
+  const questionCounter = `${questionCounterBase} | ID: ${question.id}`;
   const copyLabel = i18n.copy || "Copy";
   const prevLabel = i18n.previous || "Previous";
   const submitLabel =

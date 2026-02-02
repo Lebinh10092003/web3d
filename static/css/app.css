@@ -2632,6 +2632,15 @@ textarea:focus {
   overflow: hidden;
 }
 
+.panel-stack--compact {
+  padding: 14px;
+  gap: 10px;
+}
+
+.panel-stack--compact .panel-section {
+  padding: 14px;
+}
+
 .panel-stack .panel-section::before {
   content: "";
   position: absolute;
@@ -2745,17 +2754,17 @@ textarea:focus {
 }
 
 .wg-dialog {
-  width: min(960px, 92vw);
-  max-height: 82vh;
-  border: 1px solid rgba(34, 197, 94, 0.28);
-  border-radius: 18px;
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 243, 0.95));
+  width: min(700px, 96vw);
+  max-height: calc(100vh - 140px);
+  border: 1px solid #d5d9e3;
+  border-radius: 10px;
+  background: #ffffff;
   padding: 0;
-  box-shadow: 0 26px 70px rgba(12, 44, 25, 0.28);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
 }
 
 .wg-dialog::backdrop {
-  background: rgba(10, 26, 18, 0.55);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(3px);
 }
 
@@ -2766,16 +2775,17 @@ textarea:focus {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  border-bottom: 1px solid rgba(34, 197, 94, 0.18);
-  background: rgba(34, 197, 94, 0.06);
+  border-bottom: 1px solid #e1e5ef;
+  background: #f5f7fb;
 }
 
 .wg-dialog__body {
-  padding: 16px;
+  padding: 18px 20px;
   display: grid;
-  gap: 10px;
-  max-height: 70vh;
+  gap: 12px;
+  max-height: calc(100vh - 180px);
   overflow: auto;
+  background: #f8f9fa;
 }
 
 .wg-dialog__body form {
@@ -2879,6 +2889,34 @@ textarea:focus {
   background: rgba(255, 255, 255, 0.2);
   filter: invert(1);
 }
+
+.ts-wrapper {
+  width: 100%;
+}
+
+.ts-control {
+  border-radius: 14px;
+  border: 1px solid #d5d9e3;
+  padding: 8px 12px;
+  min-height: 42px;
+  box-shadow: none;
+}
+
+.ts-control input {
+  font-size: 0.95rem;
+}
+
+.ts-dropdown {
+  border-radius: 12px;
+  border: 1px solid #d5d9e3;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+}
+
+.ts-dropdown .active {
+  background: #eef2ff;
+  color: #0f172a;
+}
+
 .owner-modal-body {
   display: flex;
   flex-direction: column;

@@ -504,6 +504,39 @@ function bindLanguageSwitcher() {
   });
 }
 
+function initTomSelect(scope) {
+  if (!window.TomSelect) {
+    return;
+  }
+  const root = scope || document;
+  root.querySelectorAll("select").forEach((select) => {
+    if (select.dataset.tomselectBound === "true") {
+      return;
+    }
+    if (select.dataset.noTomselect === "true") {
+      return;
+    }
+    const isMultiple = select.multiple === true;
+    const plugins = [];
+    if (isMultiple) {
+      plugins.push("remove_button");
+    }
+    const config = {
+      create: select.dataset.tomselectCreate === "true",
+      allowEmptyOption: true,
+      closeAfterSelect: !isMultiple,
+      hideSelected: true,
+      plugins
+    };
+    const placeholder = select.getAttribute("placeholder") || select.dataset.placeholder;
+    if (placeholder) {
+      config.placeholder = placeholder;
+    }
+    select.dataset.tomselectBound = "true";
+    new TomSelect(select, config);
+  });
+}
+
 let userMenuDocBound = false;
 
 function setUserMenuOpen(menu, open) {
@@ -1045,6 +1078,7 @@ function bindPolicyTabs() {
 
 document.addEventListener("DOMContentLoaded", () => {
   applyStagger(document);
+  initTomSelect(document);
   bindModalEvents();
   bindContactTriggers();
   bindPointsTriggers();
@@ -1072,6 +1106,7 @@ document.addEventListener("htmx:afterRequest", (event) => {
 document.addEventListener("htmx:afterSwap", (event) => {
   if (event.target) {
     applyStagger(event.target);
+    initTomSelect(event.target);
     if (event.target.id === "auth-modal-body") {
       openAuthModal();
     }

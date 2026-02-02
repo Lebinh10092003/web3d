@@ -30,7 +30,7 @@ msgstr "Cộng đồng"
 
 #: .\accounts\views.py:66
 msgid "Welcome to V+ STEAM LAB Library."
-msgstr ""
+msgstr "Ch?o m?ng ??n v?i V+ STEAM LAB Library."
 
 #: .\accounts\views.py:91
 #, python-format
@@ -92,7 +92,7 @@ msgstr "File tải lên không giống PDF."
 #: .\contributions\forms.py:106
 msgid ""
 "This .io archive is password-protected. Please export without a password."
-msgstr ""
+msgstr "Tệp .io này được bảo vệ bằng mật khẩu. Vui lòng xuất không đặt mật khẩu."
 
 #: .\contributions\forms.py:116
 msgid "Preview image"
@@ -133,15 +133,15 @@ msgstr "Cuộc thi khác"
 
 #: .\contributions\models.py:54
 msgid "Points required to unlock and download this content."
-msgstr ""
+msgstr "C?n ?i?m ?? m? kh?a v? t?i xu?ng n?i dung n?y."
 
 #: .\contributions\models.py:59
 msgid "Override points awarded to the uploader on approval."
-msgstr ""
+msgstr "Ghi ?? s? ?i?m th??ng cho ng??i t?i l?n khi ???c duy?t."
 
 #: .\contributions\models.py:63
 msgid "Price in VND for paid content. Set 0 for free/points."
-msgstr ""
+msgstr "Gi? b?ng VND cho n?i dung tr? ph?. ??t 0 n?u mi?n ph?/?i?m."
 
 #: .\contributions\views.py:33
 msgid "Could not determine file type."
@@ -400,7 +400,7 @@ msgstr "Nội dung đã mở khóa"
 
 #: .\templates\accounts\profile.html:42
 msgid "Your recent unlocks"
-msgstr ""
+msgstr "N?i dung m? kh?a g?n ??y"
 
 #: .\templates\accounts\profile.html:51
 msgid "No unlocks yet."
@@ -414,7 +414,7 @@ msgstr "Đã yêu thích"
 
 #: .\templates\accounts\profile.html:57
 msgid "Saved for later"
-msgstr ""
+msgstr "?? l?u ?? xem sau"
 
 #: .\templates\accounts\profile.html:66
 #, fuzzy
@@ -442,7 +442,7 @@ msgstr "Nội dung đã xuất bản"
 
 #: .\templates\accounts\profile.html:101
 msgid "Public items in the library"
-msgstr ""
+msgstr "N?i dung c?ng khai trong th? vi?n"
 
 #: .\templates\accounts\profile.html:110
 msgid "No items yet."
@@ -562,7 +562,7 @@ msgstr "Điện thoại"
 
 #: .\templates\base.html:382
 msgid "Choose a quick action to earn or top up points."
-msgstr ""
+msgstr "Ch?n m?t thao t?c nhanh ?? ki?m ho?c n?p ?i?m."
 
 #: .\templates\base.html:386
 #, fuzzy
@@ -572,7 +572,7 @@ msgstr "Chia sẻ tài liệu học tập của bạn"
 
 #: .\templates\base.html:388
 msgid "Submit a PDF or 3D file to earn points after approval."
-msgstr ""
+msgstr "G?i PDF ho?c file 3D ?? nh?n ?i?m sau khi ???c duy?t."
 
 #: .\templates\base.html:392
 #, fuzzy
@@ -582,7 +582,7 @@ msgstr "Điểm"
 
 #: .\templates\base.html:394
 msgid "Contact us to top up points for premium models."
-msgstr ""
+msgstr "Li?n h? ?? n?p ?i?m cho c?c m? h?nh cao c?p."
 
 #: .\templates\base.html:408
 msgid "Loading..."
@@ -836,7 +836,7 @@ msgstr "Vui lòng đăng nhập để mở khóa tải xuống."
 
 #: .\templates\library\_lego_viewer.html:23
 msgid "Flip"
-msgstr ""
+msgstr "L?t"
 
 #: .\templates\library\_lego_viewer.html:24
 #, fuzzy
@@ -850,7 +850,7 @@ msgstr "Đặt lại"
 
 #: .\templates\library\_lego_viewer.html:39
 msgid "Enable JavaScript to view this 3D model."
-msgstr ""
+msgstr "B?t JavaScript ?? xem m? h?nh 3D n?y."
 
 #: .\templates\library\detail.html:27
 msgid "Free download"
@@ -871,7 +871,7 @@ msgstr "Tải xuống để xem thêm."
 
 #: .\templates\library\detail.html:61
 msgid "Unlock with points to view the full 3D model."
-msgstr ""
+msgstr "M? kh?a b?ng ?i?m ?? xem ??y ?? m? h?nh 3D."
 
 #: .\templates\library\detail.html:62
 #, fuzzy
@@ -881,7 +881,7 @@ msgstr "Tải xuống để xem thêm."
 
 #: .\templates\library\detail.html:69
 msgid "Unlock with points to see the full model preview."
-msgstr ""
+msgstr "M? kh?a b?ng ?i?m ?? xem b?n xem tr??c ??y ?? c?a m? h?nh."
 
 #: .\templates\library\detail.html:103
 msgid ""
@@ -985,7 +985,7 @@ msgstr "Quản trị"
 #: .\web3d\context_processors.py:25
 #, python-format
 msgid "%(site)s | V for tech, V for future"
-msgstr ""
+msgstr "%(site)s | V cho c?ng ngh?, V cho t??ng lai"
 
 #: .\web3d\context_processors.py:28
 #, fuzzy
@@ -1287,7 +1287,9 @@ msgstr "Bỏ đánh dấu hoàn thành"
 msgid "Top up instantly via ZaloPay."
 msgstr "Nạp điểm ngay qua ZaloPay."
 
-# Blockly quiz UI
+msgid "HKICO Practice"
+msgstr "Luyện thi HKICO"
+
 msgid "Quizzes"
 msgstr "Đề"
 

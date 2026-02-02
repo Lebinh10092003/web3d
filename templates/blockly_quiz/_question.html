@@ -5,12 +5,14 @@
     <div class="quiz-question-header">
       <div class="quiz-step-label">
         {% blocktrans with n=question_number total=total_questions %}Question {{ n }} / {{ total }}{% endblocktrans %}
+        &middot; ID: {{ question.id }}
       </div>
       <div class="quiz-meta-chips">
         <span class="quiz-chip-soft">{{ question.get_difficulty_display }}</span>
         <span class="quiz-chip-soft">
           {% if question.question_type == "blockly" %}Blockly{% elif question.question_type == "scratch" %}Scratch{% else %}Python{% endif %}
         </span>
+        <span class="quiz-chip-soft">ID: {{ question.id }}</span>
       </div>
     </div>
 
