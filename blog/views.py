@@ -1,8 +1,11 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.conf import settings
+from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, JsonResponse
 from django.urls import reverse
+from django.core.paginator import Paginator
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
@@ -26,6 +29,37 @@ def _seo_description(post):
     if post.summary:
         return post.summary
     return (post.body or "")[:155]
+
+
+def _get_client_ip(request):
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if forwarded:
+        ip = forwarded.split(",")[0].strip()
+        return ip or None
+    ip = request.META.get("REMOTE_ADDR")
+    return ip if ip else None
+
+
+def _rate_limit(request, key, limit, window):
+    if not limit or limit <= 0:
+        return True
+    if request.user.is_authenticated:
+        identity = f"user:{request.user.id}"
+    else:
+        identity = _get_client_ip(request) or "anon"
+    cache_key = f"rl:{key}:{identity}"
+    try:
+        count = cache.incr(cache_key)
+    except ValueError:
+        cache.set(cache_key, 1, timeout=window)
+        count = 1
+    return count <= limit
+
+
+def _rate_limit_response(window):
+    response = HttpResponse("Too Many Requests", status=429, content_type="text/plain")
+    response["Retry-After"] = str(window)
+    return response
 
 
 def _get_visible_post_or_404(request, slug):
@@ -72,12 +106,18 @@ def post_list(request):
     # autopublish scheduled posts when due
     Post.objects.scheduled().filter(published_at__lte=timezone.now()).update(status=Post.Status.PUBLISHED)
 
-    posts = Post.objects.live()
+    posts = Post.objects.live().select_related("author")
+    paginator = Paginator(posts, 9)
+    page_obj = paginator.get_page(request.GET.get("page") or 1)
+    page_range = paginator.get_elided_page_range(
+        number=page_obj.number, on_each_side=1, on_ends=1
+    )
     context = {
-        "posts": posts,
-        "page_title": "Blog / Tin tức",
-        "seo_title": "Blog STEAM & Robotics - V+ STEAM LAB Library",
-        "seo_description": "Tin tức, phân tích luật thi, hướng dẫn lập trình robot và tài nguyên STEAM mới nhất từ V+ STEAM LAB Library.",
+        "page_obj": page_obj,
+        "page_range": page_range,
+        "page_title": _("Blog / News"),
+        "seo_title": _("STEAM & Robotics Blog - V+ STEAM LAB Library"),
+        "seo_description": _("News, competition insights, robot tutorials, and new STEAM resources from V+ STEAM LAB Library."),
     }
     return render(request, "blog/list.html", context)
 
@@ -105,6 +145,9 @@ def post_detail(request, slug):
 @require_POST
 @login_required
 def add_comment(request, slug):
+    limit = int(getattr(settings, "RATE_LIMIT_BLOG_COMMENT_PER_MIN", 12) or 12)
+    if not _rate_limit(request, "blog:comment", limit, 60):
+        return _rate_limit_response(60)
     post = _get_visible_post_or_404(request, slug)
     form = BlogCommentForm(request.POST)
     if form.is_valid():
@@ -180,7 +223,7 @@ def post_quick_create(request):
             post = form.save(commit=False)
             post.author = request.user
             post.save()
-            messages.success(request, "Đã tạo bài viết. Bạn có thể thêm block nội dung chi tiết.")
+            messages.success(request, _("Post created. You can add detailed content blocks."))
             return HttpResponseRedirect(reverse("blog:editor-edit", args=[post.pk]))
     else:
         form = PostQuickForm(initial={"status": Post.Status.DRAFT, "published_at": timezone.now()})
@@ -189,8 +232,8 @@ def post_quick_create(request):
         "blog/create.html",
         {
             "form": form,
-            "seo_title": "Tạo bài blog - V+ STEAM LAB Library",
-            "seo_description": "Soạn bài blog, đặt lịch xuất bản và thêm block nội dung.",
+            "seo_title": _("Create blog post - V+ STEAM LAB Library"),
+            "seo_description": _("Compose blog posts, schedule publishing, and add content blocks."),
         },
     )
 
@@ -215,7 +258,7 @@ def post_editor_edit(request, post_id=None):
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         if not title:
-            return HttpResponseBadRequest("Title is required")
+            return HttpResponseBadRequest(_("Title is required"))
         summary = request.POST.get("summary", "").strip()
         hero_image_url = request.POST.get("hero_image_url", "").strip()
         status = request.POST.get("status") or Post.Status.DRAFT
@@ -271,7 +314,7 @@ def post_editor_edit(request, post_id=None):
             payload=post.snapshot(),
         )
 
-        messages.success(request, "Đã lưu bài viết. Bạn có thể tiếp tục chỉnh sửa.")
+        messages.success(request, _("Post saved. You can continue editing."))
         return HttpResponseRedirect(reverse("blog:editor-edit", args=[post.id]))
 
     initial_blocks = []
@@ -281,8 +324,8 @@ def post_editor_edit(request, post_id=None):
     context = {
         "post": post,
         "initial_blocks_json": json.dumps(initial_blocks),
-        "seo_title": "Chỉnh sửa bài blog" if post else "Tạo bài blog",
-        "seo_description": "Soạn bài blog với block nội dung, ảnh, video, gallery.",
+        "seo_title": _("Edit blog post") if post else _("Create blog post"),
+        "seo_description": _("Compose blog posts with content blocks, images, videos, and galleries."),
     }
     return render(request, "blog/editor.html", context)
 

@@ -158,6 +158,9 @@ class BlogComment(models.Model):
         ordering = ["created_at"]
         verbose_name = _("Blog comment")
         verbose_name_plural = _("Blog comments")
+        indexes = [
+            models.Index(fields=["post", "created_at"], name="blog_comment_post_created_idx"),
+        ]
 
     def __str__(self):
         return f"Blog comment {self.id} on {self.post_id}"

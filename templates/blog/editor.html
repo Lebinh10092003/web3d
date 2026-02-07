@@ -11,12 +11,12 @@
       <div>
         <p class="eyebrow text-uppercase text-muted mb-1">{% trans "Blog editor" %}</p>
         <h1 class="h4 mb-0">
-          {% if post %}{% trans "Chỉnh sửa bài" %}{% else %}{% trans "Tạo bài blog" %}{% endif %}
+          {% if post %}{% trans "Edit post" %}{% else %}{% trans "Create blog post" %}{% endif %}
         </h1>
-        <p class="text-muted mb-0">{% trans "Thêm block văn bản, hình, video, gallery, quote, divider." %}</p>
+        <p class="text-muted mb-0">{% trans "Add text, image, video, gallery, quote, or divider blocks." %}</p>
       </div>
       <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary" href="{% url 'blog:list' %}">&larr; {% trans "Quay lại Blog" %}</a>
+        <a class="btn btn-outline-secondary" href="{% url 'blog:list' %}">&larr; {% trans "Back to Blog" %}</a>
       </div>
     </div>
 
@@ -49,9 +49,9 @@
             <input class="form-control" id="published_at" name="published_at" type="datetime-local" value="{{ post.published_at|date:'Y-m-d\\TH:i' }}">
           </div>
           <div class="col-12 col-md-4 d-flex align-items-end justify-content-end gap-2">
-            <button type="button" class="btn btn-success" id="add-text">{% trans "Thêm Text" %}</button>
-            <button type="button" class="btn btn-outline-primary" id="add-media">{% trans "Thêm Ảnh/Video" %}</button>
-            <button type="button" class="btn btn-outline-secondary" id="add-quote">{% trans "Thêm Quote" %}</button>
+            <button type="button" class="btn btn-success" id="add-text">{% trans "Add Text" %}</button>
+            <button type="button" class="btn btn-outline-primary" id="add-media">{% trans "Add Image/Video" %}</button>
+            <button type="button" class="btn btn-outline-secondary" id="add-quote">{% trans "Add Quote" %}</button>
             <button type="button" class="btn btn-outline-secondary" id="add-divider">{% trans "Divider" %}</button>
           </div>
         </div>
@@ -62,8 +62,8 @@
       <input type="hidden" name="blocks_json" id="blocks_json">
 
       <div class="d-flex justify-content-between align-items-center gap-2">
-        <div class="text-muted small" id="autosave-status">{% trans "Draft chưa lưu" %}</div>
-        <button class="btn btn-primary" type="submit">{% trans "Lưu & tiếp tục" %}</button>
+        <div class="text-muted small" id="autosave-status">{% trans "Draft not saved" %}</div>
+        <button class="btn btn-primary" type="submit">{% trans "Save & continue" %}</button>
       </div>
     </form>
   </section>

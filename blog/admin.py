@@ -3,7 +3,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .models import Post, PostBlock, PostRevision
+from .models import BlogComment, Post, PostBlock, PostRevision
 
 
 class PostBlockInline(admin.StackedInline):
@@ -78,3 +78,13 @@ class PostRevisionAdmin(admin.ModelAdmin):
         )
 
     restore_revision.short_description = _("Restore selected revisions")
+
+
+@admin.register(BlogComment)
+class BlogCommentAdmin(admin.ModelAdmin):
+    list_display = ("id", "post", "user", "is_deleted", "created_at")
+    list_filter = ("is_deleted", "created_at")
+    search_fields = ("body", "user__username", "user__email", "post__title")
+    autocomplete_fields = ("post", "user", "parent")
+    list_select_related = ("post", "user")
+    ordering = ("-created_at",)

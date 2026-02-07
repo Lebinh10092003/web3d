@@ -17,15 +17,15 @@
       <div>
         <p class="eyebrow text-uppercase text-muted mb-1">{% trans "Insights" %}</p>
         <h1 class="h3 mb-0">{% trans "Blog & Updates" %}</h1>
-        <p class="text-muted mb-0">{% trans "Luật thi WRO, hướng dẫn robot, mẹo lập trình và cập nhật tài nguyên." %}</p>
+        <p class="text-muted mb-0">{% trans "Competition rules, robot tutorials, programming tips, and new STEAM resources." %}</p>
       </div>
       {% if request.user.is_staff or request.user.is_superuser %}
-        <a class="btn btn-primary" href="{% url 'blog:create' %}">{% trans "Đăng bài" %}</a>
+        <a class="btn btn-primary" href="{% url 'blog:create' %}">{% trans "Post" %}</a>
       {% endif %}
     </div>
 
     <div class="row g-4">
-      {% for post in posts %}
+      {% for post in page_obj %}
         <div class="col-12 col-md-6 col-lg-4">
           <article class="card blog-card h-100">
             {% if post.hero_image_url %}
@@ -43,7 +43,7 @@
               {% endif %}
               {% if request.user.is_staff or request.user.is_superuser %}
                 <div class="mt-2">
-                  <a class="btn btn-outline-primary btn-sm" href="{% url 'blog:editor-edit' post.id %}">{% trans "Sửa bằng editor" %}</a>
+                  <a class="btn btn-outline-primary btn-sm" href="{% url 'blog:editor-edit' post.id %}">{% trans "Edit in editor" %}</a>
                 </div>
               {% endif %}
             </div>
@@ -53,6 +53,29 @@
         <p class="text-muted">{% trans "No posts yet." %}</p>
       {% endfor %}
     </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+      <div class="pagination mt-4">
+        {% if page_obj.has_previous %}
+          <a class="button button-ghost" href="?page={{ page_obj.previous_page_number }}" rel="prev">{% trans "Previous" %}</a>
+        {% endif %}
+        <div class="pagination-pages">
+          {% for page_num in page_range %}
+            {% if page_num == page_obj.paginator.ELLIPSIS %}
+              <span class="pagination-ellipsis">{{ page_num }}</span>
+            {% elif page_num == page_obj.number %}
+              <span class="pagination-current">{{ page_num }}</span>
+            {% else %}
+              <a class="pagination-link" href="?page={{ page_num }}">{{ page_num }}</a>
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% if page_obj.has_next %}
+          <a class="button button-ghost" href="?page={{ page_obj.next_page_number }}" rel="next">{% trans "Next" %}</a>
+        {% endif %}
+      </div>
+    {% endif %}
+
   </section>
 
 {% endblock %}

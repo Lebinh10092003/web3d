@@ -1,4 +1,4 @@
-msgid ""
+﻿msgid ""
 msgstr ""
 "Project-Id-Version: web3d\n"
 "Report-Msgid-Bugs-To: \n"
@@ -1511,3 +1511,158 @@ msgstr "Đã hoàn thành đề."
 
 msgid "Finish the quiz to view the review screen."
 msgstr "Hãy hoàn thành đề để xem phần xem lại."
+
+# Blog UI
+msgid "Insights"
+msgstr "Góc chia sẻ"
+
+msgid "Blog & Updates"
+msgstr "Blog & Cập nhật"
+
+msgid "Competition rules, robot tutorials, programming tips, and new STEAM resources."
+msgstr "Luật thi, hướng dẫn robot, mẹo lập trình và tài nguyên STEAM mới."
+
+msgid "Post"
+msgstr "Đăng bài"
+
+msgid "Edit in editor"
+msgstr "Sửa bằng editor"
+
+msgid "Blog / News"
+msgstr "Blog / Tin tức"
+
+msgid "STEAM & Robotics Blog - V+ STEAM LAB Library"
+msgstr "Blog STEAM & Robotics - V+ STEAM LAB Library"
+
+msgid "News, competition insights, robot tutorials, and new STEAM resources from V+ STEAM LAB Library."
+msgstr "Tin tức, phân tích cuộc thi, hướng dẫn robot và tài nguyên STEAM mới từ V+ STEAM LAB Library."
+
+msgid "Create blog post - V+ STEAM LAB Library"
+msgstr "Tạo bài blog - V+ STEAM LAB Library"
+
+msgid "Compose blog posts, schedule publishing, and add content blocks."
+msgstr "Soạn bài blog, đặt lịch xuất bản và thêm block nội dung."
+
+msgid "Post created. You can add detailed content blocks."
+msgstr "Đã tạo bài viết. Bạn có thể thêm block nội dung chi tiết."
+
+msgid "Post saved. You can continue editing."
+msgstr "Đã lưu bài viết. Bạn có thể tiếp tục chỉnh sửa."
+
+msgid "Edit blog post"
+msgstr "Chỉnh sửa bài blog"
+
+msgid "Create blog post"
+msgstr "Tạo bài blog"
+
+msgid "Compose blog posts with content blocks, images, videos, and galleries."
+msgstr "Soạn bài blog với block nội dung, ảnh, video, gallery."
+
+msgid "Article"
+msgstr "Bài viết"
+
+msgid "Author"
+msgstr "Tác giả"
+
+msgid "Published"
+msgstr "Xuất bản"
+
+msgid "Edit"
+msgstr "Chỉnh sửa"
+
+msgid "Share"
+msgstr "Chia sẻ"
+
+msgid "Explore resources"
+msgstr "Khám phá tài liệu"
+
+msgid "Related posts"
+msgstr "Bài viết liên quan"
+
+msgid "You may also like"
+msgstr "Có thể bạn cũng thích"
+
+msgid "View all posts"
+msgstr "Xem tất cả bài viết"
+
+msgid "Read next"
+msgstr "Đọc tiếp"
+
+msgid "No related posts yet."
+msgstr "Chưa có bài liên quan."
+
+msgid "Resource library"
+msgstr "Thư viện tài nguyên"
+
+msgid "Explore STEAM resources"
+msgstr "Khám phá tài nguyên STEAM"
+
+msgid "Find PDFs, lesson plans, and 3D builds created by the community."
+msgstr "Tìm PDF, giáo án và mô hình 3D do cộng đồng tạo."
+
+msgid "Explore library"
+msgstr "Khám phá thư viện"
+
+msgid "Community discussion"
+msgstr "Thảo luận cộng đồng"
+
+msgid "Join the discussion"
+msgstr "Tham gia thảo luận"
+
+msgid "Share your thoughts or questions"
+msgstr "Chia sẻ suy nghĩ hoặc câu hỏi"
+
+msgid "No comments yet. Be the first to share."
+msgstr "Chưa có bình luận. Hãy là người đầu tiên chia sẻ."
+
+msgid "This post is being updated."
+msgstr "Bài viết đang được cập nhật."
+
+msgid "Check back soon or explore the resource library."
+msgstr "Hãy quay lại sau hoặc khám phá thư viện tài nguyên."
+
+msgid "New post"
+msgstr "Bài viết mới"
+
+msgid "Create blog post"
+msgstr "Tạo bài blog"
+
+msgid "Enter basic info, save, then add detailed content blocks."
+msgstr "Nhập thông tin cơ bản, lưu rồi thêm block nội dung chi tiết."
+
+msgid "Back to Blog"
+msgstr "Quay lại Blog"
+
+msgid "Edit post"
+msgstr "Chỉnh sửa bài"
+
+msgid "Blog editor"
+msgstr "Trình soạn blog"
+
+msgid "Add text, image, video, gallery, quote, or divider blocks."
+msgstr "Thêm block văn bản, hình, video, gallery, quote hoặc divider."
+
+msgid "Add Text"
+msgstr "Thêm Text"
+
+msgid "Add Image/Video"
+msgstr "Thêm Ảnh/Video"
+
+msgid "Add Quote"
+msgstr "Thêm Quote"
+
+msgid "Draft not saved"
+msgstr "Draft chưa lưu"
+
+msgid "Save & continue"
+msgstr "Lưu & tiếp tục"
+
+msgid "Title is required"
+msgstr "Cần có tiêu đề"
+
+msgid "Create & edit blocks"
+msgstr "Tạo & chỉnh sửa block"
+
+msgid "Share a constructive note"
+msgstr "Chia sẻ góp ý xây dựng"
+
