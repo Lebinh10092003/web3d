@@ -96,16 +96,46 @@ def _build_library_grid_cache_key(request):
     return f"library:grid:v2:{digest}"
 
 
-def _build_meta_description(content):
-    description = (content.description or "").strip()
-    if not description:
-        description = _("%(title)s - %(type)s resource from V+ STEAM LAB Library.") % {
+def _build_meta_description(content, extensions, request):
+    lang = getattr(request, "LANGUAGE_CODE", "en")
+    ext_label = "/".join(ext.upper() for ext in extensions if ext) or content.get_content_type_display()
+    base_desc = (content.description or "").strip()
+    if not base_desc:
+        if lang == "vi":
+            base_desc = _("Tài nguyên %(type)s, chuẩn cho luyện tập và thi đấu.") % {"type": content.get_content_type_display()}
+        else:
+            base_desc = _("A %(type)s resource, optimized for practice and competition.") % {"type": content.get_content_type_display()}
+    if lang == "vi":
+        description = _("Tải %(title)s (%(ext)s) - %(desc)s") % {
             "title": content.title,
-            "type": content.get_content_type_display(),
+            "ext": ext_label,
+            "desc": base_desc,
+        }
+    else:
+        description = _("Download %(title)s (%(ext)s) - %(desc)s") % {
+            "title": content.title,
+            "ext": ext_label,
+            "desc": base_desc,
         }
     if len(description) > 155:
         description = description[:152].rstrip() + "..."
     return description
+
+
+def _build_meta_title(content, extensions, request):
+    lang = getattr(request, "LANGUAGE_CODE", "en")
+    ext_label = "/".join(ext.upper() for ext in extensions if ext) or content.get_content_type_display()
+    if lang == "vi":
+        return _("Tải %(title)s (%(ext)s) | %(site)s") % {
+            "title": content.title,
+            "ext": ext_label,
+            "site": settings.SITE_NAME,
+        }
+    return _("Download %(title)s (%(ext)s) | %(site)s") % {
+        "title": content.title,
+        "ext": ext_label,
+        "site": settings.SITE_NAME,
+    }
 
 
 def _get_client_ip(request):
@@ -484,8 +514,15 @@ def content_detail(request, slug):
     preview_url = _safe_signed_url(preview_file)
     source_ext = _extract_extension(getattr(source_file, "storage_path", ""))
     preview_ext = _extract_extension(getattr(preview_file, "storage_path", ""))
-    file_type_label = source_ext.upper() if source_ext else (
-        preview_ext.upper() if preview_ext else content.get_content_type_display()
+    extensions = []
+    if source_ext:
+        extensions.append(source_ext)
+    if preview_ext and preview_ext not in extensions:
+        extensions.append(preview_ext)
+    file_type_label = (
+        "/".join(ext.upper() for ext in extensions)
+        if extensions
+        else content.get_content_type_display()
     )
     is_pdf = (preview_ext or source_ext) == "pdf"
     lego_model_url = ""
@@ -560,7 +597,8 @@ def content_detail(request, slug):
         "is_pdf": is_pdf,
         "lego_model_url": lego_model_url,
         "source_file": source_file,
-        "meta_description": _build_meta_description(content),
+        "seo_title": _build_meta_title(content, extensions, request),
+        "meta_description": _build_meta_description(content, extensions, request),
         "og_image_url": og_image_url,
         "rating_avg": rating_stats["avg"],
         "rating_count": rating_stats["count"],

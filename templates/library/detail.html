@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load static i18n %}
 
-{% block title %}{{ content.title }} | V+ STEAM LAB Library{% endblock %}
-{% block meta_title %}{{ content.title }} | V+ STEAM LAB Library{% endblock %}
+{% block title %}{{ seo_title|default:content.title }}{% endblock %}
+{% block meta_title %}{{ seo_title|default:content.title }}{% endblock %}
 {% block meta_description %}{{ meta_description }}{% endblock %}
 {% block og_description %}{{ meta_description }}{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block og_image %}{{ og_image_url|default:DEFAULT_OG_IMAGE }}{% endblock %}
-{% block twitter_title %}{{ content.title }} | V+ STEAM LAB Library{% endblock %}
+{% block twitter_title %}{{ seo_title|default:content.title }}{% endblock %}
 {% block twitter_description %}{{ meta_description }}{% endblock %}
 {% block twitter_image %}{{ og_image_url|default:DEFAULT_OG_IMAGE }}{% endblock %}
 

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "contributions",
     "analytics",
     "blockly_quiz",
+    "blog",
 ]
 
 MIDDLEWARE = [

@@ -1,34 +1,96 @@
-{% load i18n %}
-<div class="modal-panel">
-  <h2>{% trans "Create your account" %}</h2>
-  <p>{% trans "Earn points, unlock downloads, and contribute resources." %}</p>
+{% load i18n static %}
+{% trans "Register" as register_label %}
+{% trans "Username" as username_label %}
+{% trans "Email" as email_label %}
+{% trans "Display name" as display_name_label %}
+{% trans "Group" as group_label %}
+{% trans "Password" as password_label %}
+{% trans "Confirm password" as confirm_password_label %}
+<div class="auth-modal" data-auth-modal data-aphile-title="{% trans 'Register' %}">
+  <div class="auth-modal__header">
+    <div class="auth-modal__icon auth-modal__icon--brand" aria-hidden="true">
+      <img src="{% static 'img/logoV+.png' %}" alt="V+">
+    </div>
+    <div>
+      <p class="eyebrow text-uppercase mb-1">{{ register_label }}</p>
+      <h2 class="h4 mb-0">{% trans "Create your account" %}</h2>
+      <p class="text-muted small mb-0">
+        {% trans "Earn points, unlock downloads, and contribute resources." %}
+      </p>
+    </div>
+  </div>
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger small mb-3" role="alert">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+
   <form
     method="post"
-    class="form"
+    class="auth-modal__form"
     hx-post="{% url 'accounts:register' %}?modal=1"
     hx-target="#auth-modal-body"
     hx-swap="innerHTML"
   >
     {% csrf_token %}
-    {{ form.non_field_errors }}
-    {{ form.errors }}
-    <label>{% trans "Username" %}</label>
-    {{ form.username }}
-    <label>{% trans "Email" %}</label>
-    {{ form.email }}
-    <label>{% trans "Display name" %}</label>
-    {{ form.display_name }}
-    <label>{% trans "Group" %}</label>
-    {{ form.group }}
-    <label>{% trans "Password" %}</label>
-    {{ form.password1 }}
-    <label>{% trans "Confirm password" %}</label>
-    {{ form.password2 }}
-    <button class="button" type="submit">{% trans "Register" %}</button>
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label" for="{{ form.username.id_for_label }}">{{ username_label }}</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="invalid-feedback d-block">{{ form.username.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="{{ form.email.id_for_label }}">{{ email_label }}</label>
+        {{ form.email }}
+        {% if form.email.errors %}
+          <div class="invalid-feedback d-block">{{ form.email.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="{{ form.display_name.id_for_label }}">{{ display_name_label }}</label>
+        {{ form.display_name }}
+        {% if form.display_name.errors %}
+          <div class="invalid-feedback d-block">{{ form.display_name.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12">
+        <label class="form-label" for="{{ form.group.id_for_label }}">{{ group_label }}</label>
+        {{ form.group }}
+        {% if form.group.errors %}
+          <div class="invalid-feedback d-block">{{ form.group.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="{{ form.password1.id_for_label }}">{{ password_label }}</label>
+        {{ form.password1 }}
+        {% if form.password1.errors %}
+          <div class="invalid-feedback d-block">{{ form.password1.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="{{ form.password2.id_for_label }}">{{ confirm_password_label }}</label>
+        {{ form.password2 }}
+        {% if form.password2.errors %}
+          <div class="invalid-feedback d-block">{{ form.password2.errors|striptags }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <button class="btn btn-primary w-100 mt-3" type="submit">{{ register_label }}</button>
   </form>
-  <div class="modal-switch">
-    <span>{% trans "Already have an account?" %}</span>
+
+  <div class="auth-modal__footer">
+    <span class="text-muted">{% trans "Already have an account?" %}</span>
     <a
+      class="auth-modal__link"
       href="{% url 'accounts:login' %}?modal=1"
       hx-get="{% url 'accounts:login' %}?modal=1"
       hx-target="#auth-modal-body"

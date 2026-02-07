@@ -1577,6 +1577,21 @@ body.random-quiz-page .modal-backdrop {
   border-top-color: var(--quiz-border);
 }
 
+[data-blockly-quiz] .quiz-confirm-modal .modal-header {
+  background: linear-gradient(120deg, #1f7a45, #37b26b);
+  color: #fff;
+  border-bottom: none;
+}
+
+[data-blockly-quiz] .quiz-confirm-modal .modal-body {
+  background: #f8fafc;
+}
+
+[data-blockly-quiz] .quiz-confirm-modal .btn-close {
+  filter: invert(1);
+  opacity: 0.9;
+}
+
 [data-blockly-quiz] .quiz-chip {
   display: inline-flex;
   align-items: center;

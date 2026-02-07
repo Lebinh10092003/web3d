@@ -1,28 +1,62 @@
-{% load i18n %}
-<div class="modal-panel">
-  <h2>{% trans "Welcome back" %}</h2>
-  <p>{% trans "Sign in to unlock downloads and leave feedback." %}</p>
+{% load i18n static %}
+{% trans "Login" as login_label %}
+{% trans "Username" as username_label %}
+{% trans "Password" as password_label %}
+<div class="auth-modal" data-auth-modal data-aphile-title="{% trans 'Login' %}">
+  <div class="auth-modal__header">
+    <div class="auth-modal__icon auth-modal__icon--brand" aria-hidden="true">
+      <img src="{% static 'img/logoV+.png' %}" alt="V+">
+    </div>
+    <div>
+      <p class="eyebrow text-uppercase mb-1">{{ login_label }}</p>
+      <h2 class="h4 mb-0">{% trans "Welcome back" %}</h2>
+      <p class="text-muted small mb-0">
+        {% trans "Sign in to unlock downloads and leave feedback." %}
+      </p>
+    </div>
+  </div>
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger small mb-3" role="alert">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+
   <form
     method="post"
-    class="form"
+    class="auth-modal__form"
     hx-post="{% url 'accounts:login' %}?modal=1"
     hx-target="#auth-modal-body"
     hx-swap="innerHTML"
   >
     {% csrf_token %}
-    {{ form.non_field_errors }}
     {% if next %}
       <input type="hidden" name="next" value="{{ next }}">
     {% endif %}
-    <label>{% trans "Username" %}</label>
-    {{ form.username }}
-    <label>{% trans "Password" %}</label>
-    {{ form.password }}
-    <button class="button" type="submit">{% trans "Login" %}</button>
+
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.username.id_for_label }}">{{ username_label }}</label>
+      {{ form.username }}
+      {% if form.username.errors %}
+        <div class="invalid-feedback d-block">{{ form.username.errors|striptags }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.password.id_for_label }}">{{ password_label }}</label>
+      {{ form.password }}
+      {% if form.password.errors %}
+        <div class="invalid-feedback d-block">{{ form.password.errors|striptags }}</div>
+      {% endif %}
+    </div>
+
+    <button class="btn btn-primary w-100" type="submit">{{ login_label }}</button>
   </form>
-  <div class="modal-switch">
-    <span>{% trans "New here?" %}</span>
+
+  <div class="auth-modal__footer">
+    <span class="text-muted">{% trans "New here?" %}</span>
     <a
+      class="auth-modal__link"
       href="{% url 'accounts:register' %}?modal=1"
       hx-get="{% url 'accounts:register' %}?modal=1"
       hx-target="#auth-modal-body"

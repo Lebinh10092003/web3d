@@ -8,23 +8,14 @@
   <link rel="stylesheet" href="{% static 'css/blockly_quiz.css' %}">
 {% endblock %}
 
-{% block content %}
+    {% block content %}
   <div class="container py-4" data-blockly-quiz data-quiz-play data-quiz-slug="{{ quiz.slug }}" data-api-quiz-url="{{ api_quiz_url }}" data-api-submit-url="{{ api_submit_url }}" data-assignment-id="{{ assignment_id }}">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 quiz-play-topbar">
       <div class="d-flex flex-wrap align-items-center gap-2">
-        {% if quiz.is_temporary %}
-          <form method="post" action="{% url 'blockly_quiz:random-discard' quiz.slug %}" class="d-inline">
-            {% csrf_token %}
-            <button class="btn btn-outline-secondary btn-sm" type="submit">
-              &larr; {% trans "Back" %}
-            </button>
-          </form>
-        {% else %}
-          <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:detail' quiz.slug %}">
-            &larr; {% trans "Back" %}
-          </a>
-        {% endif %}
-        <button class="btn btn-outline-secondary btn-sm" type="button" data-quiz-toggle-intro>
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#quizExitModal">
+          &larr; {% trans "Back" %}
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#quizDetailsModal">
           {% trans "Details" %}
         </button>
         <div class="quiz-play-title">{{ quiz.title }}</div>
@@ -70,7 +61,16 @@
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label" for="quiz-play-dob">{% trans "Date of birth" %}</label>
-              <input class="form-control" id="quiz-play-dob" name="dob" type="date" autocomplete="bday" maxlength="50" value="{{ initial_dob }}">
+              <input
+                class="form-control"
+                id="quiz-play-dob"
+                name="dob"
+                type="date"
+                autocomplete="bday"
+                maxlength="50"
+                value="{{ initial_dob }}"
+                lang="{{ request.LANGUAGE_CODE|default:'vi' }}"
+              >
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label" for="quiz-play-campus">{% trans "Campus" %}</label>
@@ -94,6 +94,84 @@
       <div class="card shadow-sm">
         <div class="card-body">
           <div class="text-muted">{% trans "Loading..." %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="modal fade"
+    id="quizExitModal"
+    tabindex="-1"
+    aria-labelledby="quizExitModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content quiz-confirm-modal">
+        <div class="modal-header bg-success text-white">
+          <h2 class="h5 modal-title" id="quizExitModalLabel">{% trans "Leave quiz?" %}</h2>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          {% if quiz.is_temporary %}
+            <p class="mb-2">{% trans "This temporary quiz will be discarded if you leave now." %}</p>
+            <p class="text-muted small mb-0">{% trans "Your answers are not saved until you finish." %}</p>
+          {% else %}
+            <p class="mb-2">{% trans "You can leave and return later from the quiz detail page." %}</p>
+            <p class="text-muted small mb-0">{% trans "Progress is saved after each question." %}</p>
+          {% endif %}
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">{% trans "Stay" %}</button>
+          {% if quiz.is_temporary %}
+            <form id="quiz-exit-discard-form" method="post" action="{% url 'blockly_quiz:random-discard' quiz.slug %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger">{% trans "Discard quiz" %}</button>
+            </form>
+          {% else %}
+            <a class="btn btn-primary" href="{% url 'blockly_quiz:detail' quiz.slug %}">{% trans "Leave quiz" %}</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="modal fade"
+    id="quizDetailsModal"
+    tabindex="-1"
+    aria-labelledby="quizDetailsModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h2 class="h5 modal-title" id="quizDetailsModalLabel">{{ quiz.title }}</h2>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <div class="quiz-brand-icons quiz-brand-icons--lg mb-3" aria-hidden="true">
+            {% if quiz.has_blockly %}
+              <img class="quiz-brand-icon" src="{% static 'img/logo_Blockly.png' %}" alt="Blockly">
+            {% endif %}
+            {% if quiz.has_scratch %}
+              <img class="quiz-brand-icon" src="{% static 'img/logo_Scratch.png' %}" alt="Scratch">
+            {% endif %}
+            {% if quiz.has_code %}
+              <img class="quiz-brand-icon" src="{% static 'img/logo_Python.png' %}" alt="Python">
+            {% endif %}
+          </div>
+          {% if quiz.description %}
+            <p class="text-muted mb-3">{{ quiz.description|linebreaksbr }}</p>
+          {% endif %}
+          {% if assignment_id %}
+            <p class="text-muted small mb-0">
+              <strong>{% trans "Assignment" %}:</strong> #{{ assignment_id }}
+            </p>
+          {% endif %}
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">{% trans "Close" %}</button>
         </div>
       </div>
     </div>

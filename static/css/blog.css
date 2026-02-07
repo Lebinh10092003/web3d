@@ -1,0 +1,140 @@
+/* Blog detail and list styling inspired by long-form articles */
+:root {
+  --blog-body: #0d1214;
+  --blog-muted: #56626b;
+  --blog-accent: #1f7a45;
+  --blog-surface: #ffffff;
+}
+
+.blog-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+}
+
+.blog-hero img {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  display: block;
+}
+
+.blog-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.blog-hero__text {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 28px 32px;
+  color: #fff;
+}
+
+.blog-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  color: var(--blog-muted);
+  font-size: 14px;
+}
+
+.blog-meta .pill {
+  background: rgba(31, 122, 69, 0.08);
+  color: var(--blog-accent);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.blog-body {
+  max-width: 860px;
+  margin: 0 auto;
+  color: var(--blog-body);
+  font-size: 18px;
+  line-height: 1.72;
+}
+
+.blog-body h2,
+.blog-body h3 {
+  margin-top: 28px;
+  margin-bottom: 12px;
+  font-weight: 700;
+  color: #0b1b14;
+}
+
+.blog-body p {
+  margin-bottom: 18px;
+}
+
+.blog-block {
+  margin: 0;
+}
+
+.blog-block--image,
+.blog-block--video {
+  margin: 24px 0;
+}
+
+.blog-block--image img,
+.blog-block--gallery img {
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.14);
+}
+
+.blog-block--gallery .row > div {
+  padding: 6px;
+}
+
+.blog-block--quote {
+  background: #f5fbf7;
+  border-left: 4px solid var(--blog-accent);
+  padding: 16px 18px;
+  margin: 18px 0;
+  border-radius: 12px;
+  font-style: italic;
+}
+
+.blog-block--divider {
+  margin: 28px 0;
+}
+
+.blog-share {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--blog-muted);
+}
+
+.blog-share .btn {
+  padding: 8px 12px;
+}
+
+.blog-card {
+  border: none;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.blog-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.18);
+}
+
+.blog-card img {
+  height: 200px;
+  object-fit: cover;
+}
+
+.blog-card .card-body {
+  min-height: 180px;
+}

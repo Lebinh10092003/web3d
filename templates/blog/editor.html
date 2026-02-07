@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{{ seo_title }}{% endblock %}
+{% block meta_title %}{{ seo_title }}{% endblock %}
+{% block meta_description %}{{ seo_description }}{% endblock %}
+
+{% block content %}
+  <section class="container py-4 blog-editor">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <p class="eyebrow text-uppercase text-muted mb-1">{% trans "Blog editor" %}</p>
+        <h1 class="h4 mb-0">
+          {% if post %}{% trans "Chỉnh sửa bài" %}{% else %}{% trans "Tạo bài blog" %}{% endif %}
+        </h1>
+        <p class="text-muted mb-0">{% trans "Thêm block văn bản, hình, video, gallery, quote, divider." %}</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'blog:list' %}">&larr; {% trans "Quay lại Blog" %}</a>
+      </div>
+    </div>
+
+    <form method="post" action="{% if post %}{% url 'blog:editor-edit' post.id %}{% else %}{% url 'blog:editor-new' %}{% endif %}" id="blog-editor-form">
+      {% csrf_token %}
+      <div class="card shadow-sm mb-3">
+        <div class="card-body row g-3">
+          <div class="col-12 col-lg-6">
+            <label class="form-label" for="title">{% trans "Title" %}</label>
+            <input class="form-control" id="title" name="title" value="{{ post.title|default:'' }}" required>
+          </div>
+          <div class="col-12 col-lg-6">
+            <label class="form-label" for="hero_image_url">{% trans "Hero image URL" %}</label>
+            <input class="form-control" id="hero_image_url" name="hero_image_url" value="{{ post.hero_image_url|default:'' }}">
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="summary">{% trans "Summary" %}</label>
+            <textarea class="form-control" id="summary" name="summary" rows="2">{{ post.summary|default:'' }}</textarea>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="status">{% trans "Status" %}</label>
+            <select class="form-select" id="status" name="status">
+              {% for value,label in post.Status.choices %}
+                <option value="{{ value }}" {% if post and post.status == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="published_at">{% trans "Publish at" %}</label>
+            <input class="form-control" id="published_at" name="published_at" type="datetime-local" value="{{ post.published_at|date:'Y-m-d\\TH:i' }}">
+          </div>
+          <div class="col-12 col-md-4 d-flex align-items-end justify-content-end gap-2">
+            <button type="button" class="btn btn-success" id="add-text">{% trans "Thêm Text" %}</button>
+            <button type="button" class="btn btn-outline-primary" id="add-media">{% trans "Thêm Ảnh/Video" %}</button>
+            <button type="button" class="btn btn-outline-secondary" id="add-quote">{% trans "Thêm Quote" %}</button>
+            <button type="button" class="btn btn-outline-secondary" id="add-divider">{% trans "Divider" %}</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="blocks-list" class="d-flex flex-column gap-3 mb-3"></div>
+
+      <input type="hidden" name="blocks_json" id="blocks_json">
+
+      <div class="d-flex justify-content-between align-items-center gap-2">
+        <div class="text-muted small" id="autosave-status">{% trans "Draft chưa lưu" %}</div>
+        <button class="btn btn-primary" type="submit">{% trans "Lưu & tiếp tục" %}</button>
+      </div>
+    </form>
+  </section>
+
+  <script>
+    (() => {
+      const initialBlocks = {{ initial_blocks_json|safe }};
+      const blocksList = document.getElementById("blocks-list");
+      const blocksInput = document.getElementById("blocks_json");
+      const autosaveStatus = document.getElementById("autosave-status");
+      const storageKey = "blog-editor-" + ("{{ post.id|default:'new' }}");
+      const uploadUrl = "{% url 'blog:upload-media' %}";
+
+      let blocks = initialBlocks && Array.isArray(initialBlocks) ? initialBlocks : [];
+
+      function makeId() {
+        return Math.random().toString(36).slice(2, 9);
+      }
+
+      function defaultBlock(type) {
+        return {
+          id: makeId(),
+          type,
+          position: blocks.length + 1,
+          text: "",
+          media_url: "",
+          caption: "",
+          alt_text: "",
+          align: "center",
+          data: {}
+        };
+      }
+
+      function renderBlocks() {
+        blocksList.innerHTML = "";
+        blocks.forEach((block, index) => {
+          block.position = index + 1;
+          const card = document.createElement("div");
+          card.className = "card shadow-sm";
+          card.draggable = true;
+          card.dataset.id = block.id || makeId();
+          card.innerHTML = `
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge text-bg-light border">#${block.position}</span>
+                  <select class="form-select form-select-sm block-type" style="width:auto">
+                    <option value="TEXT"${block.type === "TEXT" ? " selected" : ""}>Text</option>
+                    <option value="IMAGE"${block.type === "IMAGE" ? " selected" : ""}>Image</option>
+                    <option value="VIDEO"${block.type === "VIDEO" ? " selected" : ""}>Video</option>
+                    <option value="GALLERY"${block.type === "GALLERY" ? " selected" : ""}>Gallery</option>
+                    <option value="QUOTE"${block.type === "QUOTE" ? " selected" : ""}>Quote</option>
+                    <option value="DIVIDER"${block.type === "DIVIDER" ? " selected" : ""}>Divider</option>
+                  </select>
+                </div>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-outline-secondary btn-sm move-up">↑</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm move-down">↓</button>
+                  <button type="button" class="btn btn-outline-danger btn-sm delete">✕</button>
+                </div>
+              </div>
+              <div class="block-fields"></div>
+            </div>
+          `;
+          const fields = card.querySelector(".block-fields");
+          fields.appendChild(renderFields(block));
+          blocksList.appendChild(card);
+
+          card.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("text/plain", block.id);
+            card.classList.add("dragging");
+          });
+          card.addEventListener("dragend", () => card.classList.remove("dragging"));
+          card.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            const dragging = blocksList.querySelector(".dragging");
+            const after = getDragAfterElement(blocksList, e.clientY);
+            if (after == null) {
+              blocksList.appendChild(dragging);
+            } else {
+              blocksList.insertBefore(dragging, after);
+            }
+          });
+          card.addEventListener("drop", (e) => {
+            e.preventDefault();
+            reorderFromDom();
+          });
+
+          card.querySelector(".block-type").addEventListener("change", (e) => {
+            block.type = e.target.value;
+            renderBlocks();
+            sync();
+          });
+          card.querySelector(".delete").addEventListener("click", () => {
+            blocks = blocks.filter((b) => b.id !== block.id);
+            renderBlocks(); sync();
+          });
+          card.querySelector(".move-up").addEventListener("click", () => move(block.id, -1));
+          card.querySelector(".move-down").addEventListener("click", () => move(block.id, 1));
+        });
+        sync();
+      }
+
+      function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll(".card:not(.dragging)")];
+        return draggableElements.reduce(
+          (closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+              return { offset, element: child };
+            } else {
+              return closest;
+            }
+          },
+          { offset: Number.NEGATIVE_INFINITY }
+        ).element;
+      }
+
+      function reorderFromDom() {
+        const ids = [...blocksList.querySelectorAll(".card")].map((c) => c.dataset.id);
+        blocks.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+        renderBlocks();
+      }
+
+      function renderFields(block) {
+        const wrapper = document.createElement("div");
+        const type = block.type;
+        const addInput = (label, prop, opts = {}) => {
+          const div = document.createElement("div");
+          div.className = "mb-2";
+          div.innerHTML = `
+            <label class="form-label form-label-sm">${label}</label>
+            <input class="form-control form-control-sm" value="${block[prop] || ""}" ${opts.type ? `type="${opts.type}"` : ""}>
+          `;
+          const input = div.querySelector("input");
+          input.addEventListener("input", () => { block[prop] = input.value; sync(); });
+          wrapper.appendChild(div);
+        };
+        const addTextarea = (label, prop, rows=3) => {
+          const div = document.createElement("div");
+          div.className = "mb-2";
+          div.innerHTML = `
+            <label class="form-label form-label-sm">${label}</label>
+            <textarea class="form-control form-control-sm" rows="${rows}">${block[prop] || ""}</textarea>
+          `;
+          const ta = div.querySelector("textarea");
+          ta.addEventListener("input", () => { block[prop] = ta.value; sync(); });
+          wrapper.appendChild(div);
+        };
+
+        if (type === "TEXT") {
+          addTextarea("Nội dung", "text", 4);
+        } else if (type === "IMAGE") {
+          addInput("Ảnh URL", "media_url");
+          addInput("Caption", "caption");
+          addInput("Alt text", "alt_text");
+          addInput("Align (left/center/right/wide/full)", "align");
+          const uploadRow = document.createElement("div");
+          uploadRow.className = "d-flex gap-2 align-items-center";
+          uploadRow.innerHTML = `<input type="file" accept="image/*" class="form-control form-control-sm" />`;
+          const fileInput = uploadRow.querySelector("input[type='file']");
+          fileInput.addEventListener("change", () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            uploadFile(file, (url) => {
+              block.media_url = url;
+              renderBlocks();
+            });
+          });
+          wrapper.appendChild(uploadRow);
+        } else if (type === "VIDEO") {
+          addInput("Video URL/Embed", "media_url");
+          addInput("Caption", "caption");
+        } else if (type === "GALLERY") {
+          const div = document.createElement("div");
+          div.className = "mb-2";
+          const itemsText = (block.data.items || []).map(item => {
+            const cap = item.caption ? ` | ${item.caption}` : "";
+            return `${item.url || item.src || ""}${cap}`;
+          }).join("\\n");
+          div.innerHTML = `
+            <label class="form-label form-label-sm">Gallery (mỗi dòng: URL | caption)</label>
+            <textarea class="form-control form-control-sm" rows="4">${itemsText}</textarea>
+          `;
+          const ta = div.querySelector("textarea");
+          ta.addEventListener("input", () => {
+            const lines = ta.value.split(/\\n+/).map(l => l.trim()).filter(Boolean);
+            block.data.items = lines.map(line => {
+              const [urlPart, ...capParts] = line.split("|");
+              return { url: urlPart.trim(), caption: capParts.join("|").trim() };
+            });
+            sync();
+          });
+          wrapper.appendChild(div);
+          const uploadRow = document.createElement("div");
+          uploadRow.className = "d-flex gap-2 align-items-center mt-2";
+          uploadRow.innerHTML = `<input type="file" accept="image/*" multiple class="form-control form-control-sm" />`;
+          const fileInput = uploadRow.querySelector("input[type='file']");
+          fileInput.addEventListener("change", async () => {
+            const files = Array.from(fileInput.files || []);
+            for (const file of files) {
+              await uploadFile(file, (url) => {
+                block.data.items = block.data.items || [];
+                block.data.items.push({ url, caption: "" });
+              });
+            }
+            renderBlocks();
+          });
+          wrapper.appendChild(uploadRow);
+        } else if (type === "QUOTE") {
+          addTextarea("Quote", "text", 3);
+          addInput("Caption/Tác giả", "caption");
+        } else if (type === "DIVIDER") {
+          const note = document.createElement("p");
+          note.className = "text-muted small mb-0";
+          note.textContent = "Divider - đường kẻ ngang";
+          wrapper.appendChild(note);
+        } else {
+          addTextarea("Nội dung", "text", 3);
+        }
+        return wrapper;
+      }
+
+      function move(id, delta) {
+        const idx = blocks.findIndex((b) => b.id === id);
+        if (idx < 0) return;
+        const newIdx = idx + delta;
+        if (newIdx < 0 || newIdx >= blocks.length) return;
+        const [item] = blocks.splice(idx, 1);
+        blocks.splice(newIdx, 0, item);
+        renderBlocks();
+        sync();
+      }
+
+      function sync() {
+        blocksInput.value = JSON.stringify(blocks);
+        localStorage.setItem(storageKey, blocksInput.value);
+        autosaveStatus.textContent = "Đã lưu nháp cục bộ " + new Date().toLocaleTimeString();
+      }
+
+      async function uploadFile(file, onDone) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const resp = await fetch(uploadUrl, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": document.querySelector('[name=\"csrfmiddlewaretoken\"]').value
+          },
+          body: formData
+        });
+        const data = await resp.json();
+        if (resp.ok && data.url) {
+          onDone(data.url);
+        } else {
+          alert(data.error || "Upload thất bại");
+        }
+      }
+
+      // restore from localStorage if newer
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved && !initialBlocks.length) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            blocks = parsed;
+          }
+        }
+      } catch (e) {}
+
+      document.getElementById("add-text").addEventListener("click", () => {
+        blocks.push(defaultBlock("TEXT"));
+        renderBlocks();
+      });
+      document.getElementById("add-media").addEventListener("click", () => {
+        blocks.push(defaultBlock("IMAGE"));
+        renderBlocks();
+      });
+      document.getElementById("add-quote").addEventListener("click", () => {
+        blocks.push(defaultBlock("QUOTE"));
+        renderBlocks();
+      });
+      document.getElementById("add-divider").addEventListener("click", () => {
+        blocks.push(defaultBlock("DIVIDER"));
+        renderBlocks();
+      });
+
+      renderBlocks();
+    })();
+  </script>
+{% endblock %}

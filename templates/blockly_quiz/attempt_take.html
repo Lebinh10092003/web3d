@@ -8,13 +8,13 @@
   <link rel="stylesheet" href="{% static 'css/blockly_quiz.css' %}">
 {% endblock %}
 
-{% block content %}
+    {% block content %}
   <div class="container py-4" data-blockly-quiz>
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
       <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-outline-secondary btn-sm" href="{% url 'blockly_quiz:detail' quiz.slug %}">
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#attemptExitModal">
           {% trans "Exit" %}
-        </a>
+        </button>
       </div>
       <div class="text-muted small">
         {% blocktrans with done=answered_count total=total_questions %}{{ done }} / {{ total }} answered{% endblocktrans %}
@@ -28,6 +28,31 @@
 
     <div id="quiz-stage">
       {% include "blockly_quiz/_question.html" %}
+    </div>
+  </div>
+
+  <div
+    class="modal fade"
+    id="attemptExitModal"
+    tabindex="-1"
+    aria-labelledby="attemptExitModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content quiz-confirm-modal">
+      <div class="modal-header bg-success text-white">
+        <h2 class="h5 modal-title" id="attemptExitModalLabel">{% trans "Exit quiz?" %}</h2>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+        <div class="modal-body">
+          <p class="mb-2">{% trans "You can return from the quiz detail page to try again." %}</p>
+          <p class="text-muted small mb-0">{% trans "Unsubmitted answers will be lost when you leave." %}</p>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">{% trans "Stay" %}</button>
+          <a class="btn btn-primary" href="{% url 'blockly_quiz:detail' quiz.slug %}">{% trans "Leave quiz" %}</a>
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}

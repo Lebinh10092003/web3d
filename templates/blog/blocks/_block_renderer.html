@@ -1,0 +1,39 @@
+{% if block.type == "TEXT" %}
+  <div class="blog-block blog-block--text">
+    {{ block.text|linebreaks }}
+  </div>
+{% elif block.type == "IMAGE" %}
+  <figure class="blog-block blog-block--image text-{{ block.align|default:'center' }}">
+    <img src="{{ block.media_url }}" alt="{{ block.alt_text|default:block.caption }}">
+    {% if block.caption %}<figcaption class="text-muted small mt-2">{{ block.caption }}</figcaption>{% endif %}
+  </figure>
+{% elif block.type == "VIDEO" %}
+  <div class="blog-block blog-block--video ratio ratio-16x9">
+    <iframe src="{{ block.media_url }}" title="{{ block.caption|default:block.text|default:block.media_url }}" allowfullscreen></iframe>
+  </div>
+  {% if block.caption %}<p class="text-muted small mt-2">{{ block.caption }}</p>{% endif %}
+{% elif block.type == "GALLERY" %}
+  {% with items=block.data.items|default:block.data.gallery|default:block.data.images %}
+    <div class="blog-block blog-block--gallery row row-cols-2 row-cols-md-3 g-2">
+      {% for item in items %}
+        <div class="col">
+          <figure class="mb-0">
+            <img src="{{ item.url|default:item.src }}" alt="{{ item.alt|default:item.caption }}">
+            {% if item.caption %}<figcaption class="text-muted small mt-1">{{ item.caption }}</figcaption>{% endif %}
+          </figure>
+        </div>
+      {% endfor %}
+    </div>
+  {% endwith %}
+{% elif block.type == "QUOTE" %}
+  <blockquote class="blog-block blog-block--quote">
+    <p class="fs-5 mb-1">{{ block.text }}</p>
+    {% if block.caption %}<footer class="text-muted">{{ block.caption }}</footer>{% endif %}
+  </blockquote>
+{% elif block.type == "DIVIDER" %}
+  <hr class="blog-block blog-block--divider">
+{% else %}
+  <div class="blog-block blog-block--text">
+    {{ block.text|linebreaks }}
+  </div>
+{% endif %}

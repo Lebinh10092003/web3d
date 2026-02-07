@@ -20,8 +20,68 @@
     </div>
     <h3><a href="{% url 'library:content-detail' item.slug %}">{{ item.title }}</a></h3>
     <p>{{ item.description|default:""|truncatechars:80 }}</p>
-    <a class="button button-ghost button-xs" href="{% url 'library:content-detail' item.slug %}">
-      {% trans "View details" %}
-    </a>
+    <div class="card-actions">
+      <button
+        class="button button-ghost button-xs"
+        type="button"
+        data-bs-toggle="modal"
+        data-bs-target="#contentPreview-{{ item.id }}"
+      >
+        {% trans "Quick view" %}
+      </button>
+      <a class="button button-ghost button-xs" href="{% url 'library:content-detail' item.slug %}">
+        {% trans "View details" %}
+      </a>
+    </div>
   </div>
 </article>
+
+<div
+  class="modal fade modal-mazer content-preview-modal"
+  id="contentPreview-{{ item.id }}"
+  tabindex="-1"
+  aria-labelledby="contentPreviewLabel-{{ item.id }}"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h2 class="h5 modal-title" id="contentPreviewLabel-{{ item.id }}">{{ item.title }}</h2>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3 align-items-start">
+          <div class="col-12 col-md-5">
+            <div class="content-preview-media rounded">
+              {% if item.preview_url %}
+                <img src="{{ item.preview_url }}" alt="{{ item.title }}" loading="lazy">
+              {% else %}
+                <img src="{% static 'img/test.jpg' %}" alt="{{ item.title }}" loading="lazy">
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-12 col-md-7">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+              <span class="badge text-bg-light border">{{ item.get_content_type_display }}</span>
+              {% if item.download_cost_points == 0 %}
+                <span class="badge text-bg-success">{% trans "Free" %}</span>
+              {% else %}
+                <span class="badge text-bg-primary">
+                  {% blocktrans with points=item.download_cost_points %}{{ points }} pts{% endblocktrans %}
+                </span>
+              {% endif %}
+            </div>
+            <p class="text-muted mb-2">{{ item.description|default:""|truncatechars:140 }}</p>
+            <p class="small text-muted mb-0">
+              {% trans "Published" %}: {{ item.created_at|date:"Y-m-d" }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button class="btn btn-light" type="button" data-bs-dismiss="modal">{% trans "Close" %}</button>
+        <a class="btn btn-primary" href="{% url 'library:content-detail' item.slug %}">{% trans "Open detail page" %}</a>
+      </div>
+    </div>
+  </div>
+</div>

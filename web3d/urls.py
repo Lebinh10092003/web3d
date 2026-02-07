@@ -45,6 +45,7 @@ urlpatterns = [
     path("contributions/", include("contributions.urls")),
     path("payments/", include("gating.urls")),
     path("quizzes/", include("blockly_quiz.urls")),
+    path("blog/", include("blog.urls")),
     path("", include("library.urls")),
 ]
 
