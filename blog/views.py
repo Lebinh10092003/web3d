@@ -1,17 +1,19 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, JsonResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.views.decorators.http import require_POST
 import json
 import os
 import uuid
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
-from .models import Post, PostBlock, PostRevision
-from .forms import PostQuickForm
+from .models import BlogComment, Post, PostBlock, PostRevision
+from .forms import BlogCommentForm, PostQuickForm
 
 
 def _seo_title(post):
@@ -24,6 +26,46 @@ def _seo_description(post):
     if post.summary:
         return post.summary
     return (post.body or "")[:155]
+
+
+def _get_visible_post_or_404(request, slug):
+    qs = Post.objects
+    if not request.user.is_staff and not request.user.is_superuser:
+        qs = qs.live()
+    return get_object_or_404(qs, slug=slug)
+
+
+def _get_related_posts(request, post, limit=6):
+    qs = Post.objects
+    if not request.user.is_staff and not request.user.is_superuser:
+        qs = qs.live()
+    return list(
+        qs.exclude(pk=post.pk).order_by("-published_at", "-created_at")[:limit]
+    )
+
+
+def _get_comments(post):
+    return list(
+        BlogComment.objects.filter(post=post, parent__isnull=True)
+        .select_related("user")
+        .prefetch_related("replies__user")
+    )
+
+
+def _render_comment_list(request, post, comments, edit_form=None, editing_comment_id=None):
+    context = {
+        "post": post,
+        "comments": comments,
+        "edit_form": edit_form,
+        "editing_comment_id": editing_comment_id,
+    }
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "blog/_comment_list.html", context)
+    return redirect("blog:detail", slug=post.slug)
+
+
+def _can_manage_comment(user, comment):
+    return user.is_authenticated and (user.is_staff or comment.user_id == user.id)
 
 
 def post_list(request):
@@ -41,19 +83,92 @@ def post_list(request):
 
 
 def post_detail(request, slug):
-    qs = Post.objects
-    if not request.user.is_staff and not request.user.is_superuser:
-        qs = qs.live()
-    post = get_object_or_404(qs, slug=slug)
+    post = _get_visible_post_or_404(request, slug)
     blocks = post.blocks.order_by("position", "created_at")
+    related_posts = _get_related_posts(request, post)
+    comments = _get_comments(post)
     context = {
         "post": post,
         "blocks": blocks,
+        "related_posts_sidebar": related_posts[:4],
+        "related_posts_bottom": related_posts[:4],
+        "comments": comments,
+        "edit_form": None,
+        "editing_comment_id": None,
         "seo_title": _seo_title(post),
         "seo_description": _seo_description(post),
         "canonical_url": request.build_absolute_uri(request.path),
     }
     return render(request, "blog/detail.html", context)
+
+
+@require_POST
+@login_required
+def add_comment(request, slug):
+    post = _get_visible_post_or_404(request, slug)
+    form = BlogCommentForm(request.POST)
+    if form.is_valid():
+        parent = None
+        parent_id = form.cleaned_data.get("parent_id")
+        if parent_id:
+            parent = BlogComment.objects.filter(id=parent_id, post=post).first()
+        BlogComment.objects.create(
+            post=post,
+            user=request.user,
+            body=form.cleaned_data["body"],
+            parent=parent,
+        )
+    else:
+        messages.error(request, _("Comment could not be saved."))
+
+    comments = _get_comments(post)
+    return _render_comment_list(request, post, comments)
+
+
+@login_required
+def edit_comment(request, slug, comment_id):
+    post = _get_visible_post_or_404(request, slug)
+    comment = get_object_or_404(BlogComment, pk=comment_id, post=post)
+    if not _can_manage_comment(request.user, comment) or comment.is_deleted:
+        return HttpResponse(status=403)
+
+    if request.method == "POST":
+        form = BlogCommentForm(request.POST)
+        if form.is_valid():
+            comment.body = form.cleaned_data["body"]
+            comment.save(update_fields=["body", "updated_at"])
+        else:
+            messages.error(request, _("Comment could not be updated."))
+            comments = _get_comments(post)
+            return _render_comment_list(
+                request, post, comments, edit_form=form, editing_comment_id=comment.id
+            )
+        comments = _get_comments(post)
+        return _render_comment_list(request, post, comments)
+
+    if request.GET.get("cancel") == "1":
+        comments = _get_comments(post)
+        return _render_comment_list(request, post, comments)
+
+    form = BlogCommentForm(initial={"body": comment.body})
+    comments = _get_comments(post)
+    return _render_comment_list(
+        request, post, comments, edit_form=form, editing_comment_id=comment.id
+    )
+
+
+@require_POST
+@login_required
+def delete_comment(request, slug, comment_id):
+    post = _get_visible_post_or_404(request, slug)
+    comment = get_object_or_404(BlogComment, pk=comment_id, post=post)
+    if not _can_manage_comment(request.user, comment) or comment.is_deleted:
+        return HttpResponse(status=403)
+
+    comment.is_deleted = True
+    comment.save(update_fields=["is_deleted", "updated_at"])
+    comments = _get_comments(post)
+    return _render_comment_list(request, post, comments)
 
 
 @login_required

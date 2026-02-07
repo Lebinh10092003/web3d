@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block content %}
-  <section class="container py-4">
+  <section class="container py-4 blog-detail">
     {% if post.hero_image_url %}
       <div class="blog-hero mb-4">
         <img src="{{ post.hero_image_url }}" alt="{{ post.title }}">
@@ -25,39 +25,171 @@
         </div>
       </div>
     {% else %}
-      <div class="mb-3">
+      <div class="blog-title-card mb-4">
         <p class="eyebrow text-uppercase text-muted mb-1">{{ post.published_at|date:"d/m/Y" }}</p>
         <h1 class="h2 mb-1">{{ post.title }}</h1>
-        {% if post.summary %}<p class="text-muted">{{ post.summary }}</p>{% endif %}
+        {% if post.summary %}<p class="text-muted mb-0">{{ post.summary }}</p>{% endif %}
       </div>
     {% endif %}
 
-    <div class="blog-meta mb-4">
-      <span class="pill">{% trans "Bài viết" %}</span>
-      {% if post.author %}<span>{% trans "Tác giả" %}: {{ post.author.get_full_name|default:post.author.username }}</span>{% endif %}
-      <span>{% trans "Xuất bản" %}: {{ post.published_at|date:"d/m/Y H:i" }}</span>
-      {% if request.user.is_staff or request.user.is_superuser %}
-        <a class="btn btn-outline-primary btn-sm" href="{% url 'blog:editor-edit' post.id %}">{% trans "Chỉnh sửa" %}</a>
-      {% endif %}
-    </div>
+    <div class="blog-detail-grid">
+      <div class="blog-main">
+        <div class="blog-meta">
+          <span class="pill">{% trans "Article" %}</span>
+          {% if post.author %}<span>{% trans "Author" %}: {{ post.author.get_full_name|default:post.author.username }}</span>{% endif %}
+          <span>{% trans "Published" %}: {{ post.published_at|date:"d/m/Y H:i" }}</span>
+          {% if request.user.is_staff or request.user.is_superuser %}
+            <a class="btn btn-outline-primary btn-sm" href="{% url 'blog:editor-edit' post.id %}">{% trans "Edit" %}</a>
+          {% endif %}
+        </div>
 
-    <article class="blog-body">
-      {% if blocks %}
-        {% for block in blocks %}
-          {% include "blog/blocks/_block_renderer.html" with block=block %}
-        {% endfor %}
-      {% else %}
-        {{ post.body|linebreaks }}
-      {% endif %}
-    </article>
+        <article class="blog-body blog-content-card">
+          {% if blocks %}
+            {% for block in blocks %}
+              {% include "blog/blocks/_block_renderer.html" with block=block %}
+            {% endfor %}
+          {% elif post.body %}
+            {{ post.body|linebreaks }}
+          {% else %}
+            <div class="blog-empty">
+              <p class="mb-1">{% trans "This post is being updated." %}</p>
+              <p class="text-muted mb-0">{% trans "Check back soon or explore the resource library." %}</p>
+            </div>
+          {% endif %}
+        </article>
 
-    <div class="d-flex justify-content-between align-items-center mt-4">
-      <div class="blog-share">
-        <span class="text-muted">{% trans "Chia sẻ" %}:</span>
-        <a class="btn btn-outline-secondary btn-sm" href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" rel="noopener">Facebook</a>
-        <a class="btn btn-outline-secondary btn-sm" href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ post.title|urlencode }}" target="_blank" rel="noopener">X</a>
+        <div class="blog-actions">
+          <div class="blog-share">
+            <span class="text-muted">{% trans "Share" %}:</span>
+            <a class="btn btn-outline-secondary btn-sm" href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" rel="noopener">Facebook</a>
+            <a class="btn btn-outline-secondary btn-sm" href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ post.title|urlencode }}" target="_blank" rel="noopener">X</a>
+          </div>
+          <a class="btn btn-primary" href="{% url 'library:home' %}">{% trans "Explore resources" %}</a>
+        </div>
+
+        {% if related_posts_bottom %}
+          <section class="blog-related-section">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+              <div>
+                <p class="eyebrow text-uppercase text-muted mb-1">{% trans "Related posts" %}</p>
+                <h2 class="h4 mb-0">{% trans "You may also like" %}</h2>
+              </div>
+              <a class="btn btn-outline-secondary btn-sm" href="{% url 'blog:list' %}">{% trans "View all posts" %}</a>
+            </div>
+            <div class="row g-3">
+              {% for related in related_posts_bottom %}
+                <div class="col-12 col-md-6">
+                  <article class="card blog-card blog-card--compact h-100">
+                    {% if related.hero_image_url %}
+                      <img src="{{ related.hero_image_url }}" class="card-img-top" alt="{{ related.title }}">
+                    {% endif %}
+                    <div class="card-body">
+                      <p class="eyebrow text-uppercase text-muted mb-1">{{ related.published_at|date:"d/m/Y" }}</p>
+                      <h3 class="h6 mb-1">
+                        <a class="stretched-link text-decoration-none" href="{% url 'blog:detail' related.slug %}">{{ related.title }}</a>
+                      </h3>
+                      {% if related.summary %}
+                        <p class="text-muted mb-0">{{ related.summary|truncatechars:110 }}</p>
+                      {% else %}
+                        <p class="text-muted mb-0">{{ related.body|truncatechars:110 }}</p>
+                      {% endif %}
+                    </div>
+                  </article>
+                </div>
+              {% endfor %}
+            </div>
+          </section>
+        {% endif %}
+
+        <section class="detail-comments blog-comments section">
+          <div class="card comment-card mazer-comment-card shadow-sm">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-3 border-0 bg-transparent pb-0">
+              <div>
+                <p class="eyebrow text-uppercase text-muted mb-1">{% trans "Community discussion" %}</p>
+                <h2 class="comment-title mb-0">{% trans "Join the discussion" %}</h2>
+              </div>
+              <span class="badge text-bg-primary-subtle text-primary-emphasis comment-count-badge">
+                <i class="bi bi-chat-dots me-2" aria-hidden="true"></i>
+                <span class="me-1">{% trans "Comments" %}</span>
+                <strong id="comment-count">{{ comments|length }}</strong>
+              </span>
+            </div>
+            <div class="card-body">
+              {% if request.user.is_authenticated %}
+                <form
+                  class="form comment-form"
+                  method="post"
+                  hx-post="{% url 'blog:comment' post.slug %}"
+                  hx-target="#comment-list"
+                  hx-swap="outerHTML"
+                >
+                  {% csrf_token %}
+                  <label class="form-label fw-semibold" for="comment-body">{% trans "Share your thoughts or questions" %}</label>
+                  <textarea id="comment-body" class="form-control" name="body" rows="4" required placeholder="{% trans 'Share your thoughts or questions' %}"></textarea>
+                  <div class="comment-actions d-flex justify-content-end gap-2 mt-3">
+                    <button class="btn btn-primary text-nowrap" type="submit">
+                      <i class="bi bi-send-fill me-1" aria-hidden="true"></i>{% trans "Post comment" %}
+                    </button>
+                  </div>
+                </form>
+              {% else %}
+                <div class="alert alert-info d-flex align-items-center gap-2 mb-0">
+                  <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                  <div>
+                    <a
+                      class="btn btn-primary btn-sm me-2"
+                      href="{% url 'accounts:login' %}"
+                      hx-get="{% url 'accounts:login' %}?modal=1"
+                      hx-target="#auth-modal-body"
+                      hx-swap="innerHTML"
+                    >{% trans "Login" %}</a>
+                    <span class="text-muted">{% trans "to join the discussion." %}</span>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          {% include "blog/_comment_list.html" %}
+        </section>
       </div>
-      <a class="btn btn-primary" href="{% url 'library:home' %}">{% trans "Khám phá tài liệu" %}</a>
+
+      <aside class="blog-aside">
+        <div class="blog-aside-inner">
+          <div class="blog-aside-card">
+            <p class="eyebrow text-uppercase text-muted mb-1">{% trans "Related posts" %}</p>
+            <h2 class="h6 mb-3">{% trans "Read next" %}</h2>
+            <div class="blog-related-list">
+              {% for related in related_posts_sidebar %}
+                <a class="blog-related-item" href="{% url 'blog:detail' related.slug %}">
+                  <div class="blog-related-thumb">
+                    {% if related.hero_image_url %}
+                      <img src="{{ related.hero_image_url }}" alt="{{ related.title }}">
+                    {% else %}
+                      <span class="blog-related-placeholder">
+                        <i class="bi bi-journal-richtext" aria-hidden="true"></i>
+                      </span>
+                    {% endif %}
+                  </div>
+                  <div class="blog-related-copy">
+                    <div class="blog-related-date">{{ related.published_at|date:"d/m/Y" }}</div>
+                    <div class="blog-related-title">{{ related.title }}</div>
+                  </div>
+                </a>
+              {% empty %}
+                <div class="text-muted small">{% trans "No related posts yet." %}</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="blog-aside-card blog-aside-cta">
+            <p class="eyebrow text-uppercase text-muted mb-1">{% trans "Resource library" %}</p>
+            <h3 class="h6 mb-2">{% trans "Explore STEAM resources" %}</h3>
+            <p class="text-muted small mb-3">{% trans "Find PDFs, lesson plans, and 3D builds created by the community." %}</p>
+            <a class="btn btn-primary btn-sm w-100" href="{% url 'library:home' %}">{% trans "Explore library" %}</a>
+          </div>
+        </div>
+      </aside>
     </div>
   </section>
 {% endblock %}

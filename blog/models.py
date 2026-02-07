@@ -141,6 +141,28 @@ class Post(models.Model):
             self.save(update_fields=["status", "updated_at"])
 
 
+class BlogComment(models.Model):
+    post = models.ForeignKey(Post, related_name="comments", on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name="blog_comments", on_delete=models.CASCADE
+    )
+    parent = models.ForeignKey(
+        "self", null=True, blank=True, related_name="replies", on_delete=models.CASCADE
+    )
+    body = models.TextField()
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        verbose_name = _("Blog comment")
+        verbose_name_plural = _("Blog comments")
+
+    def __str__(self):
+        return f"Blog comment {self.id} on {self.post_id}"
+
+
 class PostBlock(models.Model):
     class BlockType(models.TextChoices):
         TEXT = "TEXT", _("Text")
