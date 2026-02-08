@@ -1,4 +1,4 @@
-﻿msgid ""
+msgid ""
 msgstr ""
 "Project-Id-Version: web3d\n"
 "Report-Msgid-Bugs-To: \n"
@@ -407,10 +407,8 @@ msgid "No unlocks yet."
 msgstr "Chưa mở khóa nội dung nào."
 
 #: .\templates\accounts\profile.html:56
-#, fuzzy
-#| msgid "Favorited"
 msgid "Favorite models"
-msgstr "Đã yêu thích"
+msgstr "Mô hình yêu thích"
 
 #: .\templates\accounts\profile.html:57
 msgid "Saved for later"
@@ -836,7 +834,7 @@ msgstr "Vui lòng đăng nhập để mở khóa tải xuống."
 
 #: .\templates\library\_lego_viewer.html:23
 msgid "Flip"
-msgstr "L?t"
+msgstr "Lật"
 
 #: .\templates\library\_lego_viewer.html:24
 #, fuzzy
@@ -1290,6 +1288,9 @@ msgstr "Nạp điểm ngay qua ZaloPay."
 msgid "HKICO Practice"
 msgstr "Luyện thi HKICO"
 
+msgid "Classrooms"
+msgstr "Lớp học"
+
 msgid "Quizzes"
 msgstr "Đề"
 
@@ -1564,12 +1565,6 @@ msgstr "Bài viết"
 msgid "Author"
 msgstr "Tác giả"
 
-msgid "Published"
-msgstr "Xuất bản"
-
-msgid "Edit"
-msgstr "Chỉnh sửa"
-
 msgid "Share"
 msgstr "Chia sẻ"
 
@@ -1623,9 +1618,6 @@ msgstr "Hãy quay lại sau hoặc khám phá thư viện tài nguyên."
 
 msgid "New post"
 msgstr "Bài viết mới"
-
-msgid "Create blog post"
-msgstr "Tạo bài blog"
 
 msgid "Enter basic info, save, then add detailed content blocks."
 msgstr "Nhập thông tin cơ bản, lưu rồi thêm block nội dung chi tiết."

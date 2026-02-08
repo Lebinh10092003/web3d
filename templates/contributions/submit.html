@@ -1,17 +1,31 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Submit content" %} | V+ STEAM LAB Library{% endblock %}
+{% block title %}
+  {% if is_edit %}
+    {% trans "Edit submission" %} | V+ STEAM LAB Library
+  {% else %}
+    {% trans "Submit content" %} | V+ STEAM LAB Library
+  {% endif %}
+{% endblock %}
 
 {% block content %}
 <section class="submit-shell">
   <div class="submit-hero">
     <div>
-      <p class="submit-eyebrow">{% trans "Submission" %}</p>
-      <h1>{% trans "Share your learning materials" %}</h1>
-      <p class="submit-subtitle">
-        {% trans "Upload a PDF or 3D file. We review every submission before it appears in the library." %}
-      </p>
+      {% if is_edit %}
+        <p class="submit-eyebrow">{% trans "Edit submission" %}</p>
+        <h1>{% trans "Update your submission" %}</h1>
+        <p class="submit-subtitle">
+          {% trans "Edits will refresh the published content if already approved." %}
+        </p>
+      {% else %}
+        <p class="submit-eyebrow">{% trans "Submission" %}</p>
+        <h1>{% trans "Share your learning materials" %}</h1>
+        <p class="submit-subtitle">
+          {% trans "Upload a PDF or 3D file. We review every submission before it appears in the library." %}
+        </p>
+      {% endif %}
     </div>
   </div>
 
@@ -24,24 +38,43 @@
           <div class="submit-section-title">
             <span class="submit-step">1</span>
             <div>
-              <h2>{% trans "Upload file" %}</h2>
-              <p>{% trans "We auto-detect file type. For PDFs, include competition keywords." %}</p>
+              {% if is_edit %}
+                <h2>{% trans "Current file" %}</h2>
+                <p>{% trans "Files cannot be replaced after submission. Please submit a new entry to change the file." %}</p>
+              {% else %}
+                <h2>{% trans "Upload file" %}</h2>
+                <p>{% trans "We auto-detect file type. For PDFs, include competition keywords." %}</p>
+              {% endif %}
             </div>
           </div>
-          <div class="submit-dropzone">
-            <div class="submit-dropzone-text">
-              <strong>{% trans "Drag and drop your file" %}</strong>
-              <span>{% trans "or click to browse from your device" %}</span>
+          {% if is_edit %}
+            <div class="submit-file-meta">
+              <span><strong>{% trans "Status" %}:</strong> {{ submission.get_status_display }}</span>
+              {% if submission.file_path %}
+                <span><strong>{% trans "File" %}:</strong> {{ submission.file_path|truncatechars:60 }}</span>
+              {% endif %}
             </div>
-            {{ form.file_upload }}
-          </div>
-          <div class="submit-field">
-            <label>{% trans "Upload preview image (optional)" %}</label>
-            {{ form.preview_upload }}
-            <p class="field-hint">
-              {% trans "Shown as the thumbnail in the library. If empty and the file is PDF, we auto-generate page 1." %}
-            </p>
-          </div>
+            {% if submission.status == "APPROVED" %}
+              <p class="submit-note submit-note--warning">
+                {% trans "This submission is approved. Changes will update the published content." %}
+              </p>
+            {% endif %}
+          {% else %}
+            <div class="submit-dropzone">
+              <div class="submit-dropzone-text">
+                <strong>{% trans "Drag and drop your file" %}</strong>
+                <span>{% trans "or click to browse from your device" %}</span>
+              </div>
+              {{ form.file_upload }}
+            </div>
+            <div class="submit-field">
+              <label>{% trans "Upload preview image (optional)" %}</label>
+              {{ form.preview_upload }}
+              <p class="field-hint">
+                {% trans "Shown as the thumbnail in the library. If empty and the file is PDF, we auto-generate page 1." %}
+              </p>
+            </div>
+          {% endif %}
         </div>
 
         <div class="submit-section">
@@ -80,6 +113,41 @@
           <div class="submit-section-title">
             <span class="submit-step">3</span>
             <div>
+              <h2>{% trans "Source & ownership" %}</h2>
+              <p>{% trans "Add the original owner (not the uploader). Each block can describe a person, team, or organization." %}</p>
+            </div>
+          </div>
+          <div
+            class="submit-source"
+            data-source-blocks
+            data-label-title="{% trans 'Label (Owner/Team/School)' %}"
+            data-label-name="{% trans 'Owner name' %}"
+            data-label-role="{% trans 'Role' %}"
+            data-label-organization="{% trans 'Organization' %}"
+            data-label-link="{% trans 'Source link' %}"
+            data-label-note="{% trans 'Note' %}"
+            data-action-up="{% trans 'Up' %}"
+            data-action-down="{% trans 'Down' %}"
+            data-action-remove="{% trans 'Remove' %}"
+          >
+            {{ form.source_blocks_json }}
+            {{ form.source_blocks_json.errors }}
+            <div class="submit-source-actions">
+              <button class="button button-ghost" type="button" data-source-add>
+                {% trans "Add source block" %}
+              </button>
+              <p class="field-hint">
+                {% trans "Example labels: Author, Team, School, Publisher." %}
+              </p>
+            </div>
+            <div class="source-block-list" data-source-list></div>
+          </div>
+        </div>
+
+        <div class="submit-section">
+          <div class="submit-section-title">
+            <span class="submit-step">4</span>
+            <div>
               <h2>{% trans "Choose category" %}</h2>
               <p>{% trans "Pick an existing category or create a new one." %}</p>
             </div>
@@ -97,16 +165,28 @@
         </div>
 
         <div class="submit-actions">
-          <button class="button" type="submit">{% trans "Submit for review" %}</button>
-          <p class="submit-note">
-            {% if request.LANGUAGE_CODE == "vi" %}
-              Xét duyệt thường mất 24-48 giờ. Bài được duyệt sẽ nhận điểm.
-              Điền càng đầy đủ thông tin càng dễ được duyệt. Hãy quay lại sau để kiểm tra kết quả.
+          <button class="button" type="submit">
+            {% if is_edit %}
+              {% trans "Save changes" %}
             {% else %}
-              Review usually takes 24-48 hours. Approved submissions earn points.
-              The more complete the details, the faster the approval. Please check back later for the result.
+              {% trans "Submit for review" %}
             {% endif %}
-          </p>
+          </button>
+          {% if is_edit %}
+            <p class="submit-note submit-note--info">
+              {% trans "Your edits are saved immediately. Approved items update the published content." %}
+            </p>
+          {% else %}
+            <p class="submit-note">
+              {% if request.LANGUAGE_CODE == "vi" %}
+                X??t duy???t th?????ng m???t 24-48 gi???. B??i ???????c duy???t s??? nh???n ??i???m.
+                ??i???n c??ng ?????y ????? th??ng tin c??ng d??? ???????c duy???t. H??y quay l???i sau ????? ki???m tra k???t qu???.
+              {% else %}
+                Review usually takes 24-48 hours. Approved submissions earn points.
+                The more complete the details, the faster the approval. Please check back later for the result.
+              {% endif %}
+            </p>
+          {% endif %}
         </div>
       </form>
     </div>

@@ -116,6 +116,7 @@ class ContentItem(models.Model):
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     description = models.TextField(blank=True)
     external_links = models.URLField(blank=True, max_length=500)
+    source_blocks = models.JSONField(blank=True, default=list)
     content_type = models.CharField(max_length=20, choices=ContentType.choices)
     categories = models.ManyToManyField(Category, blank=True, related_name="items")
     allowed_groups = models.ManyToManyField(

@@ -1,0 +1,46 @@
+{% load i18n %}
+{% if source_blocks %}
+  <div class="detail-source" data-source-section>
+    <div class="detail-source-header">
+      <span class="detail-source-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" role="presentation">
+          <path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M7 8h10M7 12h7M7 16h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <div>
+        <p class="detail-source-eyebrow">{% trans "Source" %}</p>
+        <h3 class="detail-source-title">{% trans "Original ownership" %}</h3>
+      </div>
+    </div>
+    <div class="detail-source-grid">
+      {% for block in source_blocks %}
+        <article class="source-card">
+          {% if block.title %}
+            <div class="source-card-title">{{ block.title }}</div>
+          {% endif %}
+          {% if block.name %}
+            <div class="source-card-name">{{ block.name }}</div>
+          {% endif %}
+          {% if block.role or block.organization %}
+            <div class="source-card-meta">
+              {% if block.role %}<span>{{ block.role }}</span>{% endif %}
+              {% if block.role and block.organization %}
+                <span class="source-card-dot" aria-hidden="true">&bull;</span>
+              {% endif %}
+              {% if block.organization %}<span>{{ block.organization }}</span>{% endif %}
+            </div>
+          {% endif %}
+          {% if block.link %}
+            <a class="source-card-link" href="{{ block.link }}" target="_blank" rel="noopener noreferrer">
+              {{ block.link }}
+            </a>
+          {% endif %}
+          {% if block.note %}
+            <p class="source-card-note">{{ block.note }}</p>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}

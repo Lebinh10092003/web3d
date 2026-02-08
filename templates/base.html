@@ -38,200 +38,228 @@
 </head>
 <body>
   <header class="site-header" data-site-header>
-    <a class="brand" href="{% url 'library:home' %}">
-      <img src="{% static 'img/logoV+.png' %}" alt="V+ STEAM LAB Library" class="brand-logo">
-      <div>
-        <div class="brand-title">V+ STEAM LAB Library</div>
-        {% if request.LANGUAGE_CODE == "vi" %}
-          <div class="brand-subtitle">V for tech, V for future</div>
-        {% else %}
-          <div class="brand-subtitle">V for tech, V for future</div>
-        {% endif %}
-      </div>
-    </a>
-    <button class="nav-toggle" type="button" aria-controls="site-nav" aria-expanded="false" data-nav-toggle>
-      <span class="nav-toggle-label">{% trans "Menu" %}</span>
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    </button>
-    {% with view_name=request.resolver_match.view_name|default:"" %}
-    <nav class="site-nav" id="site-nav" data-nav-panel>
-      <a class="nav-link{% if view_name == 'library:home' %} is-active{% endif %}" href="{% url 'library:home' %}">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-        </svg>
-        <span>{% trans "Library" %}</span>
+    <nav class="navbar navbar-expand-lg navbar-light w-100">
+      <a class="navbar-brand brand" href="{% url 'library:home' %}">
+        <img src="{% static 'img/logoV+.png' %}" alt="V+ STEAM LAB Library" class="brand-logo">
+        <div>
+          <div class="brand-title">V+ STEAM LAB Library</div>
+          {% if request.LANGUAGE_CODE == "vi" %}
+            <div class="brand-subtitle">V for tech, V for future</div>
+          {% else %}
+            <div class="brand-subtitle">V for tech, V for future</div>
+          {% endif %}
+        </div>
       </a>
-      <a class="nav-link{% if view_name|slice:':5' == 'blog:' %} is-active{% endif %}" href="{% url 'blog:list' %}">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3-4 3-4-3-4 3V5a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M8 9h8M8 13h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <span>{% trans "Blog" %}</span>
-      </a>
-      {% if request.user.is_authenticated %}
-        <a class="nav-link{% if view_name == 'accounts:my-library' %} is-active{% endif %}" href="{% url 'accounts:my-library' %}">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 5h16v14H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-            <path d="M8 9h8M8 13h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <span>{% trans "My library" %}</span>
-        </a>
-      {% endif %}
-      <a class="nav-link{% if view_name == 'contributions:submit' %} is-active{% endif %}" href="{% url 'contributions:submit' %}">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>{% trans "Submit" %}</span>
-      </a>
-      <a class="nav-link{% if view_name == 'recaps' %} is-active{% endif %}" href="{% url 'recaps' %}">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3 8h8l2-3h8v14H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M9 12l4 3-4 3z" fill="currentColor"/>
-        </svg>
-        <span>{% trans "Recaps" %}</span>
-      </a>
-      <a class="nav-link{% if view_name == 'courses' or view_name == 'course-detail' %} is-active{% endif %}" href="{% url 'courses' %}">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 5h16v10H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M9 19h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <path d="M12 9l4 3-4 3z" fill="currentColor"/>
-        </svg>
-        <span>{% trans "Courses" %}</span>
-      </a>
-      <a class="nav-link{% if view_name|slice:':12' == 'blockly_quiz' and 'classroom' not in view_name %} is-active{% endif %}" href="{% url 'blockly_quiz:list' %}">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M8 8h8M8 12h6M8 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <span>{% trans "HKICO Practice" %}</span>
-      </a>
-      {% if request.user.is_authenticated %}
-        <a class="nav-link{% if view_name|slice:':22' == 'blockly_quiz:classroom' %} is-active{% endif %}" href="{% url 'blockly_quiz:classroom-list' %}">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 7h16v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-            <path d="M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-            <path d="M8 12h8M8 16h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <span>{% trans "Classrooms" %}</span>
-        </a>
-      {% endif %}
-      <a class="nav-link{% if view_name == 'about' %} is-active{% endif %}" href="{% url 'about' %}">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 5a1.5 1.5 0 1 1-1.5 1.5A1.5 1.5 0 0 1 12 7zm2 10h-4v-2h1v-3h-1V10h3v5h1z" fill="currentColor"/>
-        </svg>
-        <span>{% trans "About" %}</span>
-      </a>
-      {% if request.user.is_authenticated %}
-        <div class="dropdown user-menu" data-user-menu>
-          <button
-            class="btn btn-light user-chip user-menu-toggle dropdown-toggle"
-            type="button"
-            id="userMenuDropdown"
-            aria-haspopup="menu"
-            aria-expanded="false"
-            data-user-menu-toggle
-            data-bs-toggle="dropdown"
-          >
-            <span class="avatar avatar-sm user-avatar">
-              {% if request.user.avatar_path %}
-                <img src="{{ request.user.avatar_path }}" alt="Avatar">
-              {% else %}
-                <img src="{% static 'img/test.jpg' %}" alt="Avatar">
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#site-nav"
+        aria-controls="site-nav"
+        aria-expanded="false"
+        aria-label="{% trans 'Toggle navigation' %}"
+      >
+        <span class="nav-toggle-label">{% trans "Menu" %}</span>
+        <span class="navbar-toggler-icon" aria-hidden="true"></span>
+      </button>
+      {% with view_name=request.resolver_match.view_name|default:"" %}
+      <div class="collapse navbar-collapse" id="site-nav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+          <li class="nav-item">
+            <a class="nav-link{% if view_name == 'library:home' %} is-active{% endif %}" href="{% url 'library:home' %}">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+              <span>{% trans "Library" %}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if view_name|slice:':5' == 'blog:' %} is-active{% endif %}" href="{% url 'blog:list' %}">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3-4 3-4-3-4 3V5a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M8 9h8M8 13h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>{% trans "Blog" %}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if view_name == 'contributions:submit' %} is-active{% endif %}" href="{% url 'contributions:submit' %}">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>{% trans "Submit" %}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if view_name == 'recaps' %} is-active{% endif %}" href="{% url 'recaps' %}">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 8h8l2-3h8v14H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M9 12l4 3-4 3z" fill="currentColor"/>
+              </svg>
+              <span>{% trans "Recaps" %}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if view_name == 'courses' or view_name == 'course-detail' %} is-active{% endif %}" href="{% url 'courses' %}">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 5h16v10H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M9 19h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M12 9l4 3-4 3z" fill="currentColor"/>
+              </svg>
+              <span>{% trans "Courses" %}</span>
+            </a>
+          </li>
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle{% if view_name|slice:':12' == 'blockly_quiz' %} is-active{% endif %}"
+              href="#"
+              id="hkicoDropdown"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M8 8h8M8 12h6M8 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>{% trans "HKICO Practice" %}</span>
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="hkicoDropdown">
+              <li>
+                <a class="dropdown-item{% if view_name|slice:':12' == 'blockly_quiz' and 'classroom' not in view_name %} active{% endif %}" href="{% url 'blockly_quiz:list' %}">
+                  {% trans "HKICO Practice" %}
+                </a>
+              </li>
+              {% if request.user.is_authenticated %}
+                <li>
+                  <a class="dropdown-item{% if view_name|slice:':22' == 'blockly_quiz:classroom' %} active{% endif %}" href="{% url 'blockly_quiz:classroom-list' %}">
+                    {% trans "Classrooms" %}
+                  </a>
+                </li>
               {% endif %}
-            </span>
-            <span class="user-info">
-              <span class="user-name">{{ request.user.display_name|default:request.user.username }}</span>
-              <span class="user-points">
-                {% blocktrans with points=request.user.points_balance %}{{ points }} pts{% endblocktrans %}
-              </span>
-            </span>
-          </button>
-          <ul
-            class="dropdown-menu dropdown-menu-end user-menu-dropdown shadow"
-            role="menu"
-            aria-labelledby="userMenuDropdown"
-            data-user-menu-dropdown
-          >
-            <li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if view_name == 'about' %} is-active{% endif %}" href="{% url 'about' %}">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 5a1.5 1.5 0 1 1-1.5 1.5A1.5 1.5 0 0 1 12 7zm2 10h-4v-2h1v-3h-1V10h3v5h1z" fill="currentColor"/>
+              </svg>
+              <span>{% trans "About" %}</span>
+            </a>
+          </li>
+          {% if request.user.is_authenticated %}
+            <li class="nav-item dropdown user-menu" data-user-menu>
+              <button
+                class="btn btn-light user-chip user-menu-toggle dropdown-toggle"
+                type="button"
+                id="userMenuDropdown"
+                aria-haspopup="menu"
+                aria-expanded="false"
+                data-user-menu-toggle
+                data-bs-toggle="dropdown"
+              >
+                <span class="avatar avatar-sm user-avatar">
+                  {% if request.user.avatar_path %}
+                    <img src="{{ request.user.avatar_path }}" alt="Avatar">
+                  {% else %}
+                    <img src="{% static 'img/test.jpg' %}" alt="Avatar">
+                  {% endif %}
+                </span>
+                <span class="user-info">
+                  <span class="user-name">{{ request.user.display_name|default:request.user.username }}</span>
+                  <span class="user-points">
+                    {% blocktrans with points=request.user.points_balance %}{{ points }} pts{% endblocktrans %}
+                  </span>
+                </span>
+              </button>
+              <ul
+                class="dropdown-menu dropdown-menu-end user-menu-dropdown shadow"
+                role="menu"
+                aria-labelledby="userMenuDropdown"
+                data-user-menu-dropdown
+              >
+                <li>
+                  <a
+                    class="dropdown-item user-menu-link"
+                    role="menuitem"
+                    href="{% url 'accounts:profile' %}?section=personal"
+                  >{% trans "Your profile" %}</a>
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item user-menu-link"
+                    role="menuitem"
+                    href="{% url 'accounts:profile' %}?section=public"
+                  >{% trans "Your published items" %}</a>
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item user-menu-link"
+                    role="menuitem"
+                    href="{% url 'accounts:profile' %}?section=favorites"
+                  >{% trans "Favorite models" %}</a>
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item user-menu-link"
+                    role="menuitem"
+                    href="{% url 'accounts:profile' %}?section=courses"
+                  >{% trans "My library" %}</a>
+                </li>
+                <li><hr class="dropdown-divider" aria-hidden="true"></li>
+                <li>
+                  <form action="{% url 'accounts:logout' %}" method="post" class="user-menu-form">
+                    {% csrf_token %}
+                    <button class="dropdown-item user-menu-link" type="submit" role="menuitem">
+                      <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>
+                      <span>{% trans "Logout" %}</span>
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+          {% else %}
+            <li class="nav-item auth-cta">
               <a
-                class="dropdown-item user-menu-link"
-                role="menuitem"
-                href="{% url 'accounts:profile' %}?section=personal"
-              >{% trans "Your profile" %}</a>
-            </li>
-            <li>
+                class="btn btn-primary btn-auth"
+                href="{% url 'accounts:register' %}"
+                hx-get="{% url 'accounts:register' %}?modal=1"
+                hx-target="#auth-modal-body"
+                hx-swap="innerHTML"
+              >
+                {% trans "Sign up" %}
+              </a>
               <a
-                class="dropdown-item user-menu-link"
-                role="menuitem"
-                href="{% url 'accounts:profile' %}?section=public"
-              >{% trans "Your published items" %}</a>
+                class="btn-auth btn-outline-secondary"
+                href="{% url 'accounts:login' %}"
+                hx-get="{% url 'accounts:login' %}?modal=1"
+                hx-target="#auth-modal-body"
+                hx-swap="innerHTML"
+              >
+                {% trans "Login" %}
+              </a>
             </li>
-            <li>
-              <a
-                class="dropdown-item user-menu-link"
-                role="menuitem"
-                href="{% url 'accounts:profile' %}?section=favorites"
-              >{% trans "Favorite models" %}</a>
-            </li>
-            <li>
-              <a
-                class="dropdown-item user-menu-link"
-                role="menuitem"
-                href="{% url 'accounts:profile' %}?section=courses"
-              >{% trans "My library" %}</a>
-            </li>
-            <li><hr class="dropdown-divider" aria-hidden="true"></li>
-            <li>
-              <form action="{% url 'accounts:logout' %}" method="post" class="user-menu-form">
-                {% csrf_token %}
-                <button class="dropdown-item user-menu-link" type="submit" role="menuitem">
-                  <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>
-                  <span>{% trans "Logout" %}</span>
-                </button>
-              </form>
-            </li>
-          </ul>
-        </div>
-      {% else %}
-        <div class="auth-cta">
-          <a
-            class="btn btn-primary btn-auth"
-            href="{% url 'accounts:register' %}"
-            hx-get="{% url 'accounts:register' %}?modal=1"
-            hx-target="#auth-modal-body"
-            hx-swap="innerHTML"
-          >
-            {% trans "Sign up" %}
-          </a>
-          <a
-            class="btn-auth btn-outline-secondary"
-            href="{% url 'accounts:login' %}"
-            hx-get="{% url 'accounts:login' %}?modal=1"
-            hx-target="#auth-modal-body"
-            hx-swap="innerHTML"
-          >
-            {% trans "Login" %}
-          </a>
-        </div>
-      {% endif %}
-      <form class="lang-switcher" action="{% url 'set_language' %}" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-        {% get_current_language as LANGUAGE_CODE %}
-        {% get_available_languages as LANGUAGES %}
-        <span class="lang-label">{% trans "Language" %}</span>
-        <select name="language" aria-label="{% trans 'Language' %}" data-lang-switcher>
-          {% for lang in LANGUAGES %}
-            <option value="{{ lang.0 }}" {% if lang.0 == LANGUAGE_CODE %}selected{% endif %}>
-              {{ lang.1 }}
-            </option>
-          {% endfor %}
-        </select>
-      </form>
+          {% endif %}
+          <li class="nav-item ms-lg-2">
+            <form class="lang-switcher" action="{% url 'set_language' %}" method="post">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              {% get_current_language as LANGUAGE_CODE %}
+              {% get_available_languages as LANGUAGES %}
+              <span class="lang-label">{% trans "Language" %}</span>
+              <select name="language" aria-label="{% trans 'Language' %}" data-lang-switcher>
+                {% for lang in LANGUAGES %}
+                  <option value="{{ lang.0 }}" {% if lang.0 == LANGUAGE_CODE %}selected{% endif %}>
+                    {{ lang.1 }}
+                  </option>
+                {% endfor %}
+              </select>
+            </form>
+          </li>
+        </ul>
+      </div>
+      {% endwith %}
     </nav>
-    {% endwith %}
   </header>
 
   <main class="site-main">
@@ -424,25 +452,37 @@
           <button class="btn-close btn-close-white" type="button" data-bs-dismiss="modal" data-modal-close aria-label="{% trans 'Close' %}"></button>
         </div>
         <div class="modal-body contact-modal-body">
-          <p class="contact-modal-text">
-            {% if request.LANGUAGE_CODE == "vi" %}
-              Tôi đến từ Việt Nam
-            {% else %}
-              {% trans "I am from Vietnam" %}
-            {% endif %}
-            <span class="flag-icon" aria-hidden="true">
-              <svg viewBox="0 0 36 24" aria-hidden="true" focusable="false">
-                <rect width="36" height="24" fill="#da251d"/>
-                <polygon points="18,5.4 19.53,9.9 24.28,9.96 20.47,12.8 21.88,17.34 18,14.6 14.12,17.34 15.53,12.8 11.72,9.96 16.47,9.9" fill="#ffde00"/>
-              </svg>
-            </span>
-            {% if request.LANGUAGE_CODE == "vi" %}
-              và V+ STEAM LAB Library là nơi kết nối, chia sẻ tài nguyên STEAM, robotics và các bài học thực hành.
-            {% else %}
-              {% trans "and this website is a place to connect, share, and exchange ideas about STEAM, robotics, and learning resources." %}
-            {% endif %}
-          </p>
-          {% include "partials/_contact_links.html" %}
+          <div class="auth-modal modal-panel">
+            <div class="auth-modal__header">
+              <div class="auth-modal__icon" aria-hidden="true">
+                <i class="ri-chat-smile-3-line"></i>
+              </div>
+              <div>
+                <p class="eyebrow text-uppercase mb-1">{% trans "Contact" %}</p>
+                <h2 class="h4 mb-0">{% trans "Let's connect" %}</h2>
+                <p class="text-muted small mb-0">{% trans "We would love to hear from you." %}</p>
+              </div>
+            </div>
+            <p class="contact-modal-text">
+              {% if request.LANGUAGE_CODE == "vi" %}
+                T??i ?????n t??? Vi???t Nam
+              {% else %}
+                {% trans "I am from Vietnam" %}
+              {% endif %}
+              <span class="flag-icon" aria-hidden="true">
+                <svg viewBox="0 0 36 24" aria-hidden="true" focusable="false">
+                  <rect width="36" height="24" fill="#da251d"/>
+                  <polygon points="18,5.4 19.53,9.9 24.28,9.96 20.47,12.8 21.88,17.34 18,14.6 14.12,17.34 15.53,12.8 11.72,9.96 16.47,9.9" fill="#ffde00"/>
+                </svg>
+              </span>
+              {% if request.LANGUAGE_CODE == "vi" %}
+                v?? V+ STEAM LAB Library l?? n??i k???t n???i, chia s??? t??i nguy??n STEAM, robotics v?? c??c b??i h???c th???c h??nh.
+              {% else %}
+                {% trans "and this website is a place to connect, share, and exchange ideas about STEAM, robotics, and learning resources." %}
+              {% endif %}
+            </p>
+            {% include "partials/_contact_links.html" %}
+          </div>
         </div>
         <div class="modal-footer border-0 pt-0">
           <button class="btn btn-light" type="button" data-bs-dismiss="modal" data-modal-close>{% trans "Close" %}</button>
@@ -459,22 +499,34 @@
           <button class="btn-close btn-close-white" type="button" data-bs-dismiss="modal" data-modal-close aria-label="{% trans 'Close' %}"></button>
         </div>
         <div class="modal-body points-modal-body">
-          <p class="points-modal-note mb-3">
-            {% trans "Choose a quick action to earn or top up points." %}
-          </p>
-          <div class="points-options">
-            <a class="points-option" href="{% url 'contributions:submit' %}">
-              <div class="points-option-title">{% trans "Upload learning material" %}</div>
-              <div class="points-option-desc">
-                {% trans "Submit a PDF or 3D file to earn points after approval." %}
+          <div class="auth-modal modal-panel">
+            <div class="auth-modal__header">
+              <div class="auth-modal__icon" aria-hidden="true">
+                <i class="ri-coin-line"></i>
               </div>
-            </a>
-            <a class="points-option" href="{% url 'gating:points' %}">
-              <div class="points-option-title">{% trans "Buy points" %}</div>
-              <div class="points-option-desc">
-                {% trans "Top up instantly via ZaloPay." %}
+              <div>
+                <p class="eyebrow text-uppercase mb-1">{% trans "Points" %}</p>
+                <h2 class="h4 mb-0">{% trans "Get more points" %}</h2>
+                <p class="text-muted small mb-0">{% trans "Boost your balance to unlock downloads." %}</p>
               </div>
-            </a>
+            </div>
+            <p class="points-modal-note mb-3">
+              {% trans "Choose a quick action to earn or top up points." %}
+            </p>
+            <div class="points-options">
+              <a class="points-option" href="{% url 'contributions:submit' %}">
+                <div class="points-option-title">{% trans "Upload learning material" %}</div>
+                <div class="points-option-desc">
+                  {% trans "Submit a PDF or 3D file to earn points after approval." %}
+                </div>
+              </a>
+              <a class="points-option" href="{% url 'gating:points' %}">
+                <div class="points-option-title">{% trans "Buy points" %}</div>
+                <div class="points-option-desc">
+                  {% trans "Top up instantly via ZaloPay." %}
+                </div>
+              </a>
+            </div>
           </div>
         </div>
         <div class="modal-footer border-0 pt-0">
@@ -503,21 +555,35 @@
           <h5 class="modal-title" id="owner-modal-title">{% trans "Owner" %}</h5>
           <button class="btn-close btn-close-white" type="button" data-bs-dismiss="modal" data-modal-close aria-label="{% trans 'Close' %}"></button>
         </div>
-        <div class="modal-body owner-modal-body">
-          <div class="owner-modal-header">
-            <div class="owner-modal-avatar" aria-hidden="true">
-              <img id="owner-modal-avatar-img" alt="">
-              <span id="owner-modal-avatar-initial" class="owner-modal-initial"></span>
+        <div class="modal-body">
+          <div class="auth-modal modal-panel">
+            <div class="auth-modal__header">
+              <div class="auth-modal__icon" aria-hidden="true">
+                <i class="ri-user-3-line"></i>
+              </div>
+              <div>
+                <p class="eyebrow text-uppercase mb-1">{% trans "Owner" %}</p>
+                <h2 class="h4 mb-0">{% trans "Owner details" %}</h2>
+                <p class="text-muted small mb-0">{% trans "Learn more about the creator behind this resource." %}</p>
+              </div>
             </div>
-            <div>
-              <h2 id="owner-modal-name"></h2>
-              <p id="owner-modal-username" class="owner-modal-username"></p>
-              <p id="owner-modal-role" class="owner-modal-role"></p>
+            <div class="owner-modal-body">
+              <div class="owner-modal-header">
+                <div class="owner-modal-avatar" aria-hidden="true">
+                  <img id="owner-modal-avatar-img" alt="">
+                  <span id="owner-modal-avatar-initial" class="owner-modal-initial"></span>
+                </div>
+                <div>
+                  <h2 id="owner-modal-name"></h2>
+                  <p id="owner-modal-username" class="owner-modal-username"></p>
+                  <p id="owner-modal-role" class="owner-modal-role"></p>
+                </div>
+              </div>
+              <p id="owner-modal-bio" class="owner-modal-bio"></p>
+              <div id="owner-modal-links" class="owner-modal-links"></div>
+              <p id="owner-modal-links-empty" class="owner-modal-empty"></p>
             </div>
           </div>
-          <p id="owner-modal-bio" class="owner-modal-bio"></p>
-          <div id="owner-modal-links" class="owner-modal-links"></div>
-          <p id="owner-modal-links-empty" class="owner-modal-empty"></p>
         </div>
         <div class="modal-footer border-0 pt-0">
           <button class="btn btn-light" type="button" data-bs-dismiss="modal" data-modal-close>{% trans "Close" %}</button>

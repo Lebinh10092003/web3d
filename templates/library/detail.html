@@ -33,10 +33,23 @@
         </svg>
         <span id="detail-favorites-count">{% blocktrans with count=favorites_count %}{{ count }} saves{% endblocktrans %}</span>
       </span>
-      {% include "partials/_owner_links.html" with owner=content.owner show_label=True show_links=True show_name=True %}
+      {% if content.source_blocks %}
+        <div class="detail-owner-line">
+          <span class="detail-owner-line__label">{% trans "Submitted by" %}</span>
+          {% include "partials/_owner_links.html" with owner=content.owner show_label=True show_links=True show_name=True compact=True %}
+        </div>
+      {% else %}
+        {% include "partials/_owner_links.html" with owner=content.owner show_label=True show_links=True show_name=True %}
+      {% endif %}
       {% if content.external_link_url %}
         <div class="detail-owner-line">
-          <span class="detail-owner-line__label">{% trans "Owned by" %}</span>
+          <span class="detail-owner-line__label">
+            {% if content.source_blocks %}
+              {% trans "Source link" %}
+            {% else %}
+              {% trans "Owned by" %}
+            {% endif %}
+          </span>
           <a
             class="detail-owner-line__link"
             href="{{ content.external_link_url }}"
@@ -55,6 +68,9 @@
         </span>
       {% endif %}
     </div>
+    {% if content.source_blocks %}
+      {% include "partials/_source_blocks.html" with source_blocks=content.source_blocks %}
+    {% endif %}
   </div>
 </section>
 

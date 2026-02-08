@@ -60,11 +60,16 @@
                 <span class="tag tag-muted">{{ submission.get_status_display }}</span>
               {% endif %}
             </div>
-            {% if submission.published_content %}
-              <a class="button button-ghost button-xs" href="{% url 'library:content-detail' submission.published_content.slug %}">
-                {% trans "View details" %}
+            <div class="profile-submission-actions">
+              <a class="button button-ghost button-xs" href="{% url 'contributions:edit' submission.id %}">
+                {% trans "Edit" %}
               </a>
-            {% endif %}
+              {% if submission.published_content %}
+                <a class="button button-ghost button-xs" href="{% url 'library:content-detail' submission.published_content.slug %}">
+                  {% trans "View details" %}
+                </a>
+              {% endif %}
+            </div>
           </li>
         {% empty %}
           <li class="profile-empty">{% trans "No submissions yet." %}</li>

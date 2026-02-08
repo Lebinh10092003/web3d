@@ -1,3 +1,4 @@
+import json
 import os
 import zipfile
 from urllib.parse import urlparse
@@ -60,6 +61,10 @@ class ContributionSubmissionForm(forms.ModelForm):
         widget=forms.URLInput(attrs={"placeholder": _("https://example.com")}),
         help_text=_("Paste one URL (optional)."),
     )
+    source_blocks_json = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(attrs={"id": "source-blocks-json"}),
+    )
 
     class Meta:
         model = ContributionSubmission
@@ -81,6 +86,10 @@ class ContributionSubmissionForm(forms.ModelForm):
         self.fields["category"].queryset = Category.objects.filter(
             is_active=True
         ).order_by("name")
+        if not self.is_bound:
+            source_blocks = getattr(self.instance, "source_blocks", None)
+            if source_blocks:
+                self.fields["source_blocks_json"].initial = json.dumps(source_blocks)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -89,6 +98,12 @@ class ContributionSubmissionForm(forms.ModelForm):
         cleaned_data["new_category"] = new_category
         if not category and not new_category:
             raise forms.ValidationError(_("Select a category or add a new one."))
+        source_blocks = cleaned_data.get("source_blocks_json") or []
+        if "source_blocks_json" not in self.errors and not source_blocks:
+            self.add_error(
+                "source_blocks_json",
+                _("Please add at least one source block to identify the original owner."),
+            )
         return cleaned_data
 
     def clean_file_upload(self):
@@ -149,6 +164,45 @@ class ContributionSubmissionForm(forms.ModelForm):
                 _("Invalid URL: %(url)s") % {"url": url}
             ) from exc
         return url
+
+    def clean_source_blocks_json(self):
+        raw = self.cleaned_data.get("source_blocks_json") or ""
+        if not raw:
+            return []
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise forms.ValidationError(_("Source blocks data is invalid.")) from exc
+        if not isinstance(payload, list):
+            raise forms.ValidationError(_("Source blocks data is invalid."))
+
+        validator = URLValidator()
+        cleaned = []
+        allowed_keys = {"title", "name", "role", "organization", "link", "note"}
+        for item in payload:
+            if not isinstance(item, dict):
+                continue
+            block = {}
+            for key in allowed_keys:
+                value = str(item.get(key, "") or "").strip()
+                block[key] = value
+            if not any(block.values()):
+                continue
+            link = block.get("link") or ""
+            if link:
+                link = self._normalize_external_link(link)
+                try:
+                    validator(link)
+                except forms.ValidationError as exc:
+                    raise forms.ValidationError(
+                        _("Invalid source link: %(url)s") % {"url": link}
+                    ) from exc
+                block["link"] = link
+            cleaned.append(block)
+
+        if len(cleaned) > 12:
+            raise forms.ValidationError(_("Please keep source blocks to 12 or fewer."))
+        return cleaned
 
     def _validate_upload_size(self, upload, max_mb, label):
         if not upload:
@@ -276,10 +330,18 @@ class ContributionSubmissionForm(forms.ModelForm):
     def save(self, commit=True):
         submission = super().save(commit=False)
         submission.category = self._resolve_category()
+        submission.source_blocks = self.cleaned_data.get("source_blocks_json", [])
         if commit:
             submission.save()
             self.save_m2m()
         return submission
+
+
+class ContributionSubmissionEditForm(ContributionSubmissionForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop("file_upload", None)
+        self.fields.pop("preview_upload", None)
 
     @property
     def inferred_content_type(self):

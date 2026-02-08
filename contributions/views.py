@@ -8,7 +8,7 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from .forms import ContributionSubmissionForm
+from .forms import ContributionSubmissionEditForm, ContributionSubmissionForm
 from .models import ContributionSubmission
 from .preview_utils import build_preview_filename, build_preview_path
 from .tasks import enqueue_preview_generation
@@ -117,3 +117,32 @@ def submit(request):
         form = ContributionSubmissionForm()
 
     return render(request, "contributions/submit.html", {"form": form})
+
+
+@login_required
+def edit_submission(request, submission_id):
+    submission = ContributionSubmission.objects.filter(pk=submission_id).first()
+    if not submission:
+        return redirect("contributions:submit")
+    if not (request.user.is_staff or submission.user_id == request.user.id):
+        return redirect("contributions:submit")
+
+    if request.method == "POST":
+        form = ContributionSubmissionEditForm(request.POST, instance=submission)
+        if form.is_valid():
+            submission = form.save(commit=False)
+            submission.save()
+            if request.LANGUAGE_CODE == "vi":
+                success_message = "ÄÃ£ cáº­p nháº­t thÃ´ng tin bÃ i gá»­i."
+            else:
+                success_message = "Submission updated successfully."
+            messages.success(request, success_message)
+            return redirect("contributions:edit", submission_id=submission.id)
+    else:
+        form = ContributionSubmissionEditForm(instance=submission)
+
+    return render(
+        request,
+        "contributions/submit.html",
+        {"form": form, "submission": submission, "is_edit": True},
+    )

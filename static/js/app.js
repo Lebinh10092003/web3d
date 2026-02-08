@@ -617,20 +617,49 @@ function bindNavToggle() {
   const header = document.querySelector("[data-site-header]");
   const toggle = document.querySelector("[data-nav-toggle]");
   const nav = document.querySelector("[data-nav-panel]");
-  const NAV_COLLAPSE_BREAKPOINT = 1440;
+  const NAV_COLLAPSE_BREAKPOINT = 992;
   if (!header || !toggle || !nav) {
     return;
   }
-  if (toggle.dataset.bound === "true") {
-    return;
-  }
-  toggle.dataset.bound = "true";
-  header.dataset.navReady = "true";
 
   const setOpen = (open) => {
     header.classList.toggle("is-nav-open", open);
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
   };
+
+  const navWraps = () => {
+    const items = Array.from(nav.children).filter((item) => item.offsetParent !== null);
+    if (items.length < 2) {
+      return false;
+    }
+    const baseline = items[0].offsetTop;
+    return items.some((item) => item.offsetTop > baseline);
+  };
+
+  const updateLayout = () => {
+    const wasCompact = header.classList.contains("is-nav-compact");
+    if (wasCompact) {
+      header.classList.remove("is-nav-compact");
+      header.classList.remove("is-nav-open");
+    }
+    header.classList.remove("is-nav-tight");
+
+    const shouldCollapse = window.innerWidth <= NAV_COLLAPSE_BREAKPOINT;
+    header.classList.toggle("is-nav-compact", shouldCollapse);
+    header.dataset.navReady = shouldCollapse ? "true" : "false";
+
+    if (!shouldCollapse) {
+      setOpen(false);
+      const isOverflowing = nav.scrollWidth > nav.clientWidth + 1;
+      header.classList.toggle("is-nav-tight", isOverflowing);
+    }
+  };
+
+  if (toggle.dataset.bound === "true") {
+    updateLayout();
+    return;
+  }
+  toggle.dataset.bound = "true";
 
   toggle.addEventListener("click", (event) => {
     event.preventDefault();
@@ -652,10 +681,11 @@ function bindNavToggle() {
   });
 
   window.addEventListener("resize", () => {
-    if (window.innerWidth > NAV_COLLAPSE_BREAKPOINT) {
-      setOpen(false);
-    }
+    updateLayout();
   });
+  window.addEventListener("load", updateLayout);
+
+  updateLayout();
 }
 
 function bindProfileMenu() {
@@ -1027,6 +1057,224 @@ function bindDownloadBanner() {
   }
 }
 
+function bindSubmissionSources() {
+  const root = document.querySelector("[data-source-blocks]");
+  if (!root || root.dataset.sourceBound === "true") {
+    return;
+  }
+  const list = root.querySelector("[data-source-list]");
+  const addButton = root.querySelector("[data-source-add]");
+  const input = root.querySelector("#source-blocks-json");
+  if (!list || !addButton || !input) {
+    return;
+  }
+  root.dataset.sourceBound = "true";
+
+  let blocks = [];
+
+  const makeId = () => Math.random().toString(36).slice(2, 9);
+
+  const escapeHtml = (value) => {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  };
+
+  const sync = () => {
+    input.value = JSON.stringify(blocks);
+  };
+
+  const labels = {
+    title: root.dataset.labelTitle || "Label (Owner/Team/School)",
+    name: root.dataset.labelName || "Owner name",
+    role: root.dataset.labelRole || "Role",
+    organization: root.dataset.labelOrganization || "Organization",
+    link: root.dataset.labelLink || "Source link",
+    note: root.dataset.labelNote || "Note",
+    up: root.dataset.actionUp || "Up",
+    down: root.dataset.actionDown || "Down",
+    remove: root.dataset.actionRemove || "Remove",
+  };
+
+  const normalize = (raw) => {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw.map((block) => ({
+      id: block.id || makeId(),
+      title: block.title || "",
+      name: block.name || "",
+      role: block.role || "",
+      organization: block.organization || "",
+      link: block.link || "",
+      note: block.note || "",
+    }));
+  };
+
+  const load = () => {
+    try {
+      blocks = normalize(JSON.parse(input.value || "[]"));
+    } catch (error) {
+      blocks = [];
+    }
+    if (!blocks.length) {
+      blocks = [
+        {
+          id: makeId(),
+          title: "",
+          name: "",
+          role: "",
+          organization: "",
+          link: "",
+          note: "",
+        },
+      ];
+    }
+    sync();
+  };
+
+  const render = () => {
+    list.innerHTML = "";
+    blocks.forEach((block, index) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "source-block";
+      wrapper.dataset.blockId = block.id;
+      wrapper.innerHTML = `
+        <div class="source-block-header">
+          <div class="source-block-label">
+            <span class="source-block-index">#${index + 1}</span>
+            <input
+              class="source-block-title"
+              type="text"
+              placeholder="${escapeHtml(labels.title)}"
+              data-field="title"
+              value="${escapeHtml(block.title)}"
+            >
+          </div>
+          <div class="source-block-actions">
+            <button class="button button-ghost button-xs" type="button" data-move="up">${escapeHtml(labels.up)}</button>
+            <button class="button button-ghost button-xs" type="button" data-move="down">${escapeHtml(labels.down)}</button>
+            <button class="button button-outline button-xs" type="button" data-remove>${escapeHtml(labels.remove)}</button>
+          </div>
+        </div>
+        <div class="source-block-grid">
+          <div class="submit-field">
+            <label>${escapeHtml(labels.name)}</label>
+            <input type="text" data-field="name" value="${escapeHtml(block.name)}">
+          </div>
+          <div class="submit-field">
+            <label>${escapeHtml(labels.role)}</label>
+            <input type="text" data-field="role" value="${escapeHtml(block.role)}">
+          </div>
+          <div class="submit-field">
+            <label>${escapeHtml(labels.organization)}</label>
+            <input type="text" data-field="organization" value="${escapeHtml(block.organization)}">
+          </div>
+          <div class="submit-field">
+            <label>${escapeHtml(labels.link)}</label>
+            <input type="url" data-field="link" value="${escapeHtml(block.link)}">
+          </div>
+          <div class="submit-field submit-span">
+            <label>${escapeHtml(labels.note)}</label>
+            <textarea rows="2" data-field="note">${escapeHtml(block.note)}</textarea>
+          </div>
+        </div>
+      `;
+      list.appendChild(wrapper);
+    });
+  };
+
+  const updateBlock = (blockId, field, value) => {
+    const block = blocks.find((item) => item.id === blockId);
+    if (!block) {
+      return;
+    }
+    block[field] = value;
+    sync();
+  };
+
+  const moveBlock = (blockId, direction) => {
+    const index = blocks.findIndex((item) => item.id === blockId);
+    if (index < 0) {
+      return;
+    }
+    const target = index + direction;
+    if (target < 0 || target >= blocks.length) {
+      return;
+    }
+    const [block] = blocks.splice(index, 1);
+    blocks.splice(target, 0, block);
+    render();
+    sync();
+  };
+
+  list.addEventListener("input", (event) => {
+    const field = event.target && event.target.dataset ? event.target.dataset.field : "";
+    if (!field) {
+      return;
+    }
+    const wrapper = event.target.closest("[data-block-id]");
+    if (!wrapper) {
+      return;
+    }
+    updateBlock(wrapper.dataset.blockId, field, event.target.value);
+  });
+
+  list.addEventListener("click", (event) => {
+    const removeBtn = event.target.closest("[data-remove]");
+    if (removeBtn) {
+      const wrapper = removeBtn.closest("[data-block-id]");
+      if (!wrapper) {
+        return;
+      }
+      blocks = blocks.filter((block) => block.id !== wrapper.dataset.blockId);
+      if (!blocks.length) {
+        blocks.push({
+          id: makeId(),
+          title: "",
+          name: "",
+          role: "",
+          organization: "",
+          link: "",
+          note: "",
+        });
+      }
+      render();
+      sync();
+      return;
+    }
+    const moveBtn = event.target.closest("[data-move]");
+    if (moveBtn) {
+      const wrapper = moveBtn.closest("[data-block-id]");
+      if (!wrapper) {
+        return;
+      }
+      const direction = moveBtn.dataset.move === "up" ? -1 : 1;
+      moveBlock(wrapper.dataset.blockId, direction);
+    }
+  });
+
+  addButton.addEventListener("click", () => {
+    blocks.push({
+      id: makeId(),
+      title: "",
+      name: "",
+      role: "",
+      organization: "",
+      link: "",
+      note: "",
+    });
+    render();
+    sync();
+  });
+
+  load();
+  render();
+}
+
 function bindPolicyTabs() {
   const root = document.querySelector("[data-policy-tabs]");
   if (!root || root.dataset.policyBound === "true") {
@@ -1088,6 +1336,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindProfileMenu();
   bindRecapLibrary();
   bindDownloadBanner();
+  bindSubmissionSources();
   bindPolicyTabs();
   bindOwnerTriggers();
   document.addEventListener("hidden.bs.modal", cleanupModalArtifacts);
@@ -1115,6 +1364,7 @@ document.addEventListener("htmx:afterSwap", (event) => {
   bindRecapLibrary();
   bindDownloadBanner();
   bindPointsTriggers();
+  bindSubmissionSources();
   bindPolicyTabs();
   bindOwnerTriggers();
   bindNavToggle();
