@@ -666,7 +666,14 @@ async function initViewer(root) {
           group.updateMatrixWorld(true);
           const box = new THREE.Box3().setFromObject(group);
           if (!box.isEmpty()) {
-            group.position.y -= box.min.y;
+            const center = box.getCenter(new THREE.Vector3());
+            group.position.x -= center.x;
+            group.position.z -= center.z;
+            group.updateMatrixWorld(true);
+            const groundedBox = new THREE.Box3().setFromObject(group);
+            if (!groundedBox.isEmpty()) {
+              group.position.y -= groundedBox.min.y;
+            }
             group.updateMatrixWorld(true);
           }
         };
