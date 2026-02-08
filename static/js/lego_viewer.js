@@ -252,6 +252,21 @@ function fitCamera(THREE, camera, controls, object, offset = 1.25) {
   return { center, distance };
 }
 
+function recenterCameraToVisible(THREE, camera, controls, object) {
+  const box = new THREE.Box3().setFromObject(object);
+  if (box.isEmpty()) {
+    return null;
+  }
+  const center = box.getCenter(new THREE.Vector3());
+  const delta = center.clone().sub(controls.target);
+  if (delta.lengthSq() < 1e-6) {
+    return center;
+  }
+  controls.target.add(delta);
+  camera.position.add(delta);
+  return center;
+}
+
 function setRendererSize(renderer, canvas, camera) {
   const width = canvas.clientWidth || canvas.parentElement?.clientWidth || 1;
   const height = canvas.clientHeight || CANVAS_DEFAULT_HEIGHT;
@@ -701,8 +716,8 @@ async function initViewer(root) {
               if (viewMode === "step") {
                 currentStep = Math.min(Math.max(currentStep, 1), numSteps);
                 applyVisibilityForStep(currentStep);
-                const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
-                updateZoomClamp(fitResult?.distance);
+                recenterCameraToVisible(THREE, camera, controls, modelGroup);
+                updateZoomClamp(camera.position.distanceTo(controls.target));
               } else {
                 applyVisibilityForStep(numSteps);
                 const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
@@ -725,8 +740,8 @@ async function initViewer(root) {
             currentStep = clampStep(value);
             applyVisibilityForStep(currentStep);
             updateStepUI();
-            const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
-            updateZoomClamp(fitResult?.distance);
+            recenterCameraToVisible(THREE, camera, controls, modelGroup);
+            updateZoomClamp(camera.position.distanceTo(controls.target));
           });
         }
 
@@ -738,8 +753,8 @@ async function initViewer(root) {
             currentStep = clampStep(currentStep - 1);
             applyVisibilityForStep(currentStep);
             updateStepUI();
-            const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
-            updateZoomClamp(fitResult?.distance);
+            recenterCameraToVisible(THREE, camera, controls, modelGroup);
+            updateZoomClamp(camera.position.distanceTo(controls.target));
           });
         }
 
@@ -751,16 +766,17 @@ async function initViewer(root) {
             currentStep = clampStep(currentStep + 1);
             applyVisibilityForStep(currentStep);
             updateStepUI();
-            const fitResult = fitCamera(THREE, camera, controls, modelGroup, fitOffset);
-            updateZoomClamp(fitResult?.distance);
+            recenterCameraToVisible(THREE, camera, controls, modelGroup);
+            updateZoomClamp(camera.position.distanceTo(controls.target));
           });
         }
 
         // Default visibility depends on start mode.
         applyVisibilityForStep(viewMode === "step" ? currentStep : numSteps);
         if (viewMode === "step" && modelGroup) {
-          fitCamera(THREE, camera, controls, modelGroup, fitOffset * 1.02);
+          recenterCameraToVisible(THREE, camera, controls, modelGroup);
         }
+        updateZoomClamp(camera.position.distanceTo(controls.target));
         updateStepUI();
         setModeButtons();
       },
