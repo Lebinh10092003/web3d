@@ -848,7 +848,7 @@ msgstr "Đặt lại"
 
 #: .\templates\library\_lego_viewer.html:39
 msgid "Enable JavaScript to view this 3D model."
-msgstr "B?t JavaScript ?? xem m? h?nh 3D n?y."
+msgstr "Bật JavaScript để xem mô hình 3D này."
 
 #: .\templates\library\detail.html:27
 msgid "Free download"
@@ -869,17 +869,15 @@ msgstr "Tải xuống để xem thêm."
 
 #: .\templates\library\detail.html:61
 msgid "Unlock with points to view the full 3D model."
-msgstr "M? kh?a b?ng ?i?m ?? xem ??y ?? m? h?nh 3D."
+msgstr "Mở khóa bằng điểm để xem đầy đủ mô hình 3D."
 
 #: .\templates\library\detail.html:62
-#, fuzzy
-#| msgid "Download to view more."
 msgid "Unlock to view details."
-msgstr "Tải xuống để xem thêm."
+msgstr "Mở khóa để xem chi tiết."
 
 #: .\templates\library\detail.html:69
 msgid "Unlock with points to see the full model preview."
-msgstr "M? kh?a b?ng ?i?m ?? xem b?n xem tr??c ??y ?? c?a m? h?nh."
+msgstr "Mở khóa bằng điểm để xem bản xem trước đầy đủ của mô hình."
 
 #: .\templates\library\detail.html:103
 msgid ""
@@ -1658,3 +1656,14 @@ msgstr "Tạo & chỉnh sửa block"
 msgid "Share a constructive note"
 msgstr "Chia sẻ góp ý xây dựng"
 
+#: .\templates\library\_download_action.html:5
+msgid "Download"
+msgstr "Tải xuống"
+
+#: .\templates\library\_download_action.html:6
+msgid "Ready to download"
+msgstr "Sẵn sàng tải xuống"
+
+#: .\templates\library\_download_action.html:7
+msgid "Use your points to unlock this file. Earn points by contributing or engaging with the community."
+msgstr "Dùng điểm của bạn để mở khóa tệp này. Kiếm điểm bằng cách đóng góp hoặc tham gia cộng đồng."
