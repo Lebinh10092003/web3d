@@ -214,64 +214,121 @@
           {% trans "Use this prompt with an AI tool, then paste returned JSON into the form above." %}
         </div>
         <script type="text/plain" id="blog-import-prompt-json">
-You generate import-ready blog data for a Django admin importer.
+You are generating import-ready blog JSON for a Django admin importer.
 
-Task:
-- Create POST_COUNT posts (default 1) about robotics/STEAM.
-- If bilingual is requested, include Vietnamese + English using BILINGUAL_TEXT blocks.
-- Structure content as many blocks, not one long paragraph.
-- Include visual blocks (IMAGE/GALLERY), not text-only posts.
+Goal:
+- Write 1 complete long-form article about robotics/STEAM (default POST_COUNT=1).
+- Use multiple content blocks, not one continuous paragraph.
+- Bilingual required: Vietnamese (with diacritics) + English.
 
-Output contract (strict):
-- Return ONLY valid JSON.
-- No markdown, no code fences, no comments, no explanations.
-- Top-level JSON must be:
+Output contract (STRICT):
+- Return ONLY valid JSON. No markdown, no code fences, no comments, no explanation text.
+- Top-level format:
   {
     "posts": [ ... ]
   }
 
-Per-post rules:
+Field limits (MUST respect):
+- title <= 220 chars
+- slug <= 240 chars (lowercase, hyphen-separated, ASCII)
+- summary <= 320 chars
+- seo_title <= 240 chars
+- seo_description <= 320 chars
+- hero_image_url <= 500 chars
+- block.media_url <= 600 chars
+- block.caption <= 300 chars
+- block.alt_text <= 200 chars
+- block.align <= 20 chars (left|center|right|wide|full)
+
+Critical JSON safety rules:
+- Use standard JSON with double quotes only.
+- Escape all line breaks inside text strings as \\n (never raw newline inside a string).
+- Escape inner quotes correctly (e.g. \").
+- Do not include tab/control characters in string values.
+- Do not include trailing commas.
+- Wrong multiline string:
+  "text_vi": "Dong 1
+  Dong 2"
+- Correct multiline string:
+  "text_vi": "Dong 1\\nDong 2"
+
+URL safety rules (to avoid media_url length errors):
+- For IMAGE/VIDEO/GALLERY URLs, use normal public URLs starting with https://
+- Do NOT paste full HTML iframe code into media_url.
+- Do NOT use Markdown link syntax in URL fields, e.g. [label](https://...).
+- Wrong URL value:
+  "[https://example.com/a.jpg](https://example.com/a.jpg)"
+- Correct URL value:
+  "https://example.com/a.jpg"
+- Prefer short clean URLs; remove tracking params (utm_*, fbclid, long query strings).
+- Every URL must be <= the field limit above.
+
+Post requirements:
 - Required: "title"
 - Optional: "slug", "summary", "body", "hero_image_url", "seo_title", "seo_description",
   "status" (DRAFT|PENDING_REVIEW|SCHEDULED|PUBLISHED), "published_at" (ISO 8601),
   "author_username" or "author_email"
-- "blocks" must be an array with at least 6 blocks.
-- At least 2 blocks must be visual: IMAGE or GALLERY.
-- Do not write the whole article in "body"; put the main content inside blocks.
+- "blocks" must contain at least 8 blocks.
+- At least 2 visual blocks must be IMAGE or GALLERY.
+- Include at least 1 VIDEO block with a short valid URL.
+- Main article content must be in blocks; "body" is optional fallback only.
 
-Block rules:
-- BILINGUAL_TEXT:
+Allowed block types:
+TEXT, BILINGUAL_TEXT, IMAGE, VIDEO, GALLERY, QUOTE, DIVIDER
+
+Recommended block structure for one full article:
+1) BILINGUAL_TEXT (intro)
+2) IMAGE
+3) BILINGUAL_TEXT (core idea)
+4) VIDEO
+5) BILINGUAL_TEXT (step-by-step guidance)
+6) GALLERY (2-3 items)
+7) QUOTE
+8) BILINGUAL_TEXT (conclusion + CTA)
+
+Block templates:
+- BILINGUAL_TEXT
   {
     "type": "BILINGUAL_TEXT",
-    "text_vi": "...",
-    "text_en": "..."
+    "text_vi": "Nội dung tiếng Việt có dấu...",
+    "text_en": "English content..."
   }
-- IMAGE:
+- IMAGE
   {
     "type": "IMAGE",
-    "media_url": "https://...",
-    "caption": "...",
-    "alt_text": "...",
+    "media_url": "https://example.com/image.jpg",
+    "caption": "Short caption",
+    "alt_text": "Accessible alt text",
     "align": "center"
   }
-- GALLERY:
+- VIDEO
+  {
+    "type": "VIDEO",
+    "media_url": "https://www.youtube.com/embed/VIDEO_ID",
+    "caption": "Short video caption",
+    "align": "center"
+  }
+- GALLERY
   {
     "type": "GALLERY",
     "data": {
       "items": [
-        {"url": "https://...", "caption": "..."}
+        {"url": "https://example.com/a.jpg", "caption": "Image A"},
+        {"url": "https://example.com/b.jpg", "caption": "Image B"}
       ]
     }
   }
 
-Self-check before output:
-1) JSON is parseable
-2) top-level has "posts" array
-3) every post has "title"
-4) every block has valid "type"
-5) bilingual blocks include at least one of text_vi/text_en
-6) each post has >= 6 blocks
-7) each post has >= 2 visual blocks (IMAGE/GALLERY)
+Final self-check (must pass):
+1) JSON parses successfully
+2) Top-level key is exactly "posts" and value is a non-empty array
+3) Each post has title and blocks
+4) All block types are valid
+5) BILINGUAL_TEXT has at least text_vi or text_en
+6) No media_url exceeds 600 chars; no hero_image_url exceeds 500 chars
+7) Strings contain no raw control characters; multiline text uses \\n
+8) URL fields are plain URLs only (no [text](url), no <url>, no backticks)
+9) Output is pure JSON only
         </script>
       </div>
 
