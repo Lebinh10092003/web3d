@@ -1,0 +1,53 @@
+{% load i18n %}
+<div class="blog-import-slots-result">
+  {% if errors %}
+    <ul class="errorlist">
+      {% for error in errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% elif slot_items %}
+    <p class="help">
+      {% trans "Detected image placeholders. Upload one file for each slot below." %}
+    </p>
+    <div class="blog-import-slots-list">
+      {% for item in slot_items %}
+        <div class="blog-import-slot-item" data-upload-slot-item>
+          <label for="{{ item.input_id }}">
+            <code>[[UPLOAD:{{ item.slot }}]]</code>
+          </label>
+          <input
+            type="file"
+            name="{{ item.input_name }}"
+            id="{{ item.input_id }}"
+            accept="image/*"
+            required
+          >
+          <div class="blog-import-slot-item__meta">
+            <span class="blog-import-slot-status blog-import-slot-status--missing" data-upload-slot-status>
+              {% trans "Missing file" %}
+            </span>
+          </div>
+          <img class="blog-import-slot-preview" data-upload-slot-preview alt="{% trans 'Preview image' %}">
+          <div class="help">
+            <strong>{% trans "Used at:" %}</strong>
+            <ul>
+              {% for loc in item.locations %}
+                <li>
+                  <code>{{ loc.location }}</code>
+                  {% if loc.caption %}
+                    - {% trans "Caption" %}: {{ loc.caption }}
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="help">
+      {% trans "No image upload placeholders found. Use [[UPLOAD:SLOT_NAME]] in hero_image_url/media_url/gallery item url." %}
+    </p>
+  {% endif %}
+</div>

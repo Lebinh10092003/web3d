@@ -6,33 +6,29 @@
 {% elif block.type == "BILINGUAL_TEXT" %}
   {% get_current_language as CURRENT_LANGUAGE %}
   {% with lang=CURRENT_LANGUAGE|slice:":2" %}
+    {% with text_vi=block.data.i18n.vi|default:block.data.vi|default:"" text_en=block.data.i18n.en|default:block.data.en|default:"" %}
     <div class="blog-block blog-block--text">
       {% if lang == "en" %}
-        {% if block.data.i18n.en %}
-          {{ block.data.i18n.en|linebreaks }}
-        {% elif block.data.en %}
-          {{ block.data.en|linebreaks }}
-        {% elif block.data.i18n.vi %}
-          {{ block.data.i18n.vi|linebreaks }}
-        {% elif block.data.vi %}
-          {{ block.data.vi|linebreaks }}
+        {% if text_en %}
+          {{ text_en|linebreaks }}
+        {% elif text_vi %}
+          {{ text_vi|linebreaks }}
+          <p class="blog-translation-note text-muted small mb-0">{% trans "English translation is missing. Showing Vietnamese content." %}</p>
         {% else %}
           {{ block.text|linebreaks }}
         {% endif %}
       {% else %}
-        {% if block.data.i18n.vi %}
-          {{ block.data.i18n.vi|linebreaks }}
-        {% elif block.data.vi %}
-          {{ block.data.vi|linebreaks }}
-        {% elif block.data.i18n.en %}
-          {{ block.data.i18n.en|linebreaks }}
-        {% elif block.data.en %}
-          {{ block.data.en|linebreaks }}
+        {% if text_vi %}
+          {{ text_vi|linebreaks }}
+        {% elif text_en %}
+          {{ text_en|linebreaks }}
+          <p class="blog-translation-note text-muted small mb-0">{% trans "Vietnamese translation is missing. Showing English content." %}</p>
         {% else %}
           {{ block.text|linebreaks }}
         {% endif %}
       {% endif %}
     </div>
+    {% endwith %}
   {% endwith %}
 {% elif block.type == "IMAGE" %}
   <figure class="blog-block blog-block--image text-{{ block.align|default:'center' }}">

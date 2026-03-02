@@ -1,0 +1,81 @@
+{% load i18n %}
+<div class="blog-import-preview-result">
+  {% if errors %}
+    <ul class="errorlist">
+      {% for error in errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% elif preview %}
+    <div class="blog-import-preview-summary">
+      <p class="help mb-1">
+        {% blocktrans with bytes=preview.payload_bytes posts=preview.totals.post_count blocks=preview.totals.block_count slots=preview.totals.slot_count %}
+          JSON validated successfully ({{ bytes }} bytes). Posts: {{ posts }}. Blocks: {{ blocks }}. Image slots: {{ slots }}.
+        {% endblocktrans %}
+      </p>
+      {% if preview.totals.warning_count %}
+        <p class="help">
+          {% blocktrans with warnings=preview.totals.warning_count %}
+            Preview found {{ warnings }} warning(s). You can still import, but review them first.
+          {% endblocktrans %}
+        </p>
+      {% endif %}
+      {% if preview.totals.block_type_counter %}
+        <p class="help">
+          <strong>{% trans "Block type totals:" %}</strong>
+          {% for type, count in preview.totals.block_type_counter %}
+            <code>{{ type }}</code>: {{ count }}{% if not forloop.last %}, {% endif %}
+          {% endfor %}
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="blog-import-preview-table-wrap">
+      <table class="blog-import-preview-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{% trans "Title" %}</th>
+            <th>{% trans "Slug" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Blocks" %}</th>
+            <th>{% trans "Warnings" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in preview.items %}
+            <tr>
+              <td>{{ item.index }}</td>
+              <td>{{ item.title }}</td>
+              <td><code>{{ item.slug|default:"-" }}</code></td>
+              <td><code>{{ item.status }}</code></td>
+              <td>
+                {{ item.block_count }}
+                {% if item.block_counter %}
+                  <div class="help">
+                    {% for type, count in item.block_counter %}
+                      <code>{{ type }}</code>: {{ count }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </td>
+              <td>
+                {% if item.warnings %}
+                  <ul class="errorlist">
+                    {% for warn in item.warnings %}
+                      <li>{{ warn }}</li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <span class="help">{% trans "None" %}</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="help">{% trans "No preview available." %}</p>
+  {% endif %}
+</div>

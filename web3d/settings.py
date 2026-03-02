@@ -203,6 +203,18 @@ BLOCKLY_QUIZ_GSHEET_TIMEOUT = int(os.environ.get("BLOCKLY_QUIZ_GSHEET_TIMEOUT", 
 
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
 BLOG_POST_API_KEY = os.environ.get("BLOG_POST_API_KEY", "").strip()
+BLOG_POST_API_KEYS = os.environ.get("BLOG_POST_API_KEYS", "").strip()
+BLOG_API_MAX_BODY_BYTES = int(os.environ.get("BLOG_API_MAX_BODY_BYTES", "600000"))
+BLOG_IMPORT_MAX_JSON_BYTES = int(os.environ.get("BLOG_IMPORT_MAX_JSON_BYTES", "800000"))
+RATE_LIMIT_BLOG_API_POST_PER_MIN = int(os.environ.get("RATE_LIMIT_BLOG_API_POST_PER_MIN", "40"))
+BLOG_IMAGE_MAX_UPLOAD_MB = int(os.environ.get("BLOG_IMAGE_MAX_UPLOAD_MB", "12"))
+BLOG_IMAGE_MAX_WIDTH = int(os.environ.get("BLOG_IMAGE_MAX_WIDTH", "2200"))
+BLOG_IMAGE_MAX_HEIGHT = int(os.environ.get("BLOG_IMAGE_MAX_HEIGHT", "2200"))
+BLOG_IMAGE_THUMB_WIDTH = int(os.environ.get("BLOG_IMAGE_THUMB_WIDTH", "800"))
+BLOG_IMAGE_THUMB_HEIGHT = int(os.environ.get("BLOG_IMAGE_THUMB_HEIGHT", "450"))
+BLOG_IMAGE_OG_WIDTH = int(os.environ.get("BLOG_IMAGE_OG_WIDTH", "1200"))
+BLOG_IMAGE_OG_HEIGHT = int(os.environ.get("BLOG_IMAGE_OG_HEIGHT", "630"))
+BLOG_IMAGE_WEBP_QUALITY = float(os.environ.get("BLOG_IMAGE_WEBP_QUALITY", "84"))
 
 USE_BACKGROUND_JOBS = os.environ.get("USE_BACKGROUND_JOBS", "1") == "1"
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
@@ -278,6 +290,22 @@ ADSENSE_CLIENT = os.environ.get("ADSENSE_CLIENT", "")
 ADSENSE_SLOT_HOME = os.environ.get("ADSENSE_SLOT_HOME", "")
 ADSENSE_SLOT_DETAIL = os.environ.get("ADSENSE_SLOT_DETAIL", "")
 ADSENSE_SLOT_PAGE = os.environ.get("ADSENSE_SLOT_PAGE", "")
+
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "").strip()
+SENTRY_TRACES_SAMPLE_RATE = float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0"))
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[DjangoIntegration()],
+            traces_sample_rate=max(0.0, min(1.0, SENTRY_TRACES_SAMPLE_RATE)),
+            send_default_pii=False,
+        )
+    except Exception:
+        pass
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -127,6 +127,14 @@
   margin: 0;
 }
 
+.blog-translation-note {
+  margin-top: -4px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px dashed rgba(15, 23, 42, 0.18);
+  background: rgba(15, 23, 42, 0.03);
+}
+
 .blog-block--image,
 .blog-block--video {
   margin: 24px 0;

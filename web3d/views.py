@@ -311,7 +311,7 @@ def recaps(request):
     return render(request, "pages/recaps.html", context)
 
 
-def sitemap_xml(request):
+def _build_main_sitemap_urls(request):
     base_url = f"{request.scheme}://{request.get_host()}"
     now = timezone.now()
     urls = [
@@ -342,6 +342,42 @@ def sitemap_xml(request):
             {
                 "loc": f"{base_url}{reverse('course-detail', args=[course.slug])}",
                 "lastmod": course.updated_at,
+            }
+        )
+
+    return urls
+
+
+def sitemap_xml(request):
+    base_url = f"{request.scheme}://{request.get_host()}"
+    sitemaps = [
+        {"loc": f"{base_url}{reverse('sitemap-main')}", "lastmod": timezone.now()},
+        {"loc": f"{base_url}{reverse('sitemap-blog')}", "lastmod": timezone.now()},
+    ]
+    return render(
+        request,
+        "sitemap_index.xml",
+        {"sitemaps": sitemaps},
+        content_type="application/xml",
+    )
+
+
+def sitemap_main_xml(request):
+    urls = _build_main_sitemap_urls(request)
+    return render(request, "sitemap.xml", {"urls": urls}, content_type="application/xml")
+
+
+def sitemap_blog_xml(request):
+    from blog.models import Post
+
+    base_url = f"{request.scheme}://{request.get_host()}"
+    urls = []
+    posts = Post.objects.live().only("slug", "updated_at", "published_at")
+    for post in posts:
+        urls.append(
+            {
+                "loc": f"{base_url}{reverse('blog:detail', args=[post.slug])}",
+                "lastmod": post.updated_at or post.published_at,
             }
         )
 

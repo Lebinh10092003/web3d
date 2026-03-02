@@ -7,9 +7,16 @@
 {% block og_description %}{{ seo_description }}{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block canonical_url %}{{ canonical_url }}{% endblock %}
+{% block og_image %}{{ og_image_url|default:DEFAULT_OG_IMAGE }}{% endblock %}
+{% block twitter_image %}{{ og_image_url|default:DEFAULT_OG_IMAGE }}{% endblock %}
 
 {% block extra_head %}
   <link rel="stylesheet" href="{% static 'css/blog.css' %}">
+  {% if alternate_hreflang_urls %}
+    <link rel="alternate" hreflang="vi" href="{{ alternate_hreflang_urls.vi }}">
+    <link rel="alternate" hreflang="en" href="{{ alternate_hreflang_urls.en }}">
+    <link rel="alternate" hreflang="x-default" href="{{ alternate_hreflang_urls.x-default }}">
+  {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -192,4 +199,11 @@
       </aside>
     </div>
   </section>
+{% endblock %}
+
+{% block structured_data %}
+  {{ block.super }}
+  {% if article_json_ld %}
+    <script type="application/ld+json">{{ article_json_ld|safe }}</script>
+  {% endif %}
 {% endblock %}

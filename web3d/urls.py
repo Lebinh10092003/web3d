@@ -16,6 +16,8 @@ urlpatterns = [
         RedirectView.as_view(url=FAVICON_URL, permanent=True),
     ),
     path("sitemap.xml", views.sitemap_xml, name="sitemap"),
+    path("sitemap-main.xml", views.sitemap_main_xml, name="sitemap-main"),
+    path("sitemap-blog.xml", views.sitemap_blog_xml, name="sitemap-blog"),
     path("robots.txt", views.robots_txt, name="robots"),
     path("i18n/", include("django.conf.urls.i18n")),
     path("about/", views.about, name="about"),

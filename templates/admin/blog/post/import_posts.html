@@ -88,13 +88,127 @@
       color: var(--body-quiet-color, #555);
       font-size: 12px;
     }
+
+    .blog-import-slots {
+      margin: 12px 0 18px;
+      padding: 12px;
+      border: 1px dashed var(--hairline-color, #d8d8d8);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--body-bg, #fff) 96%, #000 4%);
+    }
+
+    .blog-import-slots__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .blog-import-slots-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .blog-import-slot-item {
+      border: 1px solid var(--hairline-color, #d8d8d8);
+      border-radius: 8px;
+      padding: 10px;
+      background: var(--body-bg, #fff);
+    }
+
+    .blog-import-slot-item input[type="file"] {
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    .blog-import-slot-item__meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .blog-import-slot-preview {
+      margin-top: 8px;
+      width: 140px;
+      max-width: 100%;
+      aspect-ratio: 16 / 10;
+      border-radius: 8px;
+      border: 1px solid var(--hairline-color, #d8d8d8);
+      object-fit: cover;
+      display: none;
+    }
+
+    .blog-import-slot-preview.is-ready {
+      display: block;
+    }
+
+    .blog-import-slot-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .blog-import-slot-status--missing {
+      background: #fff4f4;
+      color: #9a1f2e;
+      border: 1px solid #f2c3cb;
+    }
+
+    .blog-import-slot-status--mapped {
+      background: #edf9f1;
+      color: #0f6b2e;
+      border: 1px solid #bfe7cb;
+    }
+
+    .blog-import-preview {
+      margin: 12px 0 18px;
+      padding: 12px;
+      border: 1px dashed var(--hairline-color, #d8d8d8);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--body-bg, #fff) 96%, #000 4%);
+    }
+
+    .blog-import-preview-table-wrap {
+      overflow: auto;
+      margin-top: 10px;
+    }
+
+    .blog-import-preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .blog-import-preview-table th,
+    .blog-import-preview-table td {
+      border: 1px solid var(--hairline-color, #d8d8d8);
+      vertical-align: top;
+      padding: 8px;
+      background: var(--body-bg, #fff);
+    }
+
+    .blog-import-preview-table th {
+      background: rgba(0, 0, 0, 0.03);
+      background: color-mix(in srgb, var(--body-bg, #fff) 92%, #000 8%);
+    }
   </style>
 {% endblock %}
 
 {% block extrahead %}
   {{ block.super }}
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <script>
     (function () {
+      let mappedLabel = "Mapped";
+      let missingLabel = "Missing file";
+      let progressTemplate = "{mapped}/{total} mapped";
+
       function normalizeExample(text) {
         return String(text || "").replace(/\r\n/g, "\n").trim();
       }
@@ -128,11 +242,78 @@
         return normalizeExample(source.textContent || "");
       }
 
+      function setSlotMappedState(input) {
+        if (!input) {
+          return;
+        }
+        const wrapper = input.closest("[data-upload-slot-item]");
+        if (!wrapper) {
+          return;
+        }
+        const statusEl = wrapper.querySelector("[data-upload-slot-status]");
+        const previewEl = wrapper.querySelector("[data-upload-slot-preview]");
+        const file = input.files && input.files[0] ? input.files[0] : null;
+        const hasFile = Boolean(file);
+
+        if (statusEl) {
+          statusEl.classList.toggle("blog-import-slot-status--mapped", hasFile);
+          statusEl.classList.toggle("blog-import-slot-status--missing", !hasFile);
+          statusEl.textContent = hasFile ? mappedLabel : missingLabel;
+        }
+
+        if (previewEl) {
+          if (!hasFile) {
+            previewEl.src = "";
+            previewEl.classList.remove("is-ready");
+          } else {
+            previewEl.src = URL.createObjectURL(file);
+            previewEl.classList.add("is-ready");
+          }
+        }
+      }
+
+      function updateSlotProgress(root) {
+        const progressEl = root.querySelector("[data-upload-slot-progress]");
+        if (!progressEl) {
+          return;
+        }
+        const inputs = root.querySelectorAll("#upload-slots-container input[type='file'][name^='upload_slot_']");
+        let mapped = 0;
+        inputs.forEach((input) => {
+          if (input.files && input.files[0]) {
+            mapped += 1;
+          }
+        });
+        progressEl.textContent = progressTemplate
+          .replace("{mapped}", String(mapped))
+          .replace("{total}", String(inputs.length));
+      }
+
+      function bindSlotInputs(root) {
+        const inputs = root.querySelectorAll("#upload-slots-container input[type='file'][name^='upload_slot_']");
+        inputs.forEach((input) => {
+          if (input.dataset.boundSlotInput === "1") {
+            setSlotMappedState(input);
+            return;
+          }
+          input.dataset.boundSlotInput = "1";
+          input.addEventListener("change", () => {
+            setSlotMappedState(input);
+            updateSlotProgress(root);
+          });
+          setSlotMappedState(input);
+        });
+        updateSlotProgress(root);
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         const root = document.querySelector("[data-blog-import]");
         if (!root) {
           return;
         }
+        mappedLabel = root.dataset.slotMappedLabel || mappedLabel;
+        missingLabel = root.dataset.slotMissingLabel || missingLabel;
+        progressTemplate = root.dataset.slotProgressTemplate || progressTemplate;
         const textarea = document.getElementById("id_data");
 
         root.querySelectorAll("[data-import-pre]").forEach((pre) => {
@@ -169,13 +350,30 @@
             textarea.scrollIntoView({ behavior: "smooth", block: "center" });
           });
         });
+
+        bindSlotInputs(root);
+
+        document.body.addEventListener("htmx:afterSwap", (event) => {
+          const target = event.target;
+          if (!target || target.id !== "upload-slots-container") {
+            return;
+          }
+          bindSlotInputs(root);
+        });
       });
     })();
   </script>
 {% endblock %}
 
 {% block content %}
-  <div id="content-main" class="blog-import" data-blog-import>
+  <div
+    id="content-main"
+    class="blog-import"
+    data-blog-import
+    data-slot-mapped-label="{% trans 'Mapped' %}"
+    data-slot-missing-label="{% trans 'Missing file' %}"
+    data-slot-progress-template="{% trans '{mapped}/{total} mapped' %}"
+  >
     <h1>{% trans "Import blog posts" %}</h1>
 
     <p>
@@ -191,9 +389,57 @@
       <a class="button" href="{% url 'admin:blog_post_changelist' %}">{% trans "Back to posts" %}</a>
     </div>
 
-    <form method="post" novalidate>
+    <form method="post" enctype="multipart/form-data" novalidate>
       {% csrf_token %}
       {{ form.as_p }}
+
+      <section class="blog-import-slots">
+        <h2>{% trans "Image Upload Slots (HTMX)" %}</h2>
+        <p class="help">
+          {% trans "Use placeholders like [[UPLOAD:HERO_MAIN]] in JSON, then click scan to upload files for each slot." %}
+        </p>
+        <div class="blog-import-slots__actions">
+          <button
+            type="button"
+            class="button"
+            hx-post="{% url 'admin:blog_post_import_scan_slots' %}"
+            hx-target="#upload-slots-container"
+            hx-swap="innerHTML"
+            hx-include="#id_data, input[name='csrfmiddlewaretoken']"
+          >
+            {% trans "Scan image placeholders" %}
+          </button>
+          <span class="help" data-upload-slot-progress>0/0 mapped</span>
+        </div>
+        <div id="upload-slots-container">
+          <p class="help">
+            {% trans "No scan yet." %}
+          </p>
+        </div>
+      </section>
+
+      <section class="blog-import-preview">
+        <h2>{% trans "Dry-run preview (no database write)" %}</h2>
+        <p class="help">
+          {% trans "Validate JSON structure, count blocks, and surface warnings before importing." %}
+        </p>
+        <div class="blog-import-slots__actions">
+          <button
+            type="button"
+            class="button"
+            hx-post="{% url 'admin:blog_post_import_preview' %}"
+            hx-target="#import-preview-container"
+            hx-swap="innerHTML"
+            hx-include="#id_data, input[name='csrfmiddlewaretoken']"
+          >
+            {% trans "Run preview" %}
+          </button>
+        </div>
+        <div id="import-preview-container">
+          <p class="help">{% trans "No preview yet." %}</p>
+        </div>
+      </section>
+
       <div class="submit-row">
         <input type="submit" value="{% trans 'Import' %}" class="default">
         <a class="button cancel-link" href="{% url 'admin:blog_post_changelist' %}">{% trans "Cancel" %}</a>
@@ -214,79 +460,67 @@
           {% trans "Use this prompt with an AI tool, then paste returned JSON into the form above." %}
         </div>
         <script type="text/plain" id="blog-import-prompt-json">
-You are generating import-ready blog JSON for a Django admin importer.
+Bạn tạo dữ liệu JSON để import bài blog vào Django Admin.
 
-Goal:
-- Write 1 complete long-form article about robotics/STEAM (default POST_COUNT=1).
-- Use multiple content blocks, not one continuous paragraph.
-- Bilingual required: Vietnamese (with diacritics) + English.
+Mục tiêu:
+- Tạo 1 bài viết dài, chia thành nhiều block (không viết liền 1 mạch trong body).
+- Chủ đề robotics/STEAM.
+- Nếu người dùng yêu cầu song ngữ thì viết tiếng Việt có dấu + tiếng Anh.
 
-Output contract (STRICT):
-- Return ONLY valid JSON. No markdown, no code fences, no comments, no explanation text.
-- Top-level format:
+Đầu ra bắt buộc:
+- Chỉ trả về JSON hợp lệ, không markdown, không code fence, không giải thích.
+- Top-level:
   {
     "posts": [ ... ]
   }
 
-Field limits (MUST respect):
-- title <= 220 chars
-- slug <= 240 chars (lowercase, hyphen-separated, ASCII)
-- summary <= 320 chars
-- seo_title <= 240 chars
-- seo_description <= 320 chars
-- hero_image_url <= 500 chars
-- block.media_url <= 600 chars
-- block.caption <= 300 chars
-- block.alt_text <= 200 chars
-- block.align <= 20 chars (left|center|right|wide|full)
+Quy tắc quan trọng về ảnh theo đúng "chỗ cần ảnh":
+- Không tự bịa link ảnh.
+- Chỗ nào cần ảnh mà chưa có URL thật thì đặt placeholder:
+  [[UPLOAD:SLOT_NAME]]
+- Dùng placeholder cho đúng vị trí:
+  - hero_image_url
+  - block IMAGE.media_url
+  - block GALLERY.data.items[].url
+- Không dùng placeholder cho VIDEO.
+- Có thể tái sử dụng cùng 1 SLOT_NAME ở nhiều vị trí nếu muốn dùng cùng 1 ảnh.
+- SLOT_NAME chỉ dùng: A-Z, a-z, 0-9, _, -
+- Để màn hình upload dễ nhận biết:
+  - Nếu dùng hero_image_url placeholder thì thêm "hero_image_caption" ở post.
+  - IMAGE phải có "caption" ngắn, rõ nghĩa.
+  - GALLERY item nên có "caption" cho từng ảnh.
 
-Critical JSON safety rules:
-- Use standard JSON with double quotes only.
-- Escape all line breaks inside text strings as \\n (never raw newline inside a string).
-- Escape inner quotes correctly (e.g. \").
-- Do not include tab/control characters in string values.
-- Do not include trailing commas.
-- Wrong multiline string:
-  "text_vi": "Dong 1
-  Dong 2"
-- Correct multiline string:
-  "text_vi": "Dong 1\\nDong 2"
+Ví dụ đặt đúng chỗ:
+- hero_image_url: [[UPLOAD:HERO_MAIN]]
+- hero_image_caption: "Ảnh tiêu đề ENJOY AI 2025 tại Ô Trấn"
+- IMAGE.media_url: [[UPLOAD:IMG_INTRO]]
+- GALLERY item url: [[UPLOAD:GALLERY_A]]
 
-URL safety rules (to avoid media_url length errors):
-- For IMAGE/VIDEO/GALLERY URLs, use normal public URLs starting with https://
-- Do NOT paste full HTML iframe code into media_url.
-- Do NOT use Markdown link syntax in URL fields, e.g. [label](https://...).
-- Wrong URL value:
-  "[https://example.com/a.jpg](https://example.com/a.jpg)"
-- Correct URL value:
-  "https://example.com/a.jpg"
-- Prefer short clean URLs; remove tracking params (utm_*, fbclid, long query strings).
-- Every URL must be <= the field limit above.
+Quy tắc về video:
+- Chỉ thêm block VIDEO khi người dùng yêu cầu rõ ràng.
+- Nếu không có yêu cầu video thì tuyệt đối không thêm VIDEO block.
 
-Post requirements:
-- Required: "title"
-- Optional: "slug", "summary", "body", "hero_image_url", "seo_title", "seo_description",
-  "status" (DRAFT|PENDING_REVIEW|SCHEDULED|PUBLISHED), "published_at" (ISO 8601),
-  "author_username" or "author_email"
-- "blocks" must contain at least 8 blocks.
-- At least 2 visual blocks must be IMAGE or GALLERY.
-- Include at least 1 VIDEO block with a short valid URL.
-- Main article content must be in blocks; "body" is optional fallback only.
+Giới hạn dữ liệu:
+- title <= 220
+- slug <= 240
+- summary <= 320
+- seo_title <= 240
+- seo_description <= 320
+- hero_image_url <= 500
+- block.media_url <= 600
+- block.caption <= 300
+- block.alt_text <= 200
+- block.align <= 20
 
-Allowed block types:
+Quy tắc JSON an toàn:
+- Dùng double quote chuẩn JSON.
+- Xuống dòng trong string phải ghi \\n.
+- Không ký tự control/tab lạ, không trailing comma.
+
+Block type hợp lệ:
 TEXT, BILINGUAL_TEXT, IMAGE, VIDEO, GALLERY, QUOTE, DIVIDER
 
-Recommended block structure for one full article:
-1) BILINGUAL_TEXT (intro)
-2) IMAGE
-3) BILINGUAL_TEXT (core idea)
-4) VIDEO
-5) BILINGUAL_TEXT (step-by-step guidance)
-6) GALLERY (2-3 items)
-7) QUOTE
-8) BILINGUAL_TEXT (conclusion + CTA)
-
-Block templates:
+Mẫu block:
 - BILINGUAL_TEXT
   {
     "type": "BILINGUAL_TEXT",
@@ -296,16 +530,9 @@ Block templates:
 - IMAGE
   {
     "type": "IMAGE",
-    "media_url": "https://example.com/image.jpg",
-    "caption": "Short caption",
-    "alt_text": "Accessible alt text",
-    "align": "center"
-  }
-- VIDEO
-  {
-    "type": "VIDEO",
-    "media_url": "https://www.youtube.com/embed/VIDEO_ID",
-    "caption": "Short video caption",
+    "media_url": "[[UPLOAD:IMG_MAIN]]",
+    "caption": "Mô tả ngắn",
+    "alt_text": "Mô tả ảnh",
     "align": "center"
   }
 - GALLERY
@@ -313,22 +540,24 @@ Block templates:
     "type": "GALLERY",
     "data": {
       "items": [
-        {"url": "https://example.com/a.jpg", "caption": "Image A"},
-        {"url": "https://example.com/b.jpg", "caption": "Image B"}
+        {"url": "[[UPLOAD:GALLERY_A]]", "caption": "Ảnh A"},
+        {"url": "[[UPLOAD:GALLERY_B]]", "caption": "Ảnh B"}
       ]
     }
   }
 
-Final self-check (must pass):
-1) JSON parses successfully
-2) Top-level key is exactly "posts" and value is a non-empty array
-3) Each post has title and blocks
-4) All block types are valid
-5) BILINGUAL_TEXT has at least text_vi or text_en
-6) No media_url exceeds 600 chars; no hero_image_url exceeds 500 chars
-7) Strings contain no raw control characters; multiline text uses \\n
-8) URL fields are plain URLs only (no [text](url), no <url>, no backticks)
-9) Output is pure JSON only
+Tự kiểm tra trước khi trả:
+1) JSON parse được
+2) Có key posts là mảng không rỗng
+3) Mỗi post có title + blocks
+4) Chỉ dùng block type hợp lệ
+5) Không tự thêm VIDEO nếu đề bài không yêu cầu
+6) Mọi chỗ cần ảnh dùng URL thật hoặc placeholder [[UPLOAD:SLOT_NAME]]
+7) Nếu dùng hero placeholder thì có hero_image_caption
+8) IMAGE/GALLERY có caption mô tả rõ để upload dễ nhận diện
+9) Không dùng [text](url), <url>, backticks trong URL field
+10) Chỉ trả về JSON duy nhất
+11) Nếu có BILINGUAL_TEXT thì ưu tiên đủ cả text_vi và text_en để tránh cảnh báo thiếu bản dịch
         </script>
       </div>
 
@@ -344,60 +573,97 @@ Final self-check (must pass):
         <div class="blog-import-example__note">
           {% trans "Tip:" %} {% trans "Enable 'Replace existing post when slug matches' to update an existing post by slug." %}
         </div>
-        <script type="text/plain" id="blog-import-example-json">
+<script type="text/plain" id="blog-import-example-json">
 {
   "posts": [
     {
-      "title": "SPIKE Prime for WRO newcomers",
-      "slug": "spike-prime-for-wro-newcomers",
-      "summary": "Bilingual introduction for teams starting WRO with SPIKE Prime.",
-      "status": "PUBLISHED",
+      "title": "Enjoy AI 2025 Global Final: V+STEAM LAB Recap and 2026 Inventions Trail Roadmap",
+      "slug": "enjoy-ai-2025-global-final-vplussteamlab-recap-2026-roadmap",
+      "summary": "Bài viết song ngữ tổng hợp ENJOY AI 2025 tại Ô Trấn, khung luyện tập của V+STEAM LAB, và định hướng chuẩn bị cho mùa 2026 Inventions Trail.",
+      "status": "DRAFT",
       "published_at": "2026-03-02T10:00:00+07:00",
-      "hero_image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/LEGO_logo.svg",
-      "seo_title": "SPIKE Prime for WRO",
-      "seo_description": "Vietnamese-English introduction to SPIKE Prime for WRO teams.",
+      "hero_image_url": "[[UPLOAD:HERO_MAIN]]",
+      "hero_image_caption": "Ảnh tiêu đề ENJOY AI 2025 tại Ô Trấn",
+      "seo_title": "Enjoy AI 2025 Recap and V+STEAM LAB 2026 Roadmap",
+      "seo_description": "Vietnamese-English article about ENJOY AI 2025, competition insights, training methodology, and 2026 Inventions Trail preparation plan.",
       "blocks": [
         {
           "type": "BILINGUAL_TEXT",
-          "text_vi": "SPIKE Prime giúp đội mới bắt đầu WRO xây dựng tư duy kỹ thuật theo từng bước.",
-          "text_en": "SPIKE Prime helps new WRO teams build engineering thinking step by step."
+          "text_vi": "ENJOY AI là sân chơi robotics và AI quốc tế dành cho học sinh, nơi các đội thi rèn năng lực kỹ thuật, tư duy hệ thống, và làm việc nhóm trong môi trường áp lực thời gian thực. Từ các nhiệm vụ mô phỏng đô thị thông minh đến bài toán điều khiển tự động, cuộc thi tạo ra hệ sinh thái học tập rất gần với thực tế kỹ thuật hiện đại.",
+          "text_en": "ENJOY AI is an international robotics and AI platform for students, where teams strengthen technical execution, systems thinking, and teamwork under real-time pressure. From smart-city simulations to autonomous control tasks, the competition builds a learning ecosystem closely aligned with modern engineering practice."
         },
         {
           "type": "IMAGE",
-          "media_url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/LEGO_logo.svg",
-          "caption": "LEGO Education",
-          "alt_text": "LEGO logo",
+          "media_url": "[[UPLOAD:IMG_EVENT_STAGE]]",
+          "caption": "Không khí thi đấu tại vòng quốc tế ENJOY AI",
+          "alt_text": "ENJOY AI international finals competition stage",
           "align": "center"
         },
         {
           "type": "BILINGUAL_TEXT",
-          "text_vi": "Lộ trình 4 tuần: cơ bản động cơ, cảm biến, state machine và thi thử theo thời gian thực.",
-          "text_en": "A 4-week plan: motor basics, sensors, state machine, and timed mock runs."
+          "text_vi": "Theo thông tin công khai của hệ sinh thái ENJOY AI, giải đấu tập trung vào nhóm tuổi rộng, từ mầm non đến trung học, với mục tiêu thúc đẩy giáo dục STEM thực hành. Điểm cốt lõi không chỉ là điểm số, mà còn là khả năng thiết kế giải pháp, kiểm thử liên tục, và cải tiến dựa trên dữ liệu.",
+          "text_en": "Based on publicly available ENJOY AI ecosystem information, the event serves a broad age range from early learners to high school students, with a strong emphasis on practical STEM education. The core value is not only scoring points, but also solution design, iterative testing, and data-driven improvement."
+        },
+        {
+          "type": "BILINGUAL_TEXT",
+          "text_vi": "Tại mùa giải 2025, vòng chung kết quốc tế tổ chức tại Ô Trấn, Trung Quốc, quy tụ lượng lớn đội thi và đoàn huấn luyện từ nhiều quốc gia. Với cường độ thi đấu cao, các đội phải kiểm soát tốt độ ổn định robot, quy trình khởi động, và chiến lược ra quyết định nhanh trong điều kiện bàn thi biến thiên.",
+          "text_en": "In the 2025 season, the global finals in Wuzhen, China gathered a large number of teams and coaching delegations from many countries. Under high competition intensity, teams had to control robot stability, startup routines, and fast decision-making strategies in varying table conditions."
+        },
+        {
+          "type": "IMAGE",
+          "media_url": "[[UPLOAD:IMG_TEAM_MOMENT]]",
+          "caption": "Đội thi Việt Nam trong khoảnh khắc quan trọng",
+          "alt_text": "Vietnam team during key match moment",
+          "align": "center"
+        },
+        {
+          "type": "BILINGUAL_TEXT",
+          "text_vi": "Khung luyện tập của V+STEAM LAB được triển khai theo chu kỳ ngắn: chạy thử có bấm giờ, ghi log lỗi chuẩn hóa, hiệu chỉnh cảm biến, và chỉ thay đổi một biến số mỗi vòng để tránh nhiễu đánh giá. Cách làm này giúp học sinh tăng tốc độ học mà vẫn giữ chất lượng kiểm soát kỹ thuật.",
+          "text_en": "V+STEAM LAB applies a short-cycle training framework: timed runs, standardized failure logs, sensor recalibration, and one-variable changes per iteration to avoid evaluation noise. This approach helps students learn faster while maintaining technical control quality."
         },
         {
           "type": "GALLERY",
           "data": {
             "items": [
               {
-                "url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/LEGO_logo.svg",
-                "caption": "Kit overview image"
+                "url": "[[UPLOAD:GALLERY_PREP_A]]",
+                "caption": "Chuẩn bị robot trước lượt chạy"
               },
               {
-                "url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/LEGO_logo.svg",
-                "caption": "Training setup image"
+                "url": "[[UPLOAD:GALLERY_PREP_B]]",
+                "caption": "Theo dõi dữ liệu sau mỗi lượt thử"
+              },
+              {
+                "url": "[[UPLOAD:GALLERY_PREP_C]]",
+                "caption": "Phân tích chiến thuật theo nhiệm vụ"
               }
             ]
           }
         },
         {
           "type": "QUOTE",
-          "text": "Dữ liệu luyện tập đều đặn quan trọng hơn sửa gấp sát ngày thi.",
-          "caption": "WRO coaching note"
+          "text": "Ổn định hệ thống là nền tảng để bứt tốc thành tích.",
+          "caption": "V+STEAM LAB coaching principle"
         },
         {
           "type": "BILINGUAL_TEXT",
-          "text_vi": "Kết luận: chia nhỏ mục tiêu, luyện theo dữ liệu và đánh giá sau mỗi buổi để tăng độ ổn định.",
-          "text_en": "Conclusion: break goals into small milestones, train with data, and review after each session."
+          "text_vi": "Định hướng cho ENJOY AI 2026 với chủ đề Inventions Trail là mở rộng từ năng lực điều khiển robot sang năng lực tư duy sản phẩm: nhận diện bài toán, thiết kế giải pháp có mục tiêu, đánh đổi rủi ro-thời gian-điểm số, và trình bày được logic kỹ thuật một cách thuyết phục.",
+          "text_en": "The 2026 Inventions Trail direction extends from robot control into product-thinking capability: defining the problem, designing goal-oriented solutions, balancing risk-time-score tradeoffs, and communicating technical logic convincingly."
+        },
+        {
+          "type": "IMAGE",
+          "media_url": "[[UPLOAD:IMG_2026_THEME]]",
+          "caption": "Định hướng chuẩn bị cho chủ đề Inventions Trail 2026",
+          "alt_text": "Preparation direction for ENJOY AI 2026 Inventions Trail theme",
+          "align": "center"
+        },
+        {
+          "type": "DIVIDER"
+        },
+        {
+          "type": "BILINGUAL_TEXT",
+          "text_vi": "V+STEAM LAB tiếp tục đồng hành cùng học sinh và phụ huynh trên lộ trình robotics STEAM bài bản, phù hợp từng độ tuổi và mục tiêu thi đấu quốc tế.\\n\\nLiên hệ V+STEAM LAB\\n096 496 11 96\\nvplussteamlab@gmail.com\\n+84 92 394 01 82\\nhttps://www.facebook.com/VPlusSteamLab",
+          "text_en": "V+STEAM LAB continues to support students and parents with a structured robotics STEAM roadmap tailored to each age group and international competition goals.\\n\\nContact V+STEAM LAB\\n096 496 11 96\\nvplussteamlab@gmail.com\\n+84 92 394 01 82\\nhttps://www.facebook.com/VPlusSteamLab"
         }
       ]
     }

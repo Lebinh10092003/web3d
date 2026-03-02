@@ -40,6 +40,11 @@ def _normalize_block_type(raw_value):
 
 _IFRAME_SRC_PATTERN = re.compile(r"""src\s*=\s*["']([^"']+)["']""", re.IGNORECASE)
 _MARKDOWN_LINK_PATTERN = re.compile(r"""^\s*\[[^\]]*\]\((?P<url>.+)\)\s*$""", re.DOTALL)
+_JSON_CODE_FENCE_PATTERN = re.compile(
+    r"^\s*```(?:json|JSON)?\s*(?P<body>[\s\S]*?)\s*```\s*$",
+    re.IGNORECASE,
+)
+_LEADING_NOISE_CHARS = "\ufeff\u200b\u200c\u200d\u2060"
 _TRACKING_QUERY_KEYS = {
     "fbclid",
     "gclid",
@@ -56,6 +61,7 @@ _TRACKING_QUERY_KEYS = {
     "utm_source",
     "utm_term",
 }
+_UNSTABLE_IMAGE_HOST_SUFFIXES = ("fbcdn.net", "fbsbx.com")
 
 
 def _validation_error_text(exc: ValidationError):
@@ -104,6 +110,14 @@ def _unwrap_markdown_url(value):
         if inner:
             text = inner
 
+    if text.lower().startswith("url(") and text.endswith(")"):
+        inner = text[4:-1].strip().strip('"').strip("'")
+        if inner:
+            text = inner
+
+    if text.startswith(":https://") or text.startswith(":http://"):
+        text = text[1:]
+
     return text
 
 
@@ -141,6 +155,28 @@ def _normalize_url(value):
     if not text:
         return ""
     return _strip_tracking_params(text).strip()
+
+
+def _validate_stable_image_url(url_text: str, *, field_name: str, post_index: int, block_index=None):
+    text = str(url_text or "").strip()
+    if not text:
+        return text
+    try:
+        parsed = urlsplit(text)
+    except Exception:
+        return text
+    host = str(parsed.netloc or "").lower()
+    if any(host.endswith(suffix) for suffix in _UNSTABLE_IMAGE_HOST_SUFFIXES):
+        if block_index is None:
+            raise ValidationError(
+                f"Post #{post_index}: {field_name} uses temporary Facebook CDN URL. "
+                "Use a stable public image URL or upload image to your own media storage."
+            )
+        raise ValidationError(
+            f"Post #{post_index} block #{block_index}: {field_name} uses temporary Facebook CDN URL. "
+            "Use a stable public image URL or upload image to your own media storage."
+        )
+    return text
 
 
 def _validate_post_char_limit(value: str, *, field_name: str, max_length: int, post_index: int):
@@ -225,6 +261,12 @@ def _normalize_block_payload(payload, *, post_index: int, block_index: int):
                 url = _normalize_url(raw_item.get("url") or raw_item.get("src"))
                 if not url:
                     continue
+                url = _validate_stable_image_url(
+                    url,
+                    field_name="gallery item url",
+                    post_index=post_index,
+                    block_index=block_index,
+                )
                 item_payload = {"url": url}
                 caption_value = str(raw_item.get("caption") or "").strip()
                 if caption_value:
@@ -281,6 +323,14 @@ def _normalize_block_payload(payload, *, post_index: int, block_index: int):
         block_index=block_index,
     )
 
+    if block_type == PostBlock.BlockType.IMAGE and media_url:
+        media_url = _validate_stable_image_url(
+            media_url,
+            field_name="media_url",
+            post_index=post_index,
+            block_index=block_index,
+        )
+
     return {
         "position": position,
         "type": block_type,
@@ -309,6 +359,11 @@ def _normalize_post_payload(payload, *, index: int):
         )
 
     hero_image_url = _normalize_url(payload.get("hero_image_url"))
+    hero_image_url = _validate_stable_image_url(
+        hero_image_url,
+        field_name="hero_image_url",
+        post_index=index,
+    )
     hero_image_url = _validate_post_char_limit(
         hero_image_url,
         field_name="hero_image_url",
@@ -344,19 +399,7 @@ def _normalize_post_payload(payload, *, index: int):
 
 
 def parse_bulk_posts(raw_data: str):
-    text = str(raw_data or "")
-    if not text.strip():
-        raise ValidationError("Import data is empty.")
-
-    text = _sanitize_json_text(text).strip()
-
-    try:
-        payload = json.loads(text)
-    except json.JSONDecodeError as exc:
-        detail = exc.msg
-        if "Invalid control character" in exc.msg:
-            detail = "Invalid control character in JSON string (use \\\\n for line breaks, avoid raw tabs/newlines)."
-        raise ValidationError(f"Invalid JSON: {detail}") from exc
+    payload = _load_json_payload(raw_data)
 
     if isinstance(payload, dict):
         posts_payload = payload.get("posts")
@@ -426,6 +469,82 @@ def _sanitize_json_text(raw_text):
         out.append(ch)
 
     return "".join(out)
+
+
+def _strip_json_wrappers(raw_text):
+    text = str(raw_text or "").strip()
+    if not text:
+        return ""
+
+    fence_match = _JSON_CODE_FENCE_PATTERN.match(text)
+    if fence_match:
+        return str(fence_match.group("body") or "").strip()
+
+    lowered = text.lower()
+    if lowered.startswith("json\n"):
+        return text.split("\n", 1)[1].strip()
+    if lowered.startswith("json\r\n"):
+        lines = text.splitlines()
+        return lines[1].strip() if len(lines) > 1 else ""
+
+    return text
+
+
+def _normalize_json_candidate_text(raw_text):
+    text = str(raw_text or "")
+    if not text:
+        return ""
+
+    # Normalize NBSP and remove common invisible leading chars from copy/paste.
+    text = text.replace("\u00a0", " ")
+    text = text.lstrip(_LEADING_NOISE_CHARS).strip()
+    return text
+
+
+def _extract_json_candidate(raw_text):
+    text = _normalize_json_candidate_text(raw_text)
+    if not text:
+        return ""
+
+    start_obj = text.find("{")
+    start_arr = text.find("[")
+    starts = [idx for idx in (start_obj, start_arr) if idx >= 0]
+    if not starts:
+        return ""
+
+    start = min(starts)
+    open_char = text[start]
+    close_char = "}" if open_char == "{" else "]"
+    end = text.rfind(close_char)
+    if end <= start:
+        return ""
+    return text[start : end + 1].strip()
+
+
+def _load_json_payload(raw_data: str):
+    text = _sanitize_json_text(str(raw_data or ""))
+    text = _strip_json_wrappers(text).strip()
+    text = _normalize_json_candidate_text(text)
+    if not text:
+        raise ValidationError("Import data is empty.")
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        # Common paste issue: text has prefix/suffix around JSON (labels, commentary, etc.).
+        candidate = _extract_json_candidate(text)
+        if candidate and candidate != text:
+            try:
+                return json.loads(candidate)
+            except json.JSONDecodeError:
+                pass
+
+        detail = exc.msg
+        if "Invalid control character" in exc.msg:
+            detail = "Invalid control character in JSON string (use \\\\n for line breaks, avoid raw tabs/newlines)."
+        raise ValidationError(
+            f"Invalid JSON at line {exc.lineno}, column {exc.colno}: {detail}"
+        ) from exc
 
 
 def _resolve_author(*, post_index: int, author_username: str, author_email: str, default_author=None):

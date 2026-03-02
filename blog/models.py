@@ -240,3 +240,27 @@ class PostRevision(models.Model):
 
     def __str__(self):
         return f"{self.post.title} @ {self.created_at:%Y-%m-%d %H:%M}"
+
+
+class BlogApiAuditLog(models.Model):
+    route = models.CharField(max_length=120, default="blog.api_post_create")
+    status_code = models.PositiveSmallIntegerField()
+    key_id = models.CharField(max_length=80, blank=True)
+    request_id = models.CharField(max_length=80, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, blank=True)
+    detail = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = _("Blog API audit log")
+        verbose_name_plural = _("Blog API audit logs")
+        indexes = [
+            models.Index(fields=["route", "created_at"], name="blog_api_rt_ct_idx"),
+            models.Index(fields=["status_code", "created_at"], name="blog_api_sc_ct_idx"),
+            models.Index(fields=["key_id", "created_at"], name="blog_api_ky_ct_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.route} {self.status_code} {self.created_at:%Y-%m-%d %H:%M:%S}"

@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, JsonResponse
 from django.urls import reverse
 from django.core.paginator import Paginator
@@ -12,15 +13,17 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+import logging
 import json
-import os
+import secrets
 import uuid
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
 
-from .models import BlogComment, Post, PostBlock, PostRevision
+from .media import resolve_blog_og_image_url, save_blog_image_variants
+from .models import BlogApiAuditLog, BlogComment, Post, PostBlock, PostRevision
 from .forms import BlogCommentForm, PostQuickForm
 
+
+logger = logging.getLogger(__name__)
 
 def _seo_title(post):
     return post.seo_title or post.title
@@ -239,59 +242,227 @@ def _resolve_api_author(payload):
     return user, ""
 
 
+def _parse_api_keys():
+    keys = []
+    raw_multi = str(getattr(settings, "BLOG_POST_API_KEYS", "") or "").strip()
+    if raw_multi:
+        for idx, chunk in enumerate(raw_multi.split(","), start=1):
+            token = str(chunk or "").strip()
+            if not token:
+                continue
+            if ":" in token:
+                key_id, key_value = token.split(":", 1)
+                key_id = key_id.strip() or f"key{idx}"
+                key_value = key_value.strip()
+            else:
+                key_id = f"key{idx}"
+                key_value = token
+            if key_value:
+                keys.append((key_id, key_value))
+
+    legacy_key = str(getattr(settings, "BLOG_POST_API_KEY", "") or "").strip()
+    if legacy_key and all(existing != legacy_key for _kid, existing in keys):
+        keys.insert(0, ("default", legacy_key))
+    return keys
+
+
+def _authenticate_api_key(request):
+    configured = _parse_api_keys()
+    if not configured:
+        return "", "blog_api_key_not_configured", 503
+
+    provided = str(request.headers.get("X-API-Key") or "").strip()
+    if not provided:
+        return "", "unauthorized", 401
+
+    hinted_key_id = str(request.headers.get("X-API-Key-Id") or "").strip()
+    for key_id, expected in configured:
+        if hinted_key_id and hinted_key_id != key_id:
+            continue
+        if secrets.compare_digest(provided, expected):
+            return key_id, "", 0
+
+    return "", "unauthorized", 401
+
+
+def _client_ip_for_api(request):
+    forwarded = str(request.META.get("HTTP_X_FORWARDED_FOR") or "").strip()
+    if forwarded:
+        first = forwarded.split(",")[0].strip()
+        if first:
+            return first
+    return str(request.META.get("REMOTE_ADDR") or "").strip() or None
+
+
+def _safe_json_size_limit():
+    try:
+        limit = int(getattr(settings, "BLOG_API_MAX_BODY_BYTES", 600_000) or 600_000)
+    except (TypeError, ValueError):
+        return 600_000
+    return max(1, limit)
+
+
+def _write_api_audit_log(*, request, status_code, key_id="", request_id="", detail=None):
+    payload = detail if isinstance(detail, dict) else {}
+    try:
+        BlogApiAuditLog.objects.create(
+            route="blog.api_post_create",
+            status_code=int(status_code),
+            key_id=str(key_id or "")[:80],
+            request_id=str(request_id or "")[:80],
+            ip_address=_client_ip_for_api(request),
+            user_agent=str(request.META.get("HTTP_USER_AGENT") or "")[:255],
+            detail=payload,
+        )
+    except Exception:
+        logger.exception("Failed to write blog API audit log.")
+
+
+def _api_json_response(*, request, status, payload, key_id="", request_id="", detail=None):
+    response = JsonResponse(payload, status=status)
+    if request_id:
+        response["X-Request-Id"] = request_id
+    _write_api_audit_log(
+        request=request,
+        status_code=status,
+        key_id=key_id,
+        request_id=request_id,
+        detail=detail,
+    )
+    return response
+
+
 @csrf_exempt
 @require_POST
 def api_post_create(request):
-    expected_key = str(getattr(settings, "BLOG_POST_API_KEY", "") or "").strip()
-    if not expected_key:
-        return JsonResponse({"error": "blog_api_key_not_configured"}, status=503)
+    request_id = str(request.headers.get("X-Request-Id") or uuid.uuid4().hex).strip()[:80]
+    key_id, auth_error, auth_status = _authenticate_api_key(request)
+    if auth_error:
+        return _api_json_response(
+            request=request,
+            status=auth_status,
+            payload={"error": auth_error},
+            request_id=request_id,
+            detail={"reason": auth_error},
+        )
 
-    provided_key = str(request.headers.get("X-API-Key") or "").strip()
-    if provided_key != expected_key:
-        return JsonResponse({"error": "unauthorized"}, status=401)
+    api_limit = int(getattr(settings, "RATE_LIMIT_BLOG_API_POST_PER_MIN", 40) or 40)
+    if not _rate_limit(request, f"blog:api-post:{key_id or 'anon'}", api_limit, 60):
+        return _api_json_response(
+            request=request,
+            status=429,
+            payload={"error": "too_many_requests", "retry_after": 60},
+            key_id=key_id,
+            request_id=request_id,
+            detail={"reason": "rate_limited"},
+        )
+
+    max_body_bytes = _safe_json_size_limit()
+    if len(request.body or b"") > max_body_bytes:
+        return _api_json_response(
+            request=request,
+            status=413,
+            payload={"error": "payload_too_large", "max_bytes": max_body_bytes},
+            key_id=key_id,
+            request_id=request_id,
+            detail={"reason": "payload_too_large", "max_bytes": max_body_bytes},
+        )
 
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except (TypeError, ValueError, UnicodeDecodeError):
-        return JsonResponse({"error": "invalid_json"}, status=400)
+        return _api_json_response(
+            request=request,
+            status=400,
+            payload={"error": "invalid_json"},
+            key_id=key_id,
+            request_id=request_id,
+            detail={"reason": "invalid_json"},
+        )
     if not isinstance(payload, dict):
-        return JsonResponse({"error": "invalid_json"}, status=400)
+        return _api_json_response(
+            request=request,
+            status=400,
+            payload={"error": "invalid_json"},
+            key_id=key_id,
+            request_id=request_id,
+            detail={"reason": "invalid_json_type"},
+        )
 
     title = str(payload.get("title") or "").strip()
     if not title:
-        return JsonResponse({"error": "title_required"}, status=400)
+        return _api_json_response(
+            request=request,
+            status=400,
+            payload={"error": "title_required"},
+            key_id=key_id,
+            request_id=request_id,
+            detail={"reason": "title_required"},
+        )
 
     status_value = str(payload.get("status") or Post.Status.DRAFT).strip().upper()
     valid_statuses = {choice for choice, _label in Post.Status.choices}
     if status_value not in valid_statuses:
-        return JsonResponse(
-            {
+        return _api_json_response(
+            request=request,
+            status=400,
+            payload={
                 "error": "invalid_status",
                 "allowed_statuses": sorted(valid_statuses),
             },
-            status=400,
+            key_id=key_id,
+            request_id=request_id,
+            detail={"reason": "invalid_status"},
         )
 
     published_raw = payload.get("published_at")
     published_at = _parse_iso_datetime(published_raw) if published_raw else timezone.now()
     if published_raw and not published_at:
-        return JsonResponse({"error": "invalid_published_at"}, status=400)
+        return _api_json_response(
+            request=request,
+            status=400,
+            payload={"error": "invalid_published_at"},
+            key_id=key_id,
+            request_id=request_id,
+            detail={"reason": "invalid_published_at"},
+        )
 
     blocks_payload = payload.get("blocks") or []
     if not isinstance(blocks_payload, list):
-        return JsonResponse({"error": "blocks_must_be_list"}, status=400)
+        return _api_json_response(
+            request=request,
+            status=400,
+            payload={"error": "blocks_must_be_list"},
+            key_id=key_id,
+            request_id=request_id,
+            detail={"reason": "blocks_must_be_list"},
+        )
 
     normalized_blocks = []
     for idx, item in enumerate(blocks_payload, start=1):
         try:
             normalized = _normalize_api_block_payload(item, index=idx)
         except ValueError as error:
-            return JsonResponse({"error": "invalid_block", "detail": str(error)}, status=400)
+            return _api_json_response(
+                request=request,
+                status=400,
+                payload={"error": "invalid_block", "detail": str(error)},
+                key_id=key_id,
+                request_id=request_id,
+                detail={"reason": "invalid_block", "block_index": idx},
+            )
         normalized_blocks.append(normalized)
 
     author, author_error = _resolve_api_author(payload)
     if author_error:
-        return JsonResponse({"error": author_error}, status=400)
+        return _api_json_response(
+            request=request,
+            status=400,
+            payload={"error": author_error},
+            key_id=key_id,
+            request_id=request_id,
+            detail={"reason": author_error},
+        )
 
     summary = str(payload.get("summary") or "").strip()
     hero_image_url = str(payload.get("hero_image_url") or "").strip()
@@ -327,22 +498,31 @@ def api_post_create(request):
                 payload=post.snapshot(),
             )
     except IntegrityError:
-        return JsonResponse(
-            {"error": "conflict", "detail": "Slug already exists or data integrity issue."},
+        return _api_json_response(
+            request=request,
             status=409,
+            payload={"error": "conflict", "detail": "Slug already exists or data integrity issue."},
+            key_id=key_id,
+            request_id=request_id,
+            detail={"reason": "conflict"},
         )
 
     detail_path = reverse("blog:detail", args=[post.slug])
-    return JsonResponse(
-        {
+    return _api_json_response(
+        request=request,
+        status=201,
+        payload={
             "id": str(post.id),
             "slug": post.slug,
             "url": detail_path,
             "status": post.status,
             "published_at": post.published_at.isoformat() if post.published_at else None,
             "block_count": len(normalized_blocks),
+            "request_id": request_id,
         },
-        status=201,
+        key_id=key_id,
+        request_id=request_id,
+        detail={"reason": "created", "post_id": str(post.id), "slug": post.slug},
     )
 
 
@@ -371,6 +551,32 @@ def post_detail(request, slug):
     blocks = post.blocks.order_by("position", "created_at")
     related_posts = _get_related_posts(request, post)
     comments = _get_comments(post)
+    canonical_url = request.build_absolute_uri(request.path)
+    og_image_url = resolve_blog_og_image_url(post.hero_image_url, request=request)
+    seo_description = _seo_description(post)
+    article_json_ld = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": post.title,
+        "description": seo_description,
+        "mainEntityOfPage": canonical_url,
+        "datePublished": post.published_at.isoformat() if post.published_at else "",
+        "dateModified": post.updated_at.isoformat() if post.updated_at else "",
+        "author": {
+            "@type": "Person",
+            "name": post.author.get_full_name() if post.author and post.author.get_full_name() else (
+                post.author.username if post.author else "V+ STEAM LAB"
+            ),
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": getattr(settings, "SITE_NAME", "V+ STEAM LAB Library"),
+        },
+        "inLanguage": request.LANGUAGE_CODE or "vi",
+    }
+    if og_image_url:
+        article_json_ld["image"] = [og_image_url]
+
     context = {
         "post": post,
         "blocks": blocks,
@@ -380,8 +586,15 @@ def post_detail(request, slug):
         "edit_form": None,
         "editing_comment_id": None,
         "seo_title": _seo_title(post),
-        "seo_description": _seo_description(post),
-        "canonical_url": request.build_absolute_uri(request.path),
+        "seo_description": seo_description,
+        "canonical_url": canonical_url,
+        "alternate_hreflang_urls": {
+            "vi": canonical_url,
+            "en": canonical_url,
+            "x-default": canonical_url,
+        },
+        "og_image_url": og_image_url,
+        "article_json_ld": json.dumps(article_json_ld, ensure_ascii=False),
     }
     return render(request, "blog/detail.html", context)
 
@@ -582,8 +795,18 @@ def upload_media(request):
     if request.method != "POST" or "file" not in request.FILES:
         return JsonResponse({"error": "No file"}, status=400)
     file = request.FILES["file"]
-    ext = os.path.splitext(file.name)[1] or ""
-    key = f"blog/{uuid.uuid4().hex}{ext}"
-    path = default_storage.save(key, ContentFile(file.read()))
-    url = default_storage.url(path)
-    return JsonResponse({"url": url})
+    content_type = str(getattr(file, "content_type", "") or "").lower()
+    if content_type and not content_type.startswith("image/"):
+        return JsonResponse({"error": "invalid_file_type"}, status=400)
+    try:
+        variants = save_blog_image_variants(file, request=request, folder_prefix="blog/uploads")
+    except ValidationError as exc:
+        detail = "; ".join(exc.messages) if getattr(exc, "messages", None) else str(exc)
+        return JsonResponse({"error": "invalid_image", "detail": detail}, status=400)
+    return JsonResponse(
+        {
+            "url": variants.get("url", ""),
+            "thumb_url": variants.get("thumb_url", ""),
+            "og_url": variants.get("og_url", ""),
+        }
+    )
