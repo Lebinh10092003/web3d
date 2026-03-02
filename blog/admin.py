@@ -1,6 +1,8 @@
+import logging
+
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import DataError, IntegrityError, transaction
 from django.http import Http404
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -11,6 +13,9 @@ from django.utils.translation import gettext_lazy as _
 from .forms import BulkPostImportForm
 from .importer import import_posts, parse_bulk_posts
 from .models import BlogComment, Post, PostBlock, PostRevision
+
+
+logger = logging.getLogger(__name__)
 
 
 class PostBlockInline(admin.StackedInline):
@@ -73,6 +78,15 @@ class PostAdmin(admin.ModelAdmin):
                     )
                 except ValidationError as exc:
                     form.add_error("data", "; ".join(exc.messages) if exc.messages else str(exc))
+                except (DataError, IntegrityError) as exc:
+                    logger.exception("Blog import failed due to database error.")
+                    form.add_error("data", _("Database error while importing posts: %(error)s") % {"error": str(exc)})
+                except Exception:
+                    logger.exception("Unexpected blog import error.")
+                    form.add_error(
+                        "data",
+                        _("Unexpected import error. Please verify block fields (especially VIDEO media_url) and try again."),
+                    )
                 else:
                     self.message_user(
                         request,

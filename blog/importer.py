@@ -1,8 +1,9 @@
 import json
+import re
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import DataError, IntegrityError, transaction
 from django.utils import timezone
 
 from .models import Post, PostBlock, PostRevision
@@ -33,6 +34,42 @@ def _normalize_block_type(raw_value):
     valid = {choice for choice, _label in PostBlock.BlockType.choices}
     if value not in valid:
         raise ValidationError(f"Unsupported block type: {value}")
+    return value
+
+
+_IFRAME_SRC_PATTERN = re.compile(r"""src\s*=\s*["']([^"']+)["']""", re.IGNORECASE)
+
+
+def _validation_error_text(exc: ValidationError):
+    if hasattr(exc, "message_dict") and exc.message_dict:
+        parts = []
+        for field, messages in exc.message_dict.items():
+            for message in messages:
+                parts.append(f"{field}: {message}")
+        if parts:
+            return "; ".join(parts)
+    if exc.messages:
+        return "; ".join(str(message) for message in exc.messages)
+    return str(exc)
+
+
+def _extract_iframe_src(value):
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if "<iframe" not in text.lower():
+        return text
+    match = _IFRAME_SRC_PATTERN.search(text)
+    if not match:
+        return ""
+    return match.group(1).strip()
+
+
+def _validate_char_limit(value: str, *, field_name: str, max_length: int, post_index: int, block_index: int):
+    if max_length and len(value) > max_length:
+        raise ValidationError(
+            f"Post #{post_index} block #{block_index}: {field_name} exceeds {max_length} characters."
+        )
     return value
 
 
@@ -110,6 +147,53 @@ def _normalize_block_payload(payload, *, post_index: int, block_index: int):
                     item_payload["caption"] = caption_value
                 normalized_items.append(item_payload)
         data["items"] = normalized_items
+
+    if block_type == PostBlock.BlockType.VIDEO:
+        media_url = _extract_iframe_src(
+            payload.get("media_url")
+            or payload.get("video_url")
+            or payload.get("embed_url")
+            or payload.get("url")
+            or payload.get("src")
+            or data.get("media_url")
+            or data.get("video_url")
+            or data.get("embed_url")
+            or data.get("url")
+            or data.get("src")
+        )
+        if not media_url:
+            raise ValidationError(
+                f"Post #{post_index} block #{block_index}: video block requires media_url (or video_url/url/src)."
+            )
+
+    media_url = _validate_char_limit(
+        media_url,
+        field_name="media_url",
+        max_length=PostBlock._meta.get_field("media_url").max_length,
+        post_index=post_index,
+        block_index=block_index,
+    )
+    caption = _validate_char_limit(
+        caption,
+        field_name="caption",
+        max_length=PostBlock._meta.get_field("caption").max_length,
+        post_index=post_index,
+        block_index=block_index,
+    )
+    alt_text = _validate_char_limit(
+        alt_text,
+        field_name="alt_text",
+        max_length=PostBlock._meta.get_field("alt_text").max_length,
+        post_index=post_index,
+        block_index=block_index,
+    )
+    align = _validate_char_limit(
+        align,
+        field_name="align",
+        max_length=PostBlock._meta.get_field("align").max_length,
+        post_index=post_index,
+        block_index=block_index,
+    )
 
     return {
         "position": position,
@@ -257,16 +341,35 @@ def import_posts(*, posts, replace_existing: bool = False, default_author=None):
                 post.slug = item["slug"]
 
             try:
+                post.full_clean()
                 post.save()
+            except ValidationError as exc:
+                raise ValidationError(f"Post #{index}: {_validation_error_text(exc)}") from exc
             except IntegrityError as exc:
                 raise ValidationError(
                     f"Post #{index}: slug '{item['slug']}' already exists."
                 ) from exc
+            except DataError as exc:
+                raise ValidationError(f"Post #{index}: data is too long or invalid.") from exc
 
             PostBlock.objects.filter(post=post).delete()
-            block_objs = [PostBlock(post=post, **block_data) for block_data in item["blocks"]]
+            block_objs = []
+            for block_index, block_data in enumerate(item["blocks"], start=1):
+                block_obj = PostBlock(post=post, **block_data)
+                try:
+                    block_obj.full_clean(validate_unique=False)
+                except ValidationError as exc:
+                    raise ValidationError(
+                        f"Post #{index} block #{block_index}: {_validation_error_text(exc)}"
+                    ) from exc
+                block_objs.append(block_obj)
             if block_objs:
-                PostBlock.objects.bulk_create(block_objs)
+                try:
+                    PostBlock.objects.bulk_create(block_objs)
+                except (IntegrityError, DataError) as exc:
+                    raise ValidationError(
+                        f"Post #{index}: unable to save blocks because one or more values are invalid."
+                    ) from exc
                 created_blocks += len(block_objs)
 
             PostRevision.objects.create(
