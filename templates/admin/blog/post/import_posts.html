@@ -1,0 +1,353 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .blog-import {
+      max-width: 980px;
+    }
+
+    .blog-import form textarea {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .blog-import__toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+
+    .blog-import__examples {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .blog-import-example {
+      border: 1px solid var(--hairline-color, #d8d8d8);
+      border-radius: 12px;
+      background: var(--body-bg, #fff);
+      overflow: hidden;
+    }
+
+    .blog-import-example__header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--hairline-color, #d8d8d8);
+      background: rgba(0, 0, 0, 0.03);
+      background: color-mix(in srgb, var(--body-bg, #fff) 92%, #000 8%);
+    }
+
+    .blog-import-example__title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .blog-import-example__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .blog-import-example__actions .button {
+      margin: 0;
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .blog-import-example__pre {
+      margin: 0;
+      padding: 12px 14px;
+      max-height: 420px;
+      overflow: auto;
+      white-space: pre;
+      tab-size: 2;
+      background: rgba(0, 0, 0, 0.03);
+      background: color-mix(in srgb, var(--body-bg, #fff) 92%, #000 8%);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .blog-import-example__note {
+      padding: 10px 14px 14px;
+      color: var(--body-quiet-color, #555);
+      font-size: 12px;
+    }
+  </style>
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script>
+    (function () {
+      function normalizeExample(text) {
+        return String(text || "").replace(/\r\n/g, "\n").trim();
+      }
+
+      async function copyToClipboard(text) {
+        const value = normalizeExample(text);
+        if (!value) {
+          throw new Error("empty");
+        }
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(value);
+          return;
+        }
+        const textarea = document.createElement("textarea");
+        textarea.value = value;
+        textarea.setAttribute("readonly", "readonly");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        textarea.style.top = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+
+      function getSourceText(sourceId) {
+        const source = document.getElementById(sourceId);
+        if (!source) {
+          return "";
+        }
+        return normalizeExample(source.textContent || "");
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const root = document.querySelector("[data-blog-import]");
+        if (!root) {
+          return;
+        }
+        const textarea = document.getElementById("id_data");
+
+        root.querySelectorAll("[data-import-pre]").forEach((pre) => {
+          const sourceId = pre.getAttribute("data-import-target") || "";
+          const value = getSourceText(sourceId);
+          if (value) {
+            pre.textContent = value;
+          }
+        });
+
+        root.querySelectorAll("[data-import-copy]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const sourceId = button.getAttribute("data-import-copy") || "";
+            const value = getSourceText(sourceId);
+            if (!value) {
+              return;
+            }
+            await copyToClipboard(value);
+          });
+        });
+
+        root.querySelectorAll("[data-import-fill]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (!textarea) {
+              return;
+            }
+            const sourceId = button.getAttribute("data-import-fill") || "";
+            const value = getSourceText(sourceId);
+            if (!value) {
+              return;
+            }
+            textarea.value = value;
+            textarea.focus();
+            textarea.scrollIntoView({ behavior: "smooth", block: "center" });
+          });
+        });
+      });
+    })();
+  </script>
+{% endblock %}
+
+{% block content %}
+  <div id="content-main" class="blog-import" data-blog-import>
+    <h1>{% trans "Import blog posts" %}</h1>
+
+    <p>
+      {% trans "Paste JSON to create/update multiple blog posts in one step." %}
+    </p>
+    <p>
+      {% trans "Supported block types:" %}
+      <code>TEXT</code>, <code>BILINGUAL_TEXT</code>, <code>IMAGE</code>, <code>VIDEO</code>,
+      <code>GALLERY</code>, <code>QUOTE</code>, <code>DIVIDER</code>.
+    </p>
+
+    <div class="blog-import__toolbar">
+      <a class="button" href="{% url 'admin:blog_post_changelist' %}">{% trans "Back to posts" %}</a>
+    </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="submit-row">
+        <input type="submit" value="{% trans 'Import' %}" class="default">
+        <a class="button cancel-link" href="{% url 'admin:blog_post_changelist' %}">{% trans "Cancel" %}</a>
+      </div>
+    </form>
+
+    <div class="blog-import__examples">
+      <div class="blog-import-example">
+        <div class="blog-import-example__header">
+          <h2 class="blog-import-example__title">{% trans "Prompt for AI (JSON blog import)" %}</h2>
+          <div class="blog-import-example__actions">
+            <button type="button" class="button" data-import-fill="blog-import-prompt-json">{% trans "Use" %}</button>
+            <button type="button" class="button" data-import-copy="blog-import-prompt-json">{% trans "Copy" %}</button>
+          </div>
+        </div>
+        <pre class="blog-import-example__pre" data-import-pre data-import-target="blog-import-prompt-json"></pre>
+        <div class="blog-import-example__note">
+          {% trans "Use this prompt with an AI tool, then paste returned JSON into the form above." %}
+        </div>
+        <script type="text/plain" id="blog-import-prompt-json">
+You generate import-ready blog data for a Django admin importer.
+
+Task:
+- Create POST_COUNT posts (default 1) about robotics/STEAM.
+- If bilingual is requested, include Vietnamese + English using BILINGUAL_TEXT blocks.
+- Structure content as many blocks, not one long paragraph.
+- Include visual blocks (IMAGE/GALLERY), not text-only posts.
+
+Output contract (strict):
+- Return ONLY valid JSON.
+- No markdown, no code fences, no comments, no explanations.
+- Top-level JSON must be:
+  {
+    "posts": [ ... ]
+  }
+
+Per-post rules:
+- Required: "title"
+- Optional: "slug", "summary", "body", "hero_image_url", "seo_title", "seo_description",
+  "status" (DRAFT|PENDING_REVIEW|SCHEDULED|PUBLISHED), "published_at" (ISO 8601),
+  "author_username" or "author_email"
+- "blocks" must be an array with at least 6 blocks.
+- At least 2 blocks must be visual: IMAGE or GALLERY.
+- Do not write the whole article in "body"; put the main content inside blocks.
+
+Block rules:
+- BILINGUAL_TEXT:
+  {
+    "type": "BILINGUAL_TEXT",
+    "text_vi": "...",
+    "text_en": "..."
+  }
+- IMAGE:
+  {
+    "type": "IMAGE",
+    "media_url": "https://...",
+    "caption": "...",
+    "alt_text": "...",
+    "align": "center"
+  }
+- GALLERY:
+  {
+    "type": "GALLERY",
+    "data": {
+      "items": [
+        {"url": "https://...", "caption": "..."}
+      ]
+    }
+  }
+
+Self-check before output:
+1) JSON is parseable
+2) top-level has "posts" array
+3) every post has "title"
+4) every block has valid "type"
+5) bilingual blocks include at least one of text_vi/text_en
+6) each post has >= 6 blocks
+7) each post has >= 2 visual blocks (IMAGE/GALLERY)
+        </script>
+      </div>
+
+      <div class="blog-import-example">
+        <div class="blog-import-example__header">
+          <h2 class="blog-import-example__title">{% trans "Example JSON payload" %}</h2>
+          <div class="blog-import-example__actions">
+            <button type="button" class="button" data-import-fill="blog-import-example-json">{% trans "Use" %}</button>
+            <button type="button" class="button" data-import-copy="blog-import-example-json">{% trans "Copy" %}</button>
+          </div>
+        </div>
+        <pre class="blog-import-example__pre" data-import-pre data-import-target="blog-import-example-json"></pre>
+        <div class="blog-import-example__note">
+          {% trans "Tip:" %} {% trans "Enable 'Replace existing post when slug matches' to update an existing post by slug." %}
+        </div>
+        <script type="text/plain" id="blog-import-example-json">
+{
+  "posts": [
+    {
+      "title": "SPIKE Prime for WRO newcomers",
+      "slug": "spike-prime-for-wro-newcomers",
+      "summary": "Bilingual introduction for teams starting WRO with SPIKE Prime.",
+      "status": "PUBLISHED",
+      "published_at": "2026-03-02T10:00:00+07:00",
+      "hero_image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/LEGO_logo.svg",
+      "seo_title": "SPIKE Prime for WRO",
+      "seo_description": "Vietnamese-English introduction to SPIKE Prime for WRO teams.",
+      "blocks": [
+        {
+          "type": "BILINGUAL_TEXT",
+          "text_vi": "SPIKE Prime giúp đội mới bắt đầu WRO xây dựng tư duy kỹ thuật theo từng bước.",
+          "text_en": "SPIKE Prime helps new WRO teams build engineering thinking step by step."
+        },
+        {
+          "type": "IMAGE",
+          "media_url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/LEGO_logo.svg",
+          "caption": "LEGO Education",
+          "alt_text": "LEGO logo",
+          "align": "center"
+        },
+        {
+          "type": "BILINGUAL_TEXT",
+          "text_vi": "Lộ trình 4 tuần: cơ bản động cơ, cảm biến, state machine và thi thử theo thời gian thực.",
+          "text_en": "A 4-week plan: motor basics, sensors, state machine, and timed mock runs."
+        },
+        {
+          "type": "GALLERY",
+          "data": {
+            "items": [
+              {
+                "url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/LEGO_logo.svg",
+                "caption": "Kit overview image"
+              },
+              {
+                "url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/LEGO_logo.svg",
+                "caption": "Training setup image"
+              }
+            ]
+          }
+        },
+        {
+          "type": "QUOTE",
+          "text": "Dữ liệu luyện tập đều đặn quan trọng hơn sửa gấp sát ngày thi.",
+          "caption": "WRO coaching note"
+        },
+        {
+          "type": "BILINGUAL_TEXT",
+          "text_vi": "Kết luận: chia nhỏ mục tiêu, luyện theo dữ liệu và đánh giá sau mỗi buổi để tăng độ ổn định.",
+          "text_en": "Conclusion: break goals into small milestones, train with data, and review after each session."
+        }
+      ]
+    }
+  ]
+}
+        </script>
+      </div>
+    </div>
+  </div>
+{% endblock %}

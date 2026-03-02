@@ -1,5 +1,5 @@
 import os
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit
 
 from django.conf import settings
 from django.contrib import messages
@@ -12,6 +12,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.db.models import Count
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
@@ -36,6 +37,23 @@ MAX_AVATAR_BYTES = 2 * 1024 * 1024  # 2 MB
 
 def _is_modal_request(request):
     return request.headers.get("HX-Request") == "true" or request.GET.get("modal") == "1"
+
+
+def _to_safe_next_path(request, raw_url):
+    candidate = str(raw_url or "").strip()
+    if not candidate:
+        return ""
+    if not url_has_allowed_host_and_scheme(
+        url=candidate,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return ""
+    parsed = urlsplit(candidate)
+    normalized = parsed.path or "/"
+    if parsed.query:
+        normalized = f"{normalized}?{parsed.query}"
+    return normalized
 
 
 def _build_page_query_prefix(request, param_name):
@@ -289,6 +307,7 @@ def _build_course_overview(user, *, request=None, per_page=5, page_param="lesson
 
 
 def register(request):
+    next_url = (request.POST.get("next") or request.GET.get("next") or "").strip()
     if request.method == "POST":
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
@@ -296,15 +315,27 @@ def register(request):
             sync_user_role_from_groups(user)
             login(request, user)
             messages.success(request, _("Welcome to V+ STEAM LAB Library."))
+            redirect_to = reverse("library:home")
+            safe_next = _to_safe_next_path(request, next_url)
+            if safe_next:
+                login_path = reverse("accounts:login")
+                register_path = reverse("accounts:register")
+                if not (
+                    safe_next == login_path
+                    or safe_next.startswith(f"{login_path}?")
+                    or safe_next == register_path
+                    or safe_next.startswith(f"{register_path}?")
+                ):
+                    redirect_to = safe_next
             if request.headers.get("HX-Request") == "true":
                 response = HttpResponse("")
-                response["HX-Redirect"] = reverse("library:home")
+                response["HX-Redirect"] = redirect_to
                 return response
-            return redirect("library:home")
+            return redirect(redirect_to)
     else:
         form = UserRegistrationForm()
 
-    return render(request, "accounts/register_modal.html", {"form": form})
+    return render(request, "accounts/register_modal.html", {"form": form, "next": next_url})
 
 
 @login_required
@@ -458,6 +489,36 @@ def my_library(request):
     return render(request, "accounts/my_library.html", context)
 
 class ModalLoginView(LoginView):
+    def _fallback_redirect_url(self):
+        login_path = reverse("accounts:login")
+        allowed_hosts = {self.request.get_host(), *self.get_success_url_allowed_hosts()}
+        require_https = self.request.is_secure()
+        candidates = [
+            self.request.headers.get("HX-Current-URL", ""),
+            self.request.META.get("HTTP_REFERER", ""),
+        ]
+        for raw_url in candidates:
+            candidate = str(raw_url or "").strip()
+            if not candidate:
+                continue
+            if not url_has_allowed_host_and_scheme(
+                url=candidate,
+                allowed_hosts=allowed_hosts,
+                require_https=require_https,
+            ):
+                continue
+            normalized = _to_safe_next_path(self.request, candidate)
+            if normalized == login_path or normalized.startswith(f"{login_path}?"):
+                continue
+            return normalized
+        return ""
+
+    def get_redirect_url(self):
+        redirect_to = super().get_redirect_url()
+        if redirect_to:
+            return redirect_to
+        return self._fallback_redirect_url()
+
     def get_template_names(self):
         if _is_modal_request(self.request):
             return ["accounts/login_modal.html"]

@@ -6,6 +6,7 @@
 {% trans "Group" as group_label %}
 {% trans "Password" as password_label %}
 {% trans "Confirm password" as confirm_password_label %}
+{% url 'accounts:login' as login_url %}
 <div class="auth-modal" data-auth-modal data-aphile-title="{% trans 'Register' %}">
   <div class="auth-modal__header">
     <div class="auth-modal__icon auth-modal__icon--brand" aria-hidden="true">
@@ -34,6 +35,9 @@
     hx-swap="innerHTML"
   >
     {% csrf_token %}
+    {% if next %}
+      <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
     <div class="row g-3">
       <div class="col-12">
         <label class="form-label" for="{{ form.username.id_for_label }}">{{ username_label }}</label>
@@ -91,8 +95,8 @@
     <span class="text-muted">{% trans "Already have an account?" %}</span>
     <a
       class="auth-modal__link"
-      href="{% url 'accounts:login' %}?modal=1"
-      hx-get="{% url 'accounts:login' %}?modal=1"
+      href="{{ login_url }}?modal=1{% if next %}&next={{ next|urlencode }}{% endif %}"
+      hx-get="{{ login_url }}?modal=1{% if next %}&next={{ next|urlencode }}{% endif %}"
       hx-target="#auth-modal-body"
       hx-swap="innerHTML"
     >{% trans "Login" %}</a>

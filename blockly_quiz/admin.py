@@ -95,7 +95,7 @@ class QuizAdmin(admin.ModelAdmin):
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ("quiz", "sort_order", "question_type", "difficulty", "short_prompt")
     list_filter = ("quiz", "question_type", "difficulty")
-    search_fields = ("prompt",)
+    search_fields = ("=id", "prompt")
     ordering = ("quiz", "sort_order", "id")
     inlines = [ChoiceInline]
     fieldsets = (

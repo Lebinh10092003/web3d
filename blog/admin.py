@@ -1,8 +1,15 @@
 from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.http import Http404
+from django.shortcuts import redirect
+from django.template.response import TemplateResponse
+from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from .forms import BulkPostImportForm
+from .importer import import_posts, parse_bulk_posts
 from .models import BlogComment, Post, PostBlock, PostRevision
 
 
@@ -37,6 +44,59 @@ class PostAdmin(admin.ModelAdmin):
     inlines = [PostBlockInline]
     actions = ["publish_now"]
     readonly_fields = ("is_live",)
+    change_list_template = "admin/blog/post/change_list.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "import-posts/",
+                self.admin_site.admin_view(self.import_posts_view),
+                name="blog_post_import_posts",
+            ),
+        ]
+        return custom_urls + urls
+
+    def import_posts_view(self, request):
+        if not (self.has_add_permission(request) or self.has_change_permission(request)):
+            raise Http404
+
+        if request.method == "POST":
+            form = BulkPostImportForm(request.POST)
+            if form.is_valid():
+                try:
+                    posts = parse_bulk_posts(form.cleaned_data["data"])
+                    created_posts, updated_posts, created_blocks = import_posts(
+                        posts=posts,
+                        replace_existing=form.cleaned_data.get("replace_existing", False),
+                        default_author=request.user if request.user.is_authenticated else None,
+                    )
+                except ValidationError as exc:
+                    form.add_error("data", "; ".join(exc.messages) if exc.messages else str(exc))
+                else:
+                    self.message_user(
+                        request,
+                        _(
+                            "Imported %(created_posts)d post(s), updated %(updated_posts)d post(s), created %(created_blocks)d block(s)."
+                        )
+                        % {
+                            "created_posts": created_posts,
+                            "updated_posts": updated_posts,
+                            "created_blocks": created_blocks,
+                        },
+                        level=messages.SUCCESS,
+                    )
+                    return redirect(reverse("admin:blog_post_changelist"))
+        else:
+            form = BulkPostImportForm()
+
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "title": _("Import blog posts"),
+            "form": form,
+        }
+        return TemplateResponse(request, "admin/blog/post/import_posts.html", context)
 
     def publish_now(self, request, queryset):
         updated = queryset.update(status=Post.Status.PUBLISHED, published_at=timezone.now())

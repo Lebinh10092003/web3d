@@ -31,3 +31,24 @@ class BlogCommentForm(forms.Form):
         )
     )
     parent_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
+
+
+class BulkPostImportForm(forms.Form):
+    data = forms.CharField(
+        label=_("JSON data"),
+        widget=forms.Textarea(
+            attrs={
+                "rows": 24,
+                "class": "vLargeTextField",
+                "spellcheck": "false",
+                "placeholder": '{"posts":[{"title":"...","status":"DRAFT","blocks":[...]}]}',
+            }
+        ),
+        help_text=_("Paste JSON with top-level key 'posts' (or a plain list of posts)."),
+    )
+    replace_existing = forms.BooleanField(
+        required=False,
+        initial=False,
+        label=_("Replace existing post when slug matches"),
+        help_text=_("If checked, matching slug will be updated and old blocks will be replaced."),
+    )

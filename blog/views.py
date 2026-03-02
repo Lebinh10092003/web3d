@@ -1,14 +1,17 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, JsonResponse
 from django.urls import reverse
 from django.core.paginator import Paginator
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 import json
 import os
 import uuid
@@ -102,11 +105,252 @@ def _can_manage_comment(user, comment):
     return user.is_authenticated and (user.is_staff or comment.user_id == user.id)
 
 
+def _parse_iso_datetime(value):
+    text = str(value or "").strip()
+    if not text:
+        return None
+    candidate = text.replace("Z", "+00:00")
+    try:
+        parsed = timezone.datetime.fromisoformat(candidate)
+    except Exception:
+        return None
+    if parsed.tzinfo is None:
+        parsed = timezone.make_aware(parsed)
+    return parsed
+
+
+def _normalize_api_block_type(raw_value):
+    aliases = {
+        "BILINGUAL": PostBlock.BlockType.BILINGUAL_TEXT,
+        "TEXT_I18N": PostBlock.BlockType.BILINGUAL_TEXT,
+        "I18N_TEXT": PostBlock.BlockType.BILINGUAL_TEXT,
+    }
+    value = str(raw_value or PostBlock.BlockType.TEXT).strip().upper()
+    value = aliases.get(value, value)
+    valid = {choice for choice, _label in PostBlock.BlockType.choices}
+    if value not in valid:
+        return PostBlock.BlockType.TEXT
+    return value
+
+
+def _normalize_api_block_payload(item, *, index):
+    if not isinstance(item, dict):
+        raise ValueError(f"Block #{index}: expected an object.")
+
+    position_raw = item.get("position")
+    try:
+        position = int(position_raw) if position_raw not in (None, "") else index
+    except (TypeError, ValueError):
+        position = index
+    if position <= 0:
+        position = index
+
+    block_type = _normalize_api_block_type(item.get("type"))
+    text = str(item.get("text") or "").strip()
+    media_url = str(item.get("media_url") or "").strip()
+    caption = str(item.get("caption") or "").strip()
+    alt_text = str(item.get("alt_text") or "").strip()
+    align = str(item.get("align") or "").strip()
+
+    data = item.get("data") if isinstance(item.get("data"), dict) else {}
+    data = dict(data)
+
+    if block_type == PostBlock.BlockType.BILINGUAL_TEXT:
+        i18n_data = data.get("i18n") if isinstance(data.get("i18n"), dict) else {}
+        text_vi = str(
+            item.get("text_vi")
+            or item.get("vi")
+            or i18n_data.get("vi")
+            or data.get("vi")
+            or ""
+        ).strip()
+        text_en = str(
+            item.get("text_en")
+            or item.get("en")
+            or i18n_data.get("en")
+            or data.get("en")
+            or ""
+        ).strip()
+        if not text and text_vi:
+            text = text_vi
+        if not text and text_en:
+            text = text_en
+        if not text:
+            raise ValueError(
+                f"Block #{index}: bilingual block requires text_vi or text_en."
+            )
+        data["i18n"] = {
+            "vi": text_vi,
+            "en": text_en,
+        }
+
+    if block_type == PostBlock.BlockType.GALLERY:
+        raw_items = data.get("items")
+        if not isinstance(raw_items, list):
+            raw_items = data.get("gallery")
+        if not isinstance(raw_items, list):
+            raw_items = data.get("images")
+
+        normalized_items = []
+        if isinstance(raw_items, list):
+            for raw_item in raw_items:
+                if isinstance(raw_item, str):
+                    url = raw_item.strip()
+                    if url:
+                        normalized_items.append({"url": url})
+                    continue
+                if not isinstance(raw_item, dict):
+                    continue
+                url = str(raw_item.get("url") or raw_item.get("src") or "").strip()
+                if not url:
+                    continue
+                caption_value = str(raw_item.get("caption") or "").strip()
+                item_payload = {"url": url}
+                if caption_value:
+                    item_payload["caption"] = caption_value
+                normalized_items.append(item_payload)
+        data["items"] = normalized_items
+
+    return {
+        "position": position,
+        "type": block_type,
+        "text": text,
+        "media_url": media_url,
+        "caption": caption,
+        "alt_text": alt_text,
+        "align": align,
+        "data": data,
+    }
+
+
+def _resolve_api_author(payload):
+    author_username = str(payload.get("author_username") or "").strip()
+    author_email = str(payload.get("author_email") or "").strip()
+    if not author_username and not author_email:
+        return None, ""
+
+    User = get_user_model()
+    if author_username:
+        user = User.objects.filter(username=author_username).first()
+    else:
+        user = User.objects.filter(email=author_email).first()
+    if not user:
+        return None, "author_not_found"
+    return user, ""
+
+
+@csrf_exempt
+@require_POST
+def api_post_create(request):
+    expected_key = str(getattr(settings, "BLOG_POST_API_KEY", "") or "").strip()
+    if not expected_key:
+        return JsonResponse({"error": "blog_api_key_not_configured"}, status=503)
+
+    provided_key = str(request.headers.get("X-API-Key") or "").strip()
+    if provided_key != expected_key:
+        return JsonResponse({"error": "unauthorized"}, status=401)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except (TypeError, ValueError, UnicodeDecodeError):
+        return JsonResponse({"error": "invalid_json"}, status=400)
+    if not isinstance(payload, dict):
+        return JsonResponse({"error": "invalid_json"}, status=400)
+
+    title = str(payload.get("title") or "").strip()
+    if not title:
+        return JsonResponse({"error": "title_required"}, status=400)
+
+    status_value = str(payload.get("status") or Post.Status.DRAFT).strip().upper()
+    valid_statuses = {choice for choice, _label in Post.Status.choices}
+    if status_value not in valid_statuses:
+        return JsonResponse(
+            {
+                "error": "invalid_status",
+                "allowed_statuses": sorted(valid_statuses),
+            },
+            status=400,
+        )
+
+    published_raw = payload.get("published_at")
+    published_at = _parse_iso_datetime(published_raw) if published_raw else timezone.now()
+    if published_raw and not published_at:
+        return JsonResponse({"error": "invalid_published_at"}, status=400)
+
+    blocks_payload = payload.get("blocks") or []
+    if not isinstance(blocks_payload, list):
+        return JsonResponse({"error": "blocks_must_be_list"}, status=400)
+
+    normalized_blocks = []
+    for idx, item in enumerate(blocks_payload, start=1):
+        try:
+            normalized = _normalize_api_block_payload(item, index=idx)
+        except ValueError as error:
+            return JsonResponse({"error": "invalid_block", "detail": str(error)}, status=400)
+        normalized_blocks.append(normalized)
+
+    author, author_error = _resolve_api_author(payload)
+    if author_error:
+        return JsonResponse({"error": author_error}, status=400)
+
+    summary = str(payload.get("summary") or "").strip()
+    hero_image_url = str(payload.get("hero_image_url") or "").strip()
+    seo_title = str(payload.get("seo_title") or "").strip()
+    seo_description = str(payload.get("seo_description") or "").strip()
+    slug = str(payload.get("slug") or "").strip()
+
+    try:
+        with transaction.atomic():
+            post = Post(
+                title=title,
+                summary=summary,
+                hero_image_url=hero_image_url,
+                seo_title=seo_title,
+                seo_description=seo_description,
+                status=status_value,
+                published_at=published_at,
+                author=author,
+            )
+            if slug:
+                post.slug = slug
+            post.save()
+
+            if normalized_blocks:
+                PostBlock.objects.bulk_create(
+                    [PostBlock(post=post, **block_data) for block_data in normalized_blocks]
+                )
+
+            PostRevision.objects.create(
+                post=post,
+                created_by=author,
+                is_autosave=False,
+                payload=post.snapshot(),
+            )
+    except IntegrityError:
+        return JsonResponse(
+            {"error": "conflict", "detail": "Slug already exists or data integrity issue."},
+            status=409,
+        )
+
+    detail_path = reverse("blog:detail", args=[post.slug])
+    return JsonResponse(
+        {
+            "id": str(post.id),
+            "slug": post.slug,
+            "url": detail_path,
+            "status": post.status,
+            "published_at": post.published_at.isoformat() if post.published_at else None,
+            "block_count": len(normalized_blocks),
+        },
+        status=201,
+    )
+
+
 def post_list(request):
     # autopublish scheduled posts when due
     Post.objects.scheduled().filter(published_at__lte=timezone.now()).update(status=Post.Status.PUBLISHED)
 
-    posts = Post.objects.live().select_related("author")
+    posts = Post.objects.live().select_related("author").order_by("-published_at", "-created_at")
     paginator = Paginator(posts, 9)
     page_obj = paginator.get_page(request.GET.get("page") or 1)
     page_range = paginator.get_elided_page_range(
@@ -324,6 +568,8 @@ def post_editor_edit(request, post_id=None):
     context = {
         "post": post,
         "initial_blocks_json": json.dumps(initial_blocks),
+        "status_choices": Post.Status.choices,
+        "selected_status": post.status if post else Post.Status.DRAFT,
         "seo_title": _("Edit blog post") if post else _("Create blog post"),
         "seo_description": _("Compose blog posts with content blocks, images, videos, and galleries."),
     }

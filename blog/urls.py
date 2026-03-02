@@ -6,6 +6,7 @@ app_name = "blog"
 
 urlpatterns = [
     path("", views.post_list, name="list"),
+    path("api/posts/", views.api_post_create, name="api-create"),
     path("create/", views.post_quick_create, name="create"),
     path("editor/", views.post_editor_new, name="editor-new"),
     path("editor/<uuid:post_id>/", views.post_editor_edit, name="editor-edit"),

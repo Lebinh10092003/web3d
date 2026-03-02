@@ -177,6 +177,7 @@ BLOCKLY_QUIZ_GSHEET_URL = os.environ.get("BLOCKLY_QUIZ_GSHEET_URL", "").strip()
 BLOCKLY_QUIZ_GSHEET_TIMEOUT = int(os.environ.get("BLOCKLY_QUIZ_GSHEET_TIMEOUT", "10"))
 
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
+BLOG_POST_API_KEY = os.environ.get("BLOG_POST_API_KEY", "").strip()
 
 USE_BACKGROUND_JOBS = os.environ.get("USE_BACKGROUND_JOBS", "1") == "1"
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")

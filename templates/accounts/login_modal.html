@@ -2,6 +2,7 @@
 {% trans "Login" as login_label %}
 {% trans "Username" as username_label %}
 {% trans "Password" as password_label %}
+{% url 'accounts:register' as register_url %}
 <div class="auth-modal" data-auth-modal data-aphile-title="{% trans 'Login' %}">
   <div class="auth-modal__header">
     <div class="auth-modal__icon auth-modal__icon--brand" aria-hidden="true">
@@ -57,8 +58,8 @@
     <span class="text-muted">{% trans "New here?" %}</span>
     <a
       class="auth-modal__link"
-      href="{% url 'accounts:register' %}?modal=1"
-      hx-get="{% url 'accounts:register' %}?modal=1"
+      href="{{ register_url }}?modal=1{% if next %}&next={{ next|urlencode }}{% endif %}"
+      hx-get="{{ register_url }}?modal=1{% if next %}&next={{ next|urlencode }}{% endif %}"
       hx-target="#auth-modal-body"
       hx-swap="innerHTML"
     >{% trans "Create account" %}</a>

@@ -1,7 +1,39 @@
+{% load i18n %}
 {% if block.type == "TEXT" %}
   <div class="blog-block blog-block--text">
     {{ block.text|linebreaks }}
   </div>
+{% elif block.type == "BILINGUAL_TEXT" %}
+  {% get_current_language as CURRENT_LANGUAGE %}
+  {% with lang=CURRENT_LANGUAGE|slice:":2" %}
+    <div class="blog-block blog-block--text">
+      {% if lang == "en" %}
+        {% if block.data.i18n.en %}
+          {{ block.data.i18n.en|linebreaks }}
+        {% elif block.data.en %}
+          {{ block.data.en|linebreaks }}
+        {% elif block.data.i18n.vi %}
+          {{ block.data.i18n.vi|linebreaks }}
+        {% elif block.data.vi %}
+          {{ block.data.vi|linebreaks }}
+        {% else %}
+          {{ block.text|linebreaks }}
+        {% endif %}
+      {% else %}
+        {% if block.data.i18n.vi %}
+          {{ block.data.i18n.vi|linebreaks }}
+        {% elif block.data.vi %}
+          {{ block.data.vi|linebreaks }}
+        {% elif block.data.i18n.en %}
+          {{ block.data.i18n.en|linebreaks }}
+        {% elif block.data.en %}
+          {{ block.data.en|linebreaks }}
+        {% else %}
+          {{ block.text|linebreaks }}
+        {% endif %}
+      {% endif %}
+    </div>
+  {% endwith %}
 {% elif block.type == "IMAGE" %}
   <figure class="blog-block blog-block--image text-{{ block.align|default:'center' }}">
     <img src="{{ block.media_url }}" alt="{{ block.alt_text|default:block.caption }}">
@@ -13,12 +45,12 @@
   </div>
   {% if block.caption %}<p class="text-muted small mt-2">{{ block.caption }}</p>{% endif %}
 {% elif block.type == "GALLERY" %}
-  {% with items=block.data.items|default:block.data.gallery|default:block.data.images %}
+  {% with items=block.data.items %}
     <div class="blog-block blog-block--gallery row row-cols-2 row-cols-md-3 g-2">
       {% for item in items %}
         <div class="col">
           <figure class="mb-0">
-            <img src="{{ item.url|default:item.src }}" alt="{{ item.alt|default:item.caption }}">
+            <img src="{{ item.url }}" alt="{{ item.caption }}">
             {% if item.caption %}<figcaption class="text-muted small mt-1">{{ item.caption }}</figcaption>{% endif %}
           </figure>
         </div>

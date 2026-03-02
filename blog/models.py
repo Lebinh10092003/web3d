@@ -169,6 +169,7 @@ class BlogComment(models.Model):
 class PostBlock(models.Model):
     class BlockType(models.TextChoices):
         TEXT = "TEXT", _("Text")
+        BILINGUAL_TEXT = "BILINGUAL_TEXT", _("Bilingual text")
         IMAGE = "IMAGE", _("Image")
         VIDEO = "VIDEO", _("Video")
         GALLERY = "GALLERY", _("Gallery")

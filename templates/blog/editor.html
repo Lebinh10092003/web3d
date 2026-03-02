@@ -39,8 +39,8 @@
           <div class="col-12 col-md-4">
             <label class="form-label" for="status">{% trans "Status" %}</label>
             <select class="form-select" id="status" name="status">
-              {% for value,label in post.Status.choices %}
-                <option value="{{ value }}" {% if post and post.status == value %}selected{% endif %}>{{ label }}</option>
+              {% for value,label in status_choices %}
+                <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
               {% endfor %}
             </select>
           </div>
@@ -50,6 +50,7 @@
           </div>
           <div class="col-12 col-md-4 d-flex align-items-end justify-content-end gap-2">
             <button type="button" class="btn btn-success" id="add-text">{% trans "Add Text" %}</button>
+            <button type="button" class="btn btn-outline-success" id="add-bilingual">{% trans "Add Bilingual" %}</button>
             <button type="button" class="btn btn-outline-primary" id="add-media">{% trans "Add Image/Video" %}</button>
             <button type="button" class="btn btn-outline-secondary" id="add-quote">{% trans "Add Quote" %}</button>
             <button type="button" class="btn btn-outline-secondary" id="add-divider">{% trans "Divider" %}</button>
@@ -112,6 +113,7 @@
                   <span class="badge text-bg-light border">#${block.position}</span>
                   <select class="form-select form-select-sm block-type" style="width:auto">
                     <option value="TEXT"${block.type === "TEXT" ? " selected" : ""}>Text</option>
+                    <option value="BILINGUAL_TEXT"${block.type === "BILINGUAL_TEXT" ? " selected" : ""}>Bilingual Text</option>
                     <option value="IMAGE"${block.type === "IMAGE" ? " selected" : ""}>Image</option>
                     <option value="VIDEO"${block.type === "VIDEO" ? " selected" : ""}>Video</option>
                     <option value="GALLERY"${block.type === "GALLERY" ? " selected" : ""}>Gallery</option>
@@ -217,6 +219,45 @@
 
         if (type === "TEXT") {
           addTextarea("Nội dung", "text", 4);
+        } else if (type === "BILINGUAL_TEXT") {
+          block.data = block.data || {};
+          block.data.i18n = block.data.i18n || {};
+
+          const viDiv = document.createElement("div");
+          viDiv.className = "mb-2";
+          viDiv.innerHTML = `
+            <label class="form-label form-label-sm">Nội dung (Tiếng Việt)</label>
+            <textarea class="form-control form-control-sm" rows="4">${block.data.i18n.vi || ""}</textarea>
+          `;
+          const viTa = viDiv.querySelector("textarea");
+          viTa.addEventListener("input", () => {
+            block.data = block.data || {};
+            block.data.i18n = block.data.i18n || {};
+            block.data.i18n.vi = viTa.value;
+            if (!block.text) {
+              block.text = viTa.value;
+            }
+            sync();
+          });
+          wrapper.appendChild(viDiv);
+
+          const enDiv = document.createElement("div");
+          enDiv.className = "mb-2";
+          enDiv.innerHTML = `
+            <label class="form-label form-label-sm">Content (English)</label>
+            <textarea class="form-control form-control-sm" rows="4">${block.data.i18n.en || ""}</textarea>
+          `;
+          const enTa = enDiv.querySelector("textarea");
+          enTa.addEventListener("input", () => {
+            block.data = block.data || {};
+            block.data.i18n = block.data.i18n || {};
+            block.data.i18n.en = enTa.value;
+            if (!block.text) {
+              block.text = enTa.value;
+            }
+            sync();
+          });
+          wrapper.appendChild(enDiv);
         } else if (type === "IMAGE") {
           addInput("Ảnh URL", "media_url");
           addInput("Caption", "caption");
@@ -336,6 +377,12 @@
 
       document.getElementById("add-text").addEventListener("click", () => {
         blocks.push(defaultBlock("TEXT"));
+        renderBlocks();
+      });
+      document.getElementById("add-bilingual").addEventListener("click", () => {
+        const block = defaultBlock("BILINGUAL_TEXT");
+        block.data = { i18n: { vi: "", en: "" } };
+        blocks.push(block);
         renderBlocks();
       });
       document.getElementById("add-media").addEventListener("click", () => {

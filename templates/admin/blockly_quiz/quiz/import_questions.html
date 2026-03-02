@@ -252,26 +252,53 @@
           {% trans "Default is 30 questions at HKICO national-final difficulty (use difficulty 'hard')." %}
         </div>
         <script type="text/plain" id="quiz-import-prompt-blockly">
-You are an HKICO national-final problem setter.
-Return ONLY JSON with exactly [QUESTION_COUNT=30] Blockly multiple-choice questions unless another count is provided.
-Use difficulty "hard" for every question to represent HKICO finals.
-Structure:
+You generate import-ready quiz data for a Django importer.
+
+Task:
+- Create QUESTION_COUNT questions (default 30) at HKICO national-final level.
+- Topic: Blockly computational thinking.
+
+Output contract (strict):
+- Return ONLY one JSON object with this top-level key: "questions".
+- No markdown, no code fences, no comments, no extra text.
+- Valid JSON only (double quotes, no trailing commas).
+
+Per-question rules:
+- "question_type" must be "blockly".
+- "difficulty" must be "hard".
+- Include exactly one of:
+  - "blockly_state": { ...object... }
+  - "blockly_xml": "<xml ...>"
+- "choices" must contain exactly 4 items.
+- Exactly 1 choice has "is_correct": true, the other 3 must be false.
+- "prompt" must be clear, standalone, and unambiguous.
+- "explanation" should be short (1-2 sentences).
+- Questions must be unique and non-duplicated.
+
+Required shape:
 {
   "questions": [
     {
       "prompt": "...",
       "question_type": "blockly",
       "difficulty": "hard",
-      "blockly_state": {...} OR "blockly_xml": "<xml...>",
+      "blockly_state": { "blocks": {} },
       "choices": [
-        {"text": "...", "is_correct": true},
-        {"text": "..."}
+        { "text": "...", "is_correct": true },
+        { "text": "...", "is_correct": false },
+        { "text": "...", "is_correct": false },
+        { "text": "...", "is_correct": false }
       ],
       "explanation": "..."
     }
   ]
 }
-No text outside the JSON.
+
+Self-check before final output:
+1) questions.length == QUESTION_COUNT (or 30 if not specified)
+2) every question has exactly 4 choices
+3) each question has exactly one true "is_correct"
+4) output is valid JSON only
         </script>
       </div>
 
@@ -288,26 +315,51 @@ No text outside the JSON.
           {% trans "Scratch-only: keep question_type as 'scratch' with HKICO finals difficulty ('hard')." %}
         </div>
         <script type="text/plain" id="quiz-import-prompt-scratch">
-You are an HKICO national-final problem setter.
-Return ONLY JSON with [QUESTION_COUNT=30] Scratch multiple-choice questions (no Blockly/Python mixed here).
-Every question uses question_type "scratch" and difficulty "hard".
-Structure:
+You generate import-ready quiz data for a Django importer.
+
+Task:
+- Create QUESTION_COUNT questions (default 30) at HKICO national-final level.
+- Topic: Scratch programming and logic.
+
+Output contract (strict):
+- Return ONLY one JSON object with key "questions".
+- No markdown, no code fences, no extra commentary.
+- Valid JSON only.
+
+Per-question rules:
+- "question_type" must be "scratch".
+- "difficulty" must be "hard".
+- Include "scratchblocks_text" as a string (use \\n for line breaks).
+- "choices" must contain exactly 4 items.
+- Exactly 1 choice has "is_correct": true, the other 3 must be false.
+- "prompt" must clearly ask about behavior/output/logic of the Scratch blocks.
+- "explanation" should be short (1-2 sentences).
+- Questions must be unique.
+
+Required shape:
 {
   "questions": [
     {
       "prompt": "...",
       "question_type": "scratch",
       "difficulty": "hard",
-      "scratchblocks_text": "when green flag clicked\nrepeat (10)\n  move (10) steps\nend",
+      "scratchblocks_text": "when green flag clicked\\nrepeat (10)\\n  move (10) steps\\nend",
       "choices": [
-        {"text": "...", "is_correct": true},
-        {"text": "..."}
+        { "text": "...", "is_correct": true },
+        { "text": "...", "is_correct": false },
+        { "text": "...", "is_correct": false },
+        { "text": "...", "is_correct": false }
       ],
       "explanation": "..."
     }
   ]
 }
-Ensure exactly one correct choice; output JSON only.
+
+Self-check before final output:
+1) questions.length == QUESTION_COUNT (or 30 if not specified)
+2) every question has exactly 4 choices
+3) each question has exactly one true "is_correct"
+4) output is valid JSON only
         </script>
       </div>
 
@@ -324,10 +376,29 @@ Ensure exactly one correct choice; output JSON only.
           {% trans "Python-only: set question_type to 'code', code_language to 'python', difficulty to 'hard' (HKICO finals)." %}
         </div>
         <script type="text/plain" id="quiz-import-prompt-python">
-You are an HKICO national-final problem setter for Python.
-Return ONLY JSON with exactly [QUESTION_COUNT=30] multiple-choice Python questions unless another count is given.
-Use question_type "code", code_language "python", and difficulty "hard" on every item.
-Structure:
+You generate import-ready quiz data for a Django importer.
+
+Task:
+- Create QUESTION_COUNT questions (default 30) at HKICO national-final level.
+- Topic: Python problem solving.
+
+Output contract (strict):
+- Return ONLY one JSON object with key "questions".
+- No markdown/code fences/comments/explanatory text.
+- Valid JSON only.
+
+Per-question rules:
+- "question_type" must be "code".
+- "code_language" must be "python".
+- "difficulty" must be "hard".
+- "code_text" must be runnable Python snippet (use \\n for line breaks where needed).
+- "choices" must contain exactly 4 items.
+- Exactly 1 choice has "is_correct": true, the other 3 must be false.
+- "prompt" should ask for output, bug reason, complexity, or behavior.
+- "explanation" should be short and precise.
+- Questions must be unique and non-repetitive.
+
+Required shape:
 {
   "questions": [
     {
@@ -335,16 +406,23 @@ Structure:
       "question_type": "code",
       "difficulty": "hard",
       "code_language": "python",
-      "code_text": "print('Hello')",
+      "code_text": "x = 2\\nprint(x * 5)",
       "choices": [
-        {"text": "...", "is_correct": true},
-        {"text": "..."}
+        { "text": "...", "is_correct": true },
+        { "text": "...", "is_correct": false },
+        { "text": "...", "is_correct": false },
+        { "text": "...", "is_correct": false }
       ],
       "explanation": "..."
     }
   ]
 }
-Do not add any text outside the JSON; one correct choice per question.
+
+Self-check before final output:
+1) questions.length == QUESTION_COUNT (or 30 if not specified)
+2) every question has exactly 4 choices
+3) each question has exactly one true "is_correct"
+4) output is valid JSON only
         </script>
       </div>
 

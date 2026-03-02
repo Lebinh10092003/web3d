@@ -1789,11 +1789,8 @@ def attempt_review(request, attempt_id):
             "questions": questions,
         },
     )
-    if getattr(attempt.quiz, "is_temporary", False):
-        try:
-            attempt.quiz.delete()
-        except Exception:
-            pass
+    # Do not delete temporary quizzes on review render.
+    # Deleting quiz cascades to Attempt and causes subsequent review requests to 404.
     return response
 
 
