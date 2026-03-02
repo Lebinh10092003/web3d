@@ -146,12 +146,28 @@ LEGO_THREE_BASE_URL = os.environ.get(
     "LEGO_THREE_BASE_URL", "https://cdn.jsdelivr.net/npm/three@0.160.0"
 )
 
+BLOCKLY_QUIZ_BLOCKLY_VERSION = (
+    os.environ.get("BLOCKLY_QUIZ_BLOCKLY_VERSION", "10.4.3").strip() or "10.4.3"
+)
+BLOCKLY_QUIZ_BLOCKLY_OFFICIAL_CORE_URL = (
+    f"https://unpkg.com/blockly@{BLOCKLY_QUIZ_BLOCKLY_VERSION}/blockly_compressed.js"
+)
+BLOCKLY_QUIZ_BLOCKLY_OFFICIAL_BLOCKS_URL = (
+    f"https://unpkg.com/blockly@{BLOCKLY_QUIZ_BLOCKLY_VERSION}/blocks_compressed.js"
+)
+BLOCKLY_QUIZ_BLOCKLY_OFFICIAL_MSG_EN_URL = (
+    f"https://unpkg.com/blockly@{BLOCKLY_QUIZ_BLOCKLY_VERSION}/msg/en.js"
+)
+BLOCKLY_QUIZ_BLOCKLY_OFFICIAL_DEFAULT_URLS = [
+    BLOCKLY_QUIZ_BLOCKLY_OFFICIAL_CORE_URL,
+    BLOCKLY_QUIZ_BLOCKLY_OFFICIAL_BLOCKS_URL,
+    BLOCKLY_QUIZ_BLOCKLY_OFFICIAL_MSG_EN_URL,
+]
+BLOCKLY_QUIZ_BLOCKLY_LEGACY_MIN_URL = "https://unpkg.com/blockly/blockly.min.js"
 BLOCKLY_QUIZ_BLOCKLY_JS_URL = (
-    os.environ.get(
-        "BLOCKLY_QUIZ_BLOCKLY_JS_URL", "https://unpkg.com/blockly/blockly.min.js"
-    )
+    os.environ.get("BLOCKLY_QUIZ_BLOCKLY_JS_URL", BLOCKLY_QUIZ_BLOCKLY_OFFICIAL_CORE_URL)
     .strip()
-    or "https://unpkg.com/blockly/blockly.min.js"
+    or BLOCKLY_QUIZ_BLOCKLY_OFFICIAL_CORE_URL
 )
 BLOCKLY_QUIZ_BLOCKLY_JS_URLS = [
     url.strip()
@@ -159,11 +175,20 @@ BLOCKLY_QUIZ_BLOCKLY_JS_URLS = [
     if url.strip()
 ]
 if not BLOCKLY_QUIZ_BLOCKLY_JS_URLS:
-    BLOCKLY_QUIZ_BLOCKLY_JS_URLS = [BLOCKLY_QUIZ_BLOCKLY_JS_URL]
+    if BLOCKLY_QUIZ_BLOCKLY_JS_URL in {
+        BLOCKLY_QUIZ_BLOCKLY_LEGACY_MIN_URL,
+        BLOCKLY_QUIZ_BLOCKLY_OFFICIAL_CORE_URL,
+    }:
+        BLOCKLY_QUIZ_BLOCKLY_JS_URLS = BLOCKLY_QUIZ_BLOCKLY_OFFICIAL_DEFAULT_URLS
+    else:
+        BLOCKLY_QUIZ_BLOCKLY_JS_URLS = [BLOCKLY_QUIZ_BLOCKLY_JS_URL]
 BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL = (
-    os.environ.get("BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL", "https://unpkg.com/blockly/media/")
+    os.environ.get(
+        "BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL",
+        f"https://unpkg.com/blockly@{BLOCKLY_QUIZ_BLOCKLY_VERSION}/media/",
+    )
     .strip()
-    or "https://unpkg.com/blockly/media/"
+    or f"https://unpkg.com/blockly@{BLOCKLY_QUIZ_BLOCKLY_VERSION}/media/"
 )
 BLOCKLY_QUIZ_SCRATCHBLOCKS_JS_URL = (
     os.environ.get(

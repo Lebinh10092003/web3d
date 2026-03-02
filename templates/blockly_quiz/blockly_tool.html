@@ -78,8 +78,9 @@
           thì bạn phải load đúng file JS định nghĩa các block đó (giống editor), nếu không Blockly sẽ báo thiếu block type.
         </p>
         <p class="text-muted mb-2">Cấu hình trong <code>.env_local</code> (ví dụ):</p>
-        <pre class="code-preview"><code>BLOCKLY_QUIZ_BLOCKLY_JS_URLS=https://unpkg.com/blockly/blockly.min.js,https://unpkg.com/blockly/msg/en.js
-BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL=https://unpkg.com/blockly/media/</code></pre>
+        <pre class="code-preview"><code>BLOCKLY_QUIZ_BLOCKLY_VERSION=10.4.3
+BLOCKLY_QUIZ_BLOCKLY_JS_URLS=https://unpkg.com/blockly@10.4.3/blockly_compressed.js,https://unpkg.com/blockly@10.4.3/blocks_compressed.js,https://unpkg.com/blockly@10.4.3/msg/en.js
+BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL=https://unpkg.com/blockly@10.4.3/media/</code></pre>
         <p class="text-muted mb-0">
           Gợi ý: thêm các file JS custom blocks của bạn vào cuối <code>BLOCKLY_QUIZ_BLOCKLY_JS_URLS</code> (sau core Blockly),
           sau đó restart server.

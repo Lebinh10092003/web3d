@@ -96,6 +96,111 @@ function patchBlocklyVariableApis() {
 
 patchBlocklyVariableApis();
 
+function ensureBlocklyColourBlocks() {
+  const blockly = window.Blockly;
+  if (!blockly || !blockly.Blocks) {
+    return;
+  }
+  if (blockly.__quizColourBlocksEnsured) {
+    return;
+  }
+
+  const requiredTypes = [
+    "colour_picker",
+    "colour_random",
+    "colour_rgb",
+    "colour_blend"
+  ];
+  const missingTypes = requiredTypes.filter((type) => !blockly.Blocks[type]);
+  if (!missingTypes.length) {
+    blockly.__quizColourBlocksEnsured = true;
+    return;
+  }
+
+  if (typeof blockly.defineBlocksWithJsonArray !== "function") {
+    return;
+  }
+
+  const definitions = [];
+
+  if (missingTypes.includes("colour_picker")) {
+    definitions.push({
+      type: "colour_picker",
+      message0: "%1",
+      args0: [
+        {
+          type: "field_colour",
+          name: "COLOUR",
+          colour: "#ff0000"
+        }
+      ],
+      output: "Colour",
+      style: "colour_blocks",
+      tooltip: "%{BKY_COLOUR_PICKER_TOOLTIP}",
+      helpUrl: "%{BKY_COLOUR_PICKER_HELPURL}"
+    });
+  }
+
+  if (missingTypes.includes("colour_random")) {
+    definitions.push({
+      type: "colour_random",
+      message0: "%{BKY_COLOUR_RANDOM_TITLE}",
+      output: "Colour",
+      style: "colour_blocks",
+      tooltip: "%{BKY_COLOUR_RANDOM_TOOLTIP}",
+      helpUrl: "%{BKY_COLOUR_RANDOM_HELPURL}"
+    });
+  }
+
+  if (missingTypes.includes("colour_rgb")) {
+    definitions.push({
+      type: "colour_rgb",
+      message0: "%{BKY_COLOUR_RGB_TITLE}",
+      message1: "%{BKY_COLOUR_RGB_RED} %1",
+      args1: [{ type: "input_value", name: "RED", check: "Number" }],
+      message2: "%{BKY_COLOUR_RGB_GREEN} %1",
+      args2: [{ type: "input_value", name: "GREEN", check: "Number" }],
+      message3: "%{BKY_COLOUR_RGB_BLUE} %1",
+      args3: [{ type: "input_value", name: "BLUE", check: "Number" }],
+      inputsInline: true,
+      output: "Colour",
+      style: "colour_blocks",
+      tooltip: "%{BKY_COLOUR_RGB_TOOLTIP}",
+      helpUrl: "%{BKY_COLOUR_RGB_HELPURL}"
+    });
+  }
+
+  if (missingTypes.includes("colour_blend")) {
+    definitions.push({
+      type: "colour_blend",
+      message0: "%{BKY_COLOUR_BLEND_TITLE}",
+      message1: "%{BKY_COLOUR_BLEND_COLOUR1} %1",
+      args1: [{ type: "input_value", name: "COLOUR1", check: "Colour" }],
+      message2: "%{BKY_COLOUR_BLEND_COLOUR2} %1",
+      args2: [{ type: "input_value", name: "COLOUR2", check: "Colour" }],
+      message3: "%{BKY_COLOUR_BLEND_RATIO} %1",
+      args3: [{ type: "input_value", name: "RATIO", check: "Number" }],
+      inputsInline: true,
+      output: "Colour",
+      style: "colour_blocks",
+      tooltip: "%{BKY_COLOUR_BLEND_TOOLTIP}",
+      helpUrl: "%{BKY_COLOUR_BLEND_HELPURL}"
+    });
+  }
+
+  if (!definitions.length) {
+    blockly.__quizColourBlocksEnsured = true;
+    return;
+  }
+
+  try {
+    blockly.defineBlocksWithJsonArray(definitions);
+    blockly.__quizColourBlocksEnsured = true;
+  } catch (error) {
+    // Keep default behavior when block registration fails.
+  }
+}
+
 function showPreviewError(element, title, message) {
   if (!element) {
     return;
@@ -217,6 +322,8 @@ function initBlocklyPreviewElement(element) {
     );
     return;
   }
+
+  ensureBlocklyColourBlocks();
 
   try {
     if (
