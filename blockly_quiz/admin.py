@@ -109,6 +109,12 @@ class QuestionAdmin(admin.ModelAdmin):
         models.TextField: {"widget": Textarea(attrs={"rows": 6})},
     }
 
+    def get_search_results(self, request, queryset, search_term):
+        term = (search_term or "").strip()
+        if term.isdigit():
+            return queryset.filter(pk=int(term)), False
+        return super().get_search_results(request, queryset, search_term)
+
     @admin.display(description="Prompt")
     def short_prompt(self, obj):
         prompt = (obj.prompt or "").strip()
