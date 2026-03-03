@@ -40,8 +40,10 @@ class QuestionAdminForm(forms.ModelForm):
         fields = "__all__"
 
     class Media:
-        css = {"all": ("css/admin_question_preview.css",)}
-        js = QUESTION_ADMIN_PREVIEW_VENDOR_JS + ("js/admin_question_preview.js",)
+        css = {"all": ("css/admin_question_preview_v3.css",)}
+        js = QUESTION_ADMIN_PREVIEW_VENDOR_JS + (
+            "js/admin_question_preview_v3.js",
+        )
 
 
 class ChoiceInline(admin.TabularInline):
