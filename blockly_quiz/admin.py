@@ -159,7 +159,12 @@ class QuestionAdmin(admin.ModelAdmin):
   <section class="admin-question-preview__card">
     <div class="admin-question-preview__heading">
       <h3 class="admin-question-preview__title">Preview</h3>
-      <span class="admin-question-preview__badge" data-admin-preview-kind>Auto</span>
+      <div class="admin-question-preview__actions">
+        <span class="admin-question-preview__badge" data-admin-preview-kind>Auto</span>
+        <button type="button" class="button admin-question-preview__refresh" data-admin-preview-refresh>
+          Load preview
+        </button>
+      </div>
     </div>
     <div class="admin-question-preview__note" data-admin-preview-note hidden></div>
     <div class="admin-question-preview__empty" data-admin-preview-empty>

@@ -36,6 +36,18 @@
   background: #f7f9fc;
 }
 
+.admin-question-preview__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-question-preview__refresh {
+  min-height: auto;
+  line-height: 1.2;
+  padding: 4px 8px;
+}
+
 .admin-question-preview__empty {
   color: #5d6b82;
   font-size: 12px;
