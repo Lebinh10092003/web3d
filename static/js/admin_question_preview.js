@@ -1,4 +1,6 @@
 (function () {
+  window.__adminQuestionPreviewVersion = "2026-03-03-compat-v1";
+
   function getValue(field) {
     if (!field || typeof field.value !== "string") {
       return "";
@@ -25,6 +27,16 @@
       return;
     }
     element.textContent = text || "";
+  }
+
+  function pickFirst(root, selectors) {
+    for (const selector of selectors) {
+      const node = root.querySelector(selector);
+      if (node) {
+        return node;
+      }
+    }
+    return null;
   }
 
   function normalizeQuestionType(value) {
@@ -135,6 +147,9 @@
   }
 
   function renderBlockly(surface, payload, mediaUrl) {
+    if (!surface) {
+      throw new Error("Preview container is missing.");
+    }
     disposeBlockly(surface);
     const Blockly = window.Blockly;
     if (!Blockly) {
@@ -311,6 +326,33 @@
     };
   }
 
+  function ensureSinglePreviewLayout(root) {
+    if (!root || root.querySelector("[data-admin-preview-empty]")) {
+      return;
+    }
+    const legacyGrid = root.querySelector(".admin-question-preview__grid");
+    if (!legacyGrid) {
+      return;
+    }
+
+    const section = document.createElement("section");
+    section.className = "admin-question-preview__card";
+    section.innerHTML = `
+      <div class="admin-question-preview__heading">
+        <h3 class="admin-question-preview__title">Preview</h3>
+        <span class="admin-question-preview__badge" data-admin-preview-kind>Auto</span>
+      </div>
+      <div class="admin-question-preview__note" data-admin-preview-note hidden></div>
+      <div class="admin-question-preview__empty" data-admin-preview-empty>
+        Enter question data to preview.
+      </div>
+      <div class="admin-question-preview__surface admin-question-preview__surface--blockly" data-admin-preview-blockly></div>
+      <div class="admin-question-preview__surface admin-question-preview__surface--scratch" data-admin-preview-scratch></div>
+      <pre class="admin-question-preview__code" data-admin-preview-code><code data-admin-preview-code-text></code></pre>
+    `;
+    legacyGrid.replaceWith(section);
+  }
+
   function initAdminQuestionPreview() {
     const root = document.querySelector("[data-admin-question-preview]");
     if (!root || root.dataset.previewBound === "1") {
@@ -325,13 +367,39 @@
     const codeField = document.getElementById("id_code_text");
     const codeLanguageField = document.getElementById("id_code_language");
 
+    ensureSinglePreviewLayout(root);
+
     const kindBadge = root.querySelector("[data-admin-preview-kind]");
     const noteNode = root.querySelector("[data-admin-preview-note]");
     const emptyNode = root.querySelector("[data-admin-preview-empty]");
-    const blocklySurface = root.querySelector("[data-admin-preview-blockly]");
-    const scratchSurface = root.querySelector("[data-admin-preview-scratch]");
-    const codeSurface = root.querySelector("[data-admin-preview-code]");
-    const codeTextNode = root.querySelector("[data-admin-preview-code-text]");
+    const isSingleLayout = Boolean(emptyNode);
+
+    const blocklySurface = pickFirst(root, [
+      "[data-admin-preview-blockly]",
+      "[data-admin-blockly-surface]",
+      "[data-admin-blockly-stage-surface]",
+      "[data-admin-blockly-xml-surface]"
+    ]);
+    const scratchSurface = pickFirst(root, [
+      "[data-admin-preview-scratch]",
+      "[data-admin-scratch-surface]"
+    ]);
+    const codeSurface = pickFirst(root, [
+      "[data-admin-preview-code]",
+      "[data-admin-code-surface]"
+    ]);
+    const codeTextNode = pickFirst(root, [
+      "[data-admin-preview-code-text]",
+      "[data-admin-code-text]"
+    ]);
+
+    const legacyBlocklyEmpty = pickFirst(root, [
+      "[data-admin-blockly-empty]",
+      "[data-admin-blockly-stage-empty]",
+      "[data-admin-blockly-xml-empty]"
+    ]);
+    const legacyScratchEmpty = root.querySelector("[data-admin-scratch-empty]");
+    const legacyCodeEmpty = root.querySelector("[data-admin-code-empty]");
     const mediaUrl = String(root.dataset.blocklyMediaUrl || "").trim();
 
     const setNote = (text) => {
@@ -349,6 +417,30 @@
       setVisible(blocklySurface, false);
       setVisible(scratchSurface, false);
       setVisible(codeSurface, false);
+      if (!isSingleLayout) {
+        setText(legacyBlocklyEmpty, "Paste Blockly state/XML to preview.");
+        setText(legacyScratchEmpty, "Paste scratchblocks_text to preview.");
+        setText(legacyCodeEmpty, "Paste code_text to preview.");
+        setVisible(legacyBlocklyEmpty, true);
+        setVisible(legacyScratchEmpty, true);
+        setVisible(legacyCodeEmpty, true);
+      }
+    };
+
+    const showMessage = (mode, message) => {
+      if (isSingleLayout) {
+        setText(emptyNode, message);
+        setVisible(emptyNode, true);
+        return;
+      }
+      const target =
+        mode === "scratch"
+          ? legacyScratchEmpty
+          : mode === "code"
+            ? legacyCodeEmpty
+            : legacyBlocklyEmpty;
+      setText(target, message);
+      setVisible(target, true);
     };
 
     const render = () => {
@@ -373,14 +465,15 @@
       setNote(selected.note || "");
 
       if (selected.mode === "none") {
-        setText(emptyNode, selected.message || "Enter question data to preview.");
-        setVisible(emptyNode, true);
+        if (isSingleLayout) {
+          setText(emptyNode, selected.message || "Enter question data to preview.");
+          setVisible(emptyNode, true);
+        }
         return;
       }
 
       if (selected.mode === "error") {
-        setText(emptyNode, selected.message || "Cannot render preview.");
-        setVisible(emptyNode, true);
+        showMessage("blockly", selected.message || "Cannot render preview.");
         return;
       }
 
@@ -388,25 +481,36 @@
         if (selected.mode === "blockly") {
           renderBlockly(blocklySurface, selected.payload, mediaUrl);
           setVisible(blocklySurface, true);
-          setVisible(emptyNode, false);
+          if (isSingleLayout) {
+            setVisible(emptyNode, false);
+          } else {
+            setVisible(legacyBlocklyEmpty, false);
+          }
           return;
         }
         if (selected.mode === "scratch") {
           renderScratch(scratchSurface, scratchText);
           setVisible(scratchSurface, true);
-          setVisible(emptyNode, false);
+          if (isSingleLayout) {
+            setVisible(emptyNode, false);
+          } else {
+            setVisible(legacyScratchEmpty, false);
+          }
           return;
         }
         if (selected.mode === "code") {
           const language = renderCode(codeTextNode, codeText, codeLanguage);
           setText(kindBadge, `Code (${language})`);
           setVisible(codeSurface, true);
-          setVisible(emptyNode, false);
+          if (isSingleLayout) {
+            setVisible(emptyNode, false);
+          } else {
+            setVisible(legacyCodeEmpty, false);
+          }
         }
       } catch (error) {
         const message = error && error.message ? error.message : String(error || "");
-        setText(emptyNode, `Cannot render preview: ${message}`);
-        setVisible(emptyNode, true);
+        showMessage(selected.mode, `Cannot render preview: ${message}`);
       }
     };
 
