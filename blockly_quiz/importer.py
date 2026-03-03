@@ -197,11 +197,11 @@ def parse_bulk_questions(raw_text: str):
 
 
 def import_questions_into_quiz(*, quiz, questions, replace_existing: bool = False):
-    if replace_existing and Attempt.objects.filter(quiz=quiz).exists():
-        raise ValidationError("Cannot replace questions because attempts already exist.")
-
     with transaction.atomic():
         if replace_existing:
+            # Replacing the question bank invalidates historical attempts that reference
+            # previous questions/choices, so clear attempts first.
+            Attempt.objects.filter(quiz=quiz).delete()
             quiz.questions.all().delete()
             base_sort = 0
         else:

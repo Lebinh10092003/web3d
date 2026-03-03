@@ -17,7 +17,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--replace",
             action="store_true",
-            help="Delete existing questions before importing (blocked if attempts exist).",
+            help="Delete existing questions before importing (also deletes existing attempts for that quiz).",
         )
 
     def handle(self, *args, **options):

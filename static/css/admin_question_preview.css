@@ -1,0 +1,107 @@
+.admin-question-preview {
+  margin-top: 6px;
+}
+
+.admin-question-preview__grid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 1200px) {
+  .admin-question-preview__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.admin-question-preview__card {
+  border: 1px solid #d7dce5;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+}
+
+.admin-question-preview__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.admin-question-preview__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-question-preview__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ccd3df;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #253046;
+  background: #f7f9fc;
+}
+
+.admin-question-preview__empty {
+  color: #5d6b82;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.admin-question-preview__surface {
+  margin-top: 8px;
+  border: 1px solid #d7dce5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-question-preview__surface[hidden] {
+  display: none !important;
+}
+
+.admin-question-preview__surface--blockly {
+  min-height: 210px;
+  overflow: hidden;
+}
+
+.admin-question-preview__surface--scratch {
+  min-height: 210px;
+  max-height: 320px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.admin-question-preview__surface--scratch pre {
+  margin: 0;
+}
+
+.admin-question-preview__code {
+  margin: 8px 0 0;
+  border: 1px solid #d7dce5;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  max-height: 320px;
+  overflow: auto;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.admin-question-preview__code code {
+  font-family: inherit;
+  color: inherit;
+  background: transparent;
+}
+
+.admin-question-preview__code[hidden] {
+  display: none !important;
+}

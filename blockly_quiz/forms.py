@@ -8,5 +8,5 @@ class BulkQuestionImportForm(forms.Form):
     )
     replace_existing = forms.BooleanField(
         required=False,
-        help_text="Delete existing questions before importing (blocked if attempts exist).",
+        help_text="Delete existing questions before importing (this also deletes existing attempts for the quiz).",
     )

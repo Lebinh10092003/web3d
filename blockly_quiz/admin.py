@@ -1,3 +1,5 @@
+from django import forms
+from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -6,6 +8,7 @@ from django.http import Http404
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
+from django.utils.html import format_html
 
 from .forms import BulkQuestionImportForm
 from .importer import import_questions_into_quiz, parse_bulk_questions
@@ -19,6 +22,26 @@ from .models import (
     Quiz,
     QuizAssignment,
 )
+
+
+QUESTION_ADMIN_PREVIEW_VENDOR_JS = tuple(
+    url
+    for url in [
+        *getattr(settings, "BLOCKLY_QUIZ_BLOCKLY_JS_URLS", []),
+        getattr(settings, "BLOCKLY_QUIZ_SCRATCHBLOCKS_JS_URL", "").strip(),
+    ]
+    if url
+)
+
+
+class QuestionAdminForm(forms.ModelForm):
+    class Meta:
+        model = Question
+        fields = "__all__"
+
+    class Media:
+        css = {"all": ("css/admin_question_preview.css",)}
+        js = QUESTION_ADMIN_PREVIEW_VENDOR_JS + ("js/admin_question_preview.js",)
 
 
 class ChoiceInline(admin.TabularInline):
@@ -93,16 +116,19 @@ class QuizAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
+    form = QuestionAdminForm
     list_display = ("quiz", "sort_order", "question_type", "difficulty", "short_prompt")
     list_filter = ("quiz", "question_type", "difficulty")
     search_fields = ("=id", "prompt")
     ordering = ("quiz", "sort_order", "id")
     inlines = [ChoiceInline]
+    readonly_fields = ("live_preview",)
     fieldsets = (
         (None, {"fields": ("quiz", "sort_order", "question_type", "difficulty", "prompt")}),
         ("Blockly", {"fields": ("blockly_state", "blockly_xml")}),
         ("Scratch", {"fields": ("scratchblocks_text",)}),
         ("Code", {"fields": ("code_language", "code_text")}),
+        ("Live preview", {"fields": ("live_preview",)}),
         ("Review", {"fields": ("explanation",)}),
     )
     formfield_overrides = {
@@ -119,6 +145,53 @@ class QuestionAdmin(admin.ModelAdmin):
     def short_prompt(self, obj):
         prompt = (obj.prompt or "").strip()
         return prompt if len(prompt) <= 80 else f"{prompt[:77]}..."
+
+    @admin.display(description="Live preview")
+    def live_preview(self, obj):
+        media_url = getattr(settings, "BLOCKLY_QUIZ_BLOCKLY_MEDIA_URL", "")
+        return format_html(
+            """
+<div class="admin-question-preview" data-admin-question-preview data-blockly-media-url="{0}">
+  <p class="help">
+    Live preview from <code>blockly_state</code>/<code>blockly_xml</code>,
+    <code>scratchblocks_text</code>, and <code>code_text</code>.
+  </p>
+  <div class="admin-question-preview__grid">
+    <section class="admin-question-preview__card">
+      <div class="admin-question-preview__heading">
+        <h3 class="admin-question-preview__title">Blockly</h3>
+      </div>
+      <div class="admin-question-preview__empty" data-admin-blockly-empty>
+        Paste Blockly state/XML to preview.
+      </div>
+      <div class="admin-question-preview__surface admin-question-preview__surface--blockly" data-admin-blockly-surface></div>
+    </section>
+
+    <section class="admin-question-preview__card">
+      <div class="admin-question-preview__heading">
+        <h3 class="admin-question-preview__title">Scratch</h3>
+      </div>
+      <div class="admin-question-preview__empty" data-admin-scratch-empty>
+        Paste <code>scratchblocks_text</code> to preview.
+      </div>
+      <div class="admin-question-preview__surface admin-question-preview__surface--scratch" data-admin-scratch-surface></div>
+    </section>
+
+    <section class="admin-question-preview__card">
+      <div class="admin-question-preview__heading">
+        <h3 class="admin-question-preview__title">Code</h3>
+        <span class="admin-question-preview__badge" data-admin-code-language>python</span>
+      </div>
+      <div class="admin-question-preview__empty" data-admin-code-empty>
+        Paste <code>code_text</code> to preview.
+      </div>
+      <pre class="admin-question-preview__code" data-admin-code-surface><code data-admin-code-text></code></pre>
+    </section>
+  </div>
+</div>
+            """,
+            media_url,
+        )
 
 
 class AttemptAnswerInline(admin.TabularInline):
