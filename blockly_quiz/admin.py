@@ -153,41 +153,22 @@ class QuestionAdmin(admin.ModelAdmin):
             """
 <div class="admin-question-preview" data-admin-question-preview data-blockly-media-url="{0}">
   <p class="help">
-    Live preview from <code>blockly_state</code>/<code>blockly_xml</code>,
-    <code>scratchblocks_text</code>, and <code>code_text</code>.
+    One preview area, auto-rendered from <code>question_type</code> and available data:
+    <code>blockly_state</code> (JSON), <code>blockly_xml</code>, <code>scratchblocks_text</code>, or <code>code_text</code>.
   </p>
-  <div class="admin-question-preview__grid">
-    <section class="admin-question-preview__card">
-      <div class="admin-question-preview__heading">
-        <h3 class="admin-question-preview__title">Blockly</h3>
-      </div>
-      <div class="admin-question-preview__empty" data-admin-blockly-empty>
-        Paste Blockly state/XML to preview.
-      </div>
-      <div class="admin-question-preview__surface admin-question-preview__surface--blockly" data-admin-blockly-surface></div>
-    </section>
-
-    <section class="admin-question-preview__card">
-      <div class="admin-question-preview__heading">
-        <h3 class="admin-question-preview__title">Scratch</h3>
-      </div>
-      <div class="admin-question-preview__empty" data-admin-scratch-empty>
-        Paste <code>scratchblocks_text</code> to preview.
-      </div>
-      <div class="admin-question-preview__surface admin-question-preview__surface--scratch" data-admin-scratch-surface></div>
-    </section>
-
-    <section class="admin-question-preview__card">
-      <div class="admin-question-preview__heading">
-        <h3 class="admin-question-preview__title">Code</h3>
-        <span class="admin-question-preview__badge" data-admin-code-language>python</span>
-      </div>
-      <div class="admin-question-preview__empty" data-admin-code-empty>
-        Paste <code>code_text</code> to preview.
-      </div>
-      <pre class="admin-question-preview__code" data-admin-code-surface><code data-admin-code-text></code></pre>
-    </section>
-  </div>
+  <section class="admin-question-preview__card">
+    <div class="admin-question-preview__heading">
+      <h3 class="admin-question-preview__title">Preview</h3>
+      <span class="admin-question-preview__badge" data-admin-preview-kind>Auto</span>
+    </div>
+    <div class="admin-question-preview__note" data-admin-preview-note hidden></div>
+    <div class="admin-question-preview__empty" data-admin-preview-empty>
+      Enter question data to preview.
+    </div>
+    <div class="admin-question-preview__surface admin-question-preview__surface--blockly" data-admin-preview-blockly></div>
+    <div class="admin-question-preview__surface admin-question-preview__surface--scratch" data-admin-preview-scratch></div>
+    <pre class="admin-question-preview__code" data-admin-preview-code><code data-admin-preview-code-text></code></pre>
+  </section>
 </div>
             """,
             media_url,

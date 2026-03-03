@@ -6,6 +6,13 @@
     return field.value.replace(/\r\n/g, "\n").trim();
   }
 
+  function getRawValue(field) {
+    if (!field || typeof field.value !== "string") {
+      return "";
+    }
+    return field.value.replace(/\r\n/g, "\n");
+  }
+
   function setVisible(element, visible) {
     if (!element) {
       return;
@@ -18,6 +25,14 @@
       return;
     }
     element.textContent = text || "";
+  }
+
+  function normalizeQuestionType(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    if (normalized === "blockly" || normalized === "scratch" || normalized === "code") {
+      return normalized;
+    }
+    return "";
   }
 
   function disposeBlockly(surface) {
@@ -36,28 +51,55 @@
     surface.innerHTML = "";
   }
 
-  function parseBlocklyPayload(stateText, xmlText) {
-    if (stateText) {
-      try {
-        const parsed = JSON.parse(stateText);
-        if (parsed && typeof parsed === "object") {
-          return { payload: { kind: "state", value: parsed }, error: "" };
-        }
-        if (typeof parsed === "string" && parsed.trim()) {
-          return { payload: { kind: "xml", value: parsed.trim() }, error: "" };
-        }
-        return { payload: null, error: "blockly_state does not contain valid Blockly data." };
-      } catch (error) {
-        if (xmlText) {
-          return { payload: { kind: "xml", value: xmlText }, error: "" };
-        }
-        return { payload: null, error: "blockly_state JSON is invalid." };
+  function parseBlocklyStatePayload(stateText) {
+    if (!stateText) {
+      return { payload: null, error: "", label: "" };
+    }
+    try {
+      const parsed = JSON.parse(stateText);
+      if (parsed && typeof parsed === "object") {
+        return { payload: { kind: "state", value: parsed }, error: "", label: "Blockly JSON" };
       }
+      if (typeof parsed === "string") {
+        const inner = parsed.trim();
+        if (!inner) {
+          return { payload: null, error: "blockly_state JSON is empty.", label: "" };
+        }
+        if (inner.startsWith("<")) {
+          return {
+            payload: { kind: "xml", value: inner },
+            error: "",
+            label: "Blockly XML (from blockly_state)"
+          };
+        }
+        try {
+          const nested = JSON.parse(inner);
+          if (nested && typeof nested === "object") {
+            return {
+              payload: { kind: "state", value: nested },
+              error: "",
+              label: "Blockly JSON (nested)"
+            };
+          }
+        } catch (nestedError) {
+          // fall through to validation error
+        }
+      }
+      return {
+        payload: null,
+        error: "blockly_state must be a JSON object (workspace state).",
+        label: ""
+      };
+    } catch (error) {
+      return { payload: null, error: "blockly_state JSON is invalid.", label: "" };
     }
-    if (xmlText) {
-      return { payload: { kind: "xml", value: xmlText }, error: "" };
+  }
+
+  function parseBlocklyXmlPayload(xmlText) {
+    if (!xmlText) {
+      return { payload: null, error: "", label: "" };
     }
-    return { payload: null, error: "" };
+    return { payload: { kind: "xml", value: xmlText }, error: "", label: "Blockly XML" };
   }
 
   function parseBlocklyXml(Blockly, xmlText) {
@@ -92,67 +134,49 @@
     throw new Error("Blockly XML loader is unavailable.");
   }
 
-  function renderBlockly(surface, emptyNode, payload, mediaUrl) {
+  function renderBlockly(surface, payload, mediaUrl) {
     disposeBlockly(surface);
-    if (!payload) {
-      setVisible(surface, false);
-      return;
-    }
-
     const Blockly = window.Blockly;
     if (!Blockly) {
-      setText(emptyNode, "Blockly library is not loaded.");
-      setVisible(emptyNode, true);
-      setVisible(surface, false);
-      return;
+      throw new Error("Blockly library is not loaded.");
     }
 
-    try {
-      const options = {
-        readOnly: true,
-        scrollbars: true,
-        trashcan: false,
-        zoom: {
-          controls: true,
-          wheel: true,
-          startScale: 0.9,
-          maxScale: 1.2,
-          minScale: 0.4,
-          scaleSpeed: 1.1
-        }
-      };
-      if (mediaUrl) {
-        options.media = mediaUrl;
+    const options = {
+      readOnly: true,
+      scrollbars: true,
+      trashcan: false,
+      zoom: {
+        controls: true,
+        wheel: true,
+        startScale: 0.9,
+        maxScale: 1.2,
+        minScale: 0.4,
+        scaleSpeed: 1.1
       }
-
-      const workspace = Blockly.inject(surface, options);
-      if (payload.kind === "state") {
-        const serializer = Blockly.serialization && Blockly.serialization.workspaces;
-        if (!serializer || typeof serializer.load !== "function") {
-          throw new Error("Blockly serialization API is unavailable.");
-        }
-        serializer.load(payload.value, workspace);
-      } else {
-        const xmlDom = parseBlocklyXml(Blockly, payload.value);
-        loadBlocklyXml(Blockly, xmlDom, workspace);
-      }
-
-      if (typeof workspace.scrollCenter === "function") {
-        workspace.scrollCenter();
-      }
-      if (typeof Blockly.svgResize === "function") {
-        Blockly.svgResize(workspace);
-      }
-      surface._blocklyWorkspace = workspace;
-      setVisible(emptyNode, false);
-      setVisible(surface, true);
-    } catch (error) {
-      disposeBlockly(surface);
-      const message = error && error.message ? error.message : String(error || "");
-      setText(emptyNode, `Cannot render Blockly preview: ${message}`);
-      setVisible(emptyNode, true);
-      setVisible(surface, false);
+    };
+    if (mediaUrl) {
+      options.media = mediaUrl;
     }
+
+    const workspace = Blockly.inject(surface, options);
+    if (payload.kind === "state") {
+      const serializer = Blockly.serialization && Blockly.serialization.workspaces;
+      if (!serializer || typeof serializer.load !== "function") {
+        throw new Error("Blockly serialization API is unavailable.");
+      }
+      serializer.load(payload.value, workspace);
+    } else {
+      const xmlDom = parseBlocklyXml(Blockly, payload.value);
+      loadBlocklyXml(Blockly, xmlDom, workspace);
+    }
+
+    if (typeof workspace.scrollCenter === "function") {
+      workspace.scrollCenter();
+    }
+    if (typeof Blockly.svgResize === "function") {
+      Blockly.svgResize(workspace);
+    }
+    surface._blocklyWorkspace = workspace;
   }
 
   function scratchLanguages() {
@@ -166,19 +190,11 @@
     return ["en", primary];
   }
 
-  function renderScratch(surface, emptyNode, text) {
+  function renderScratch(surface, text) {
     surface.innerHTML = "";
-    if (!text) {
-      setVisible(surface, false);
-      return;
-    }
-
     const scratchblocks = window.scratchblocks;
     if (!scratchblocks) {
-      setText(emptyNode, "Scratch renderer is not loaded.");
-      setVisible(emptyNode, true);
-      setVisible(surface, false);
-      return;
+      throw new Error("Scratch renderer is not loaded.");
     }
 
     const pre = document.createElement("pre");
@@ -187,42 +203,112 @@
     pre.textContent = text;
     surface.appendChild(pre);
 
-    try {
-      if (typeof scratchblocks.renderMatching === "function") {
-        scratchblocks.renderMatching(`#${pre.id}`, {
-          style: "scratch3",
-          languages: scratchLanguages()
-        });
-      } else if (typeof scratchblocks.render === "function") {
-        scratchblocks.render(`#${pre.id}`, {
-          style: "scratch3",
-          languages: scratchLanguages()
-        });
-      } else {
-        throw new Error("Scratch renderer API is unavailable.");
-      }
-      setVisible(emptyNode, false);
-      setVisible(surface, true);
-    } catch (error) {
-      const message = error && error.message ? error.message : String(error || "");
-      setText(emptyNode, `Cannot render Scratch preview: ${message}`);
-      setVisible(emptyNode, true);
-      setVisible(surface, false);
-    }
-  }
-
-  function renderCode(surface, codeNode, emptyNode, languageBadge, codeText, codeLanguage) {
-    const language = (codeLanguage || "python").trim().toLowerCase() || "python";
-    setText(languageBadge, language);
-    if (!codeText) {
-      setVisible(surface, false);
-      setVisible(emptyNode, true);
+    if (typeof scratchblocks.renderMatching === "function") {
+      scratchblocks.renderMatching(`#${pre.id}`, {
+        style: "scratch3",
+        languages: scratchLanguages()
+      });
       return;
     }
+    if (typeof scratchblocks.render === "function") {
+      scratchblocks.render(`#${pre.id}`, {
+        style: "scratch3",
+        languages: scratchLanguages()
+      });
+      return;
+    }
+    throw new Error("Scratch renderer API is unavailable.");
+  }
+
+  function renderCode(codeNode, codeText, codeLanguage) {
+    const language = (codeLanguage || "python").trim().toLowerCase() || "python";
     codeNode.className = `language-${language}`;
     setText(codeNode, codeText);
-    setVisible(emptyNode, false);
-    setVisible(surface, true);
+    return language;
+  }
+
+  function pickPreviewMode(questionType, stateText, xmlText, scratchText, codeText, codeLanguage) {
+    const preferredType = normalizeQuestionType(questionType);
+    const stateResult = parseBlocklyStatePayload(stateText);
+    const xmlResult = parseBlocklyXmlPayload(xmlText);
+
+    let blocklyCandidate = null;
+    if (stateResult.payload) {
+      blocklyCandidate = {
+        mode: "blockly",
+        kindLabel: stateResult.label || "Blockly",
+        payload: stateResult.payload,
+        note: xmlResult.payload
+          ? "Both blockly_state and blockly_xml are filled. Using blockly_state."
+          : ""
+      };
+    } else if (xmlResult.payload) {
+      blocklyCandidate = {
+        mode: "blockly",
+        kindLabel: xmlResult.label || "Blockly XML",
+        payload: xmlResult.payload,
+        note: stateResult.error ? `${stateResult.error} Showing blockly_xml.` : ""
+      };
+    } else if (stateResult.error) {
+      blocklyCandidate = {
+        mode: "error",
+        kindLabel: "Blockly",
+        message: stateResult.error,
+        note: ""
+      };
+    }
+
+    const scratchCandidate = scratchText
+      ? {
+          mode: "scratch",
+          kindLabel: "Scratch",
+          payload: null,
+          note: ""
+        }
+      : null;
+
+    const normalizedCodeLang = (codeLanguage || "python").trim().toLowerCase() || "python";
+    const hasCodeText = String(codeText || "").trim().length > 0;
+    const codeCandidate = hasCodeText
+      ? {
+          mode: "code",
+          kindLabel: `Code (${normalizedCodeLang})`,
+          payload: null,
+          note: ""
+        }
+      : null;
+
+    const candidates = {
+      blockly: blocklyCandidate,
+      scratch: scratchCandidate,
+      code: codeCandidate
+    };
+
+    const order = preferredType
+      ? [preferredType, ...["blockly", "scratch", "code"].filter((kind) => kind !== preferredType)]
+      : ["blockly", "scratch", "code"];
+
+    for (const kind of order) {
+      const candidate = candidates[kind];
+      if (candidate && candidate.mode !== "error") {
+        return candidate;
+      }
+    }
+
+    if (preferredType && candidates[preferredType] && candidates[preferredType].mode === "error") {
+      return candidates[preferredType];
+    }
+    if (blocklyCandidate && blocklyCandidate.mode === "error" && !scratchCandidate && !codeCandidate) {
+      return blocklyCandidate;
+    }
+
+    return {
+      mode: "none",
+      kindLabel: "Auto",
+      message:
+        "Enter blockly_state JSON, blockly_xml, scratchblocks_text, or code_text to preview.",
+      note: ""
+    };
   }
 
   function initAdminQuestionPreview() {
@@ -232,62 +318,96 @@
     }
     root.dataset.previewBound = "1";
 
+    const questionTypeField = document.getElementById("id_question_type");
     const blocklyStateField = document.getElementById("id_blockly_state");
     const blocklyXmlField = document.getElementById("id_blockly_xml");
     const scratchField = document.getElementById("id_scratchblocks_text");
     const codeField = document.getElementById("id_code_text");
     const codeLanguageField = document.getElementById("id_code_language");
 
-    const blocklySurface = root.querySelector("[data-admin-blockly-surface]");
-    const blocklyEmpty = root.querySelector("[data-admin-blockly-empty]");
-    const scratchSurface = root.querySelector("[data-admin-scratch-surface]");
-    const scratchEmpty = root.querySelector("[data-admin-scratch-empty]");
-    const codeSurface = root.querySelector("[data-admin-code-surface]");
-    const codeEmpty = root.querySelector("[data-admin-code-empty]");
-    const codeTextNode = root.querySelector("[data-admin-code-text]");
-    const codeLanguageBadge = root.querySelector("[data-admin-code-language]");
+    const kindBadge = root.querySelector("[data-admin-preview-kind]");
+    const noteNode = root.querySelector("[data-admin-preview-note]");
+    const emptyNode = root.querySelector("[data-admin-preview-empty]");
+    const blocklySurface = root.querySelector("[data-admin-preview-blockly]");
+    const scratchSurface = root.querySelector("[data-admin-preview-scratch]");
+    const codeSurface = root.querySelector("[data-admin-preview-code]");
+    const codeTextNode = root.querySelector("[data-admin-preview-code-text]");
     const mediaUrl = String(root.dataset.blocklyMediaUrl || "").trim();
 
+    const setNote = (text) => {
+      const value = String(text || "").trim();
+      setText(noteNode, value);
+      setVisible(noteNode, Boolean(value));
+    };
+
+    const clearSurfaces = () => {
+      disposeBlockly(blocklySurface);
+      if (scratchSurface) {
+        scratchSurface.innerHTML = "";
+      }
+      setText(codeTextNode, "");
+      setVisible(blocklySurface, false);
+      setVisible(scratchSurface, false);
+      setVisible(codeSurface, false);
+    };
+
     const render = () => {
+      const questionType = getValue(questionTypeField);
       const stateText = getValue(blocklyStateField);
       const xmlText = getValue(blocklyXmlField);
       const scratchText = getValue(scratchField);
-      const codeText = codeField && typeof codeField.value === "string"
-        ? codeField.value.replace(/\r\n/g, "\n")
-        : "";
+      const codeText = getRawValue(codeField);
       const codeLanguage = getValue(codeLanguageField);
 
-      const blocklyResult = parseBlocklyPayload(stateText, xmlText);
-      if (!blocklyResult.payload) {
-        disposeBlockly(blocklySurface);
-        if (blocklyResult.error) {
-          setText(blocklyEmpty, blocklyResult.error);
-        } else {
-          setText(blocklyEmpty, "Paste Blockly state/XML to preview.");
-        }
-        setVisible(blocklyEmpty, true);
-        setVisible(blocklySurface, false);
-      } else {
-        renderBlockly(blocklySurface, blocklyEmpty, blocklyResult.payload, mediaUrl);
-      }
-
-      if (!scratchText) {
-        scratchSurface.innerHTML = "";
-        setText(scratchEmpty, "Paste scratchblocks_text to preview.");
-        setVisible(scratchEmpty, true);
-        setVisible(scratchSurface, false);
-      } else {
-        renderScratch(scratchSurface, scratchEmpty, scratchText);
-      }
-
-      renderCode(
-        codeSurface,
-        codeTextNode,
-        codeEmpty,
-        codeLanguageBadge,
+      const selected = pickPreviewMode(
+        questionType,
+        stateText,
+        xmlText,
+        scratchText,
         codeText,
         codeLanguage
       );
+
+      clearSurfaces();
+      setText(kindBadge, selected.kindLabel || "Auto");
+      setNote(selected.note || "");
+
+      if (selected.mode === "none") {
+        setText(emptyNode, selected.message || "Enter question data to preview.");
+        setVisible(emptyNode, true);
+        return;
+      }
+
+      if (selected.mode === "error") {
+        setText(emptyNode, selected.message || "Cannot render preview.");
+        setVisible(emptyNode, true);
+        return;
+      }
+
+      try {
+        if (selected.mode === "blockly") {
+          renderBlockly(blocklySurface, selected.payload, mediaUrl);
+          setVisible(blocklySurface, true);
+          setVisible(emptyNode, false);
+          return;
+        }
+        if (selected.mode === "scratch") {
+          renderScratch(scratchSurface, scratchText);
+          setVisible(scratchSurface, true);
+          setVisible(emptyNode, false);
+          return;
+        }
+        if (selected.mode === "code") {
+          const language = renderCode(codeTextNode, codeText, codeLanguage);
+          setText(kindBadge, `Code (${language})`);
+          setVisible(codeSurface, true);
+          setVisible(emptyNode, false);
+        }
+      } catch (error) {
+        const message = error && error.message ? error.message : String(error || "");
+        setText(emptyNode, `Cannot render preview: ${message}`);
+        setVisible(emptyNode, true);
+      }
     };
 
     let renderTimer = null;
@@ -295,18 +415,23 @@
       if (renderTimer) {
         window.clearTimeout(renderTimer);
       }
-      renderTimer = window.setTimeout(render, 180);
+      renderTimer = window.setTimeout(render, 160);
     };
 
-    [blocklyStateField, blocklyXmlField, scratchField, codeField, codeLanguageField].forEach(
-      (field) => {
-        if (!field) {
-          return;
-        }
-        field.addEventListener("input", scheduleRender);
-        field.addEventListener("change", scheduleRender);
+    [
+      questionTypeField,
+      blocklyStateField,
+      blocklyXmlField,
+      scratchField,
+      codeField,
+      codeLanguageField
+    ].forEach((field) => {
+      if (!field) {
+        return;
       }
-    );
+      field.addEventListener("input", scheduleRender);
+      field.addEventListener("change", scheduleRender);
+    });
 
     window.addEventListener("resize", () => {
       const workspace = blocklySurface && blocklySurface._blocklyWorkspace;

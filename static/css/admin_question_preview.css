@@ -2,17 +2,6 @@
   margin-top: 6px;
 }
 
-.admin-question-preview__grid {
-  display: grid;
-  gap: 12px;
-}
-
-@media (min-width: 1200px) {
-  .admin-question-preview__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
 .admin-question-preview__card {
   border: 1px solid #d7dce5;
   border-radius: 10px;
@@ -51,6 +40,16 @@
   color: #5d6b82;
   font-size: 12px;
   line-height: 1.4;
+}
+
+.admin-question-preview__note {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px dashed #d4dae6;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
 }
 
 .admin-question-preview__surface {
