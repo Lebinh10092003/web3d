@@ -11,6 +11,7 @@ from web3d.queue import enqueue_task
 
 from .models import SupportConversation, SupportMessage
 from .services import (
+    create_operator_reply,
     dispatch_owner_notification,
     get_or_create_conversation,
     parse_operator_command,
@@ -150,16 +151,7 @@ def operator_reply(request):
     if conversation is None:
         return _error("Conversation not found.", status=404)
 
-    now = timezone.now()
-    message = SupportMessage.objects.create(
-        conversation=conversation,
-        sender_type=SupportMessage.SenderType.OPERATOR,
-        source=source,
-        body=body,
-    )
-    conversation.last_operator_message_at = now
-    conversation.status = SupportConversation.Status.OPEN
-    conversation.save(update_fields=["last_operator_message_at", "status", "updated_at"])
+    message = create_operator_reply(conversation, body, source=source)
 
     return JsonResponse(
         {

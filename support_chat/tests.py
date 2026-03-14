@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
@@ -67,3 +68,36 @@ class SupportChatViewTests(TestCase):
         self.assertIn("[W4821] New website chat", notification)
         self.assertIn("Visitor: Alice", notification)
         self.assertIn("#W4821 Your reply here", notification)
+
+
+@override_settings(
+    SUPPORT_CHAT_ENABLED=True,
+    SUPPORT_CHAT_AUTO_REPLY_MESSAGE="Auto reply",
+    SUPPORT_CHAT_OPERATOR_TOKEN="secret-token",
+    USE_BACKGROUND_JOBS=False,
+)
+class SupportChatAdminTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.admin_user = get_user_model().objects.create_superuser(
+            username="admin_support",
+            email="admin-support@example.com",
+            password="password123",
+        )
+        self.client.force_login(self.admin_user)
+
+    def test_admin_manual_reply_creates_operator_message(self):
+        conversation = SupportConversation.objects.create(conversation_code="W7001")
+
+        response = self.client.post(
+            reverse("admin:support_chat_supportconversation_manual_reply", args=[conversation.pk]),
+            data={"reply_text": "Manual response from staff"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        conversation.refresh_from_db()
+        self.assertEqual(conversation.messages.count(), 1)
+        message = conversation.messages.first()
+        self.assertEqual(message.sender_type, SupportMessage.SenderType.OPERATOR)
+        self.assertEqual(message.source, SupportMessage.Source.API)
+        self.assertEqual(message.body, "Manual response from staff")

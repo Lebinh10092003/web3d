@@ -47,6 +47,25 @@ def parse_operator_command(command):
     return match.group("code").upper(), match.group("body").strip()
 
 
+def create_operator_reply(conversation, body, *, source=SupportMessage.Source.API):
+    text = str(body or "").strip()
+    if conversation is None:
+        raise ValueError("conversation is required")
+    if not text:
+        raise ValueError("body is required")
+
+    message = SupportMessage.objects.create(
+        conversation=conversation,
+        sender_type=SupportMessage.SenderType.OPERATOR,
+        source=source,
+        body=text,
+    )
+    conversation.last_operator_message_at = message.created_at
+    conversation.status = SupportConversation.Status.OPEN
+    conversation.save(update_fields=["last_operator_message_at", "status", "updated_at"])
+    return message
+
+
 def get_or_create_conversation(request, payload):
     conversation_code = str(request.session.get("support_chat_conversation_code") or "").strip()
     conversation = None

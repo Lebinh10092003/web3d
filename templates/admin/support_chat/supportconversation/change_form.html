@@ -1,0 +1,163 @@
+{% extends "admin/change_form.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/bootstrap_layered.css' %}">
+  <style>
+    .support-chat-admin-panel {
+      margin-top: 24px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+    .support-chat-admin-panel__header {
+      padding: 18px 20px 12px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      background: linear-gradient(180deg, rgba(31, 122, 69, 0.05), rgba(255, 255, 255, 0.95));
+    }
+    .support-chat-admin-panel__body {
+      padding: 20px;
+    }
+    .support-chat-admin-thread {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 420px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .support-chat-admin-item {
+      display: flex;
+    }
+    .support-chat-admin-item--customer {
+      justify-content: flex-start;
+    }
+    .support-chat-admin-item--operator,
+    .support-chat-admin-item--system {
+      justify-content: flex-end;
+    }
+    .support-chat-admin-bubble {
+      max-width: min(860px, 100%);
+      padding: 12px 14px;
+      border-radius: 16px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .support-chat-admin-item--customer .support-chat-admin-bubble {
+      background: rgba(15, 23, 42, 0.04);
+      border-bottom-left-radius: 6px;
+    }
+    .support-chat-admin-item--operator .support-chat-admin-bubble {
+      background: linear-gradient(135deg, #1f7a45, #2f9e60);
+      color: #fff;
+      border-bottom-right-radius: 6px;
+    }
+    .support-chat-admin-item--system .support-chat-admin-bubble {
+      background: rgba(31, 122, 69, 0.08);
+      color: #1f7a45;
+      border: 1px solid rgba(31, 122, 69, 0.14);
+      border-bottom-right-radius: 6px;
+    }
+    .support-chat-admin-meta {
+      margin-top: 6px;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    .support-chat-admin-reply {
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+    }
+    .support-chat-admin-reply textarea {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+    }
+    .support-chat-admin-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .support-chat-admin-stat {
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: rgba(248, 250, 252, 0.8);
+    }
+    .support-chat-admin-stat__label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #667085;
+    }
+    .support-chat-admin-stat__value {
+      margin-top: 4px;
+      font-weight: 700;
+      color: #111827;
+      word-break: break-word;
+    }
+  </style>
+{% endblock %}
+
+{% block after_related_objects %}
+  {{ block.super }}
+  {% if original %}
+    <section class="support-chat-admin-panel">
+      <div class="support-chat-admin-panel__header">
+        <p class="mb-1 text-uppercase text-muted small">{% trans "Support chat" %}</p>
+        <h2 class="h5 mb-0">{% trans "Manual reply console" %}</h2>
+        <div class="support-chat-admin-summary">
+          <div class="support-chat-admin-stat">
+            <div class="support-chat-admin-stat__label">{% trans "Conversation" %}</div>
+            <div class="support-chat-admin-stat__value">{{ original.conversation_code }}</div>
+          </div>
+          <div class="support-chat-admin-stat">
+            <div class="support-chat-admin-stat__label">{% trans "Visitor" %}</div>
+            <div class="support-chat-admin-stat__value">{{ original.visitor_name|default:"-" }}</div>
+          </div>
+          <div class="support-chat-admin-stat">
+            <div class="support-chat-admin-stat__label">{% trans "Phone" %}</div>
+            <div class="support-chat-admin-stat__value">{{ original.visitor_phone|default:"-" }}</div>
+          </div>
+          <div class="support-chat-admin-stat">
+            <div class="support-chat-admin-stat__label">{% trans "Page" %}</div>
+            <div class="support-chat-admin-stat__value">{{ original.page_title|default:original.page_url|default:"-" }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="support-chat-admin-panel__body">
+        <div class="support-chat-admin-thread">
+          {% for message in conversation_messages %}
+            <div class="support-chat-admin-item support-chat-admin-item--{{ message.sender_type }}">
+              <div class="support-chat-admin-bubble">
+                <div>{{ message.body }}</div>
+                <div class="support-chat-admin-meta">
+                  {{ message.get_sender_type_display }} · {{ message.get_source_display }} · {{ message.created_at|date:"d/m/Y H:i" }}
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="text-muted">{% trans "No messages yet." %}</div>
+          {% endfor %}
+        </div>
+
+        <form class="support-chat-admin-reply" method="post" action="{{ manual_reply_url }}">
+          {% csrf_token %}
+          <label for="id_reply_text" class="fw-semibold">{% trans "Reply as staff/admin" %}</label>
+          <textarea id="id_reply_text" name="reply_text" placeholder="{% trans 'Type a manual reply for the website customer...' %}" required></textarea>
+          <div class="d-flex justify-content-end">
+            <button type="submit" class="button default">{% trans "Send manual reply" %}</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}
