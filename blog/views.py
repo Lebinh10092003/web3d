@@ -591,7 +591,7 @@ def post_detail(request, slug):
         "alternate_hreflang_urls": {
             "vi": canonical_url,
             "en": canonical_url,
-            "x-default": canonical_url,
+            "x_default": canonical_url,
         },
         "og_image_url": og_image_url,
         "article_json_ld": json.dumps(article_json_ld, ensure_ascii=False),
