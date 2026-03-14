@@ -29,8 +29,66 @@ if not SECRET_KEY:
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
 SITE_NAME = os.environ.get("SITE_NAME", "V+ STEAM LAB Library")
 SITE_URL = os.environ.get("SITE_URL", "")
+SUPPORT_CHAT_ENABLED = os.environ.get("SUPPORT_CHAT_ENABLED", "0") == "1"
+SUPPORT_CHAT_TITLE = os.environ.get("SUPPORT_CHAT_TITLE", "Chat with us").strip() or "Chat with us"
+SUPPORT_CHAT_SUBTITLE = (
+    os.environ.get("SUPPORT_CHAT_SUBTITLE", "Leave a message and we will reply here.")
+    .strip()
+    or "Leave a message and we will reply here."
+)
+SUPPORT_CHAT_AUTO_REPLY_MESSAGE = (
+    os.environ.get(
+        "SUPPORT_CHAT_AUTO_REPLY_MESSAGE",
+        "Thanks for your message. We will reply here soon. If urgent, please leave your phone number.",
+    ).strip()
+    or "Thanks for your message. We will reply here soon. If urgent, please leave your phone number."
+)
+SUPPORT_CHAT_POLL_INTERVAL_MS = int(os.environ.get("SUPPORT_CHAT_POLL_INTERVAL_MS", "5000"))
+SUPPORT_CHAT_MESSAGE_MAX_CHARS = int(os.environ.get("SUPPORT_CHAT_MESSAGE_MAX_CHARS", "1200"))
+SUPPORT_CHAT_OPERATOR_TOKEN = os.environ.get("SUPPORT_CHAT_OPERATOR_TOKEN", "").strip()
+SUPPORT_CHAT_OPENCLAW_BASE_URL = os.environ.get("SUPPORT_CHAT_OPENCLAW_BASE_URL", "").strip().rstrip("/")
+SUPPORT_CHAT_OPENCLAW_HOOK_PATH = (
+    os.environ.get("SUPPORT_CHAT_OPENCLAW_HOOK_PATH", "/hooks/agent").strip()
+    or "/hooks/agent"
+)
+SUPPORT_CHAT_OPENCLAW_HOOK_TOKEN = os.environ.get("SUPPORT_CHAT_OPENCLAW_HOOK_TOKEN", "").strip()
+SUPPORT_CHAT_OPENCLAW_AGENT_ID = (
+    os.environ.get("SUPPORT_CHAT_OPENCLAW_AGENT_ID", "support").strip() or "support"
+)
+SUPPORT_CHAT_OWNER_WHATSAPP = os.environ.get("SUPPORT_CHAT_OWNER_WHATSAPP", "").strip()
+SUPPORT_CHAT_REQUEST_TIMEOUT = float(os.environ.get("SUPPORT_CHAT_REQUEST_TIMEOUT", "10"))
+BLOG_AUTOMATION_ENABLED = os.environ.get("BLOG_AUTOMATION_ENABLED", "0") == "1"
+BLOG_AUTOMATION_TOKEN = os.environ.get("BLOG_AUTOMATION_TOKEN", "").strip()
+BLOG_AUTOMATION_DEFAULT_STATUS = (
+    os.environ.get("BLOG_AUTOMATION_DEFAULT_STATUS", "PENDING_REVIEW").strip().upper()
+    or "PENDING_REVIEW"
+)
+BLOG_AUTOMATION_DEFAULT_AUTHOR_USERNAME = (
+    os.environ.get("BLOG_AUTOMATION_DEFAULT_AUTHOR_USERNAME", "").strip()
+)
+BLOG_AUTOMATION_REQUEST_TIMEOUT = float(os.environ.get("BLOG_AUTOMATION_REQUEST_TIMEOUT", "20"))
+BLOG_AUTOMATION_MAX_VIDEO_MB = int(os.environ.get("BLOG_AUTOMATION_MAX_VIDEO_MB", "80"))
+BLOG_AUTOMATION_MEDIA_FOLDER = (
+    os.environ.get("BLOG_AUTOMATION_MEDIA_FOLDER", "blog/automation").strip()
+    or "blog/automation"
+)
+BLOG_AUTOMATION_INCLUDE_SOURCES_BLOCK = (
+    os.environ.get("BLOG_AUTOMATION_INCLUDE_SOURCES_BLOCK", "1") == "1"
+)
+BLOG_AUTOMATION_USER_AGENT = (
+    os.environ.get(
+        "BLOG_AUTOMATION_USER_AGENT",
+        "web3d-blog-automation/1.0 (+https://localhost)",
+    ).strip()
+    or "web3d-blog-automation/1.0 (+https://localhost)"
+)
 
 
 INSTALLED_APPS = [
@@ -49,6 +107,8 @@ INSTALLED_APPS = [
     "analytics",
     "blockly_quiz",
     "blog",
+    "support_chat",
+    "automation_bridge",
 ]
 
 MIDDLEWARE = [

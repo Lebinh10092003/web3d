@@ -615,20 +615,36 @@ function bindUserMenu() {
 
 function bindNavToggle() {
   const header = document.querySelector("[data-site-header]");
-  const toggle = document.querySelector("[data-nav-toggle]");
-  const nav = document.querySelector("[data-nav-panel]");
+  const toggle = header ? header.querySelector("[data-nav-toggle], .navbar-toggler") : null;
+  const nav = header ? header.querySelector("[data-nav-panel], #site-nav, .navbar-collapse") : null;
+  const navList = nav ? nav.querySelector(".navbar-nav") : null;
+  const navBar = header ? header.querySelector(".navbar") : null;
   const NAV_COLLAPSE_BREAKPOINT = 992;
-  if (!header || !toggle || !nav) {
+  if (!header || !toggle || !nav || !navBar) {
     return;
   }
+  const hasBootstrapCollapse = Boolean(window.bootstrap && bootstrap.Collapse);
+  const collapseInstance = hasBootstrapCollapse
+    ? bootstrap.Collapse.getOrCreateInstance(nav, { toggle: false })
+    : null;
 
   const setOpen = (open) => {
     header.classList.toggle("is-nav-open", open);
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
   };
 
+  const hideNav = () => {
+    if (collapseInstance) {
+      collapseInstance.hide();
+      return;
+    }
+    nav.classList.remove("show");
+    setOpen(false);
+  };
+
   const navWraps = () => {
-    const items = Array.from(nav.children).filter((item) => item.offsetParent !== null);
+    const container = navList || nav;
+    const items = Array.from(container.children).filter((item) => item.offsetParent !== null);
     if (items.length < 2) {
       return false;
     }
@@ -644,15 +660,21 @@ function bindNavToggle() {
     }
     header.classList.remove("is-nav-tight");
 
-    const shouldCollapse = window.innerWidth <= NAV_COLLAPSE_BREAKPOINT;
+    const shouldCollapse = window.innerWidth < NAV_COLLAPSE_BREAKPOINT;
     header.classList.toggle("is-nav-compact", shouldCollapse);
     header.dataset.navReady = shouldCollapse ? "true" : "false";
 
     if (!shouldCollapse) {
-      setOpen(false);
-      const isOverflowing = nav.scrollWidth > nav.clientWidth + 1;
+      hideNav();
+      const isOverflowing =
+        navWraps() ||
+        navBar.scrollWidth > navBar.clientWidth + 1 ||
+        nav.scrollWidth > nav.clientWidth + 1;
       header.classList.toggle("is-nav-tight", isOverflowing);
+      return;
     }
+
+    setOpen(nav.classList.contains("show"));
   };
 
   if (toggle.dataset.bound === "true") {
@@ -661,22 +683,43 @@ function bindNavToggle() {
   }
   toggle.dataset.bound = "true";
 
-  toggle.addEventListener("click", (event) => {
-    event.preventDefault();
-    const isOpen = header.classList.contains("is-nav-open");
-    setOpen(!isOpen);
-  });
+  if (collapseInstance) {
+    nav.addEventListener("shown.bs.collapse", () => {
+      setOpen(true);
+    });
+    nav.addEventListener("hidden.bs.collapse", () => {
+      setOpen(false);
+    });
+  } else {
+    toggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      const isOpen = header.classList.contains("is-nav-open");
+      nav.classList.toggle("show", !isOpen);
+      setOpen(!isOpen);
+    });
+  }
 
   nav.addEventListener("click", (event) => {
-    const link = event.target.closest(".nav-link, .user-menu-link");
-    if (link) {
-      setOpen(false);
+    const action = event.target.closest("a, button");
+    if (!action || window.innerWidth >= NAV_COLLAPSE_BREAKPOINT) {
+      return;
+    }
+    if (action.matches("[data-bs-toggle='dropdown'], .dropdown-toggle, [data-user-menu-toggle]")) {
+      return;
+    }
+    if (action.matches(".nav-link, .dropdown-item, .user-menu-link, .btn-auth")) {
+      hideNav();
     }
   });
 
   document.addEventListener("click", (event) => {
-    if (!header.contains(event.target)) {
-      setOpen(false);
+    if (window.innerWidth < NAV_COLLAPSE_BREAKPOINT && !header.contains(event.target)) {
+      hideNav();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && window.innerWidth < NAV_COLLAPSE_BREAKPOINT) {
+      hideNav();
     }
   });
 

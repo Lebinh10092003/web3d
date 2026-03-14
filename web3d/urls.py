@@ -48,6 +48,8 @@ urlpatterns = [
     path("payments/", include("gating.urls")),
     path("quizzes/", include("blockly_quiz.urls")),
     path("blog/", include("blog.urls")),
+    path("automation/", include("automation_bridge.urls")),
+    path("support-chat/", include("support_chat.urls")),
     path("", include("library.urls")),
 ]
 

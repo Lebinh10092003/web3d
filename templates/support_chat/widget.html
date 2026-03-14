@@ -1,0 +1,65 @@
+{% load i18n %}
+<div
+  class="support-chat"
+  data-support-chat
+  data-send-url="{% url 'support_chat:send' %}"
+  data-messages-url="{% url 'support_chat:messages' %}"
+  data-poll-interval-ms="{{ SUPPORT_CHAT_POLL_INTERVAL_MS }}"
+>
+  <button
+    type="button"
+    class="contact-fab support-chat__toggle"
+    data-support-chat-open
+    aria-expanded="false"
+    aria-controls="support-chat-panel"
+    aria-label="{{ SUPPORT_CHAT_TITLE }}"
+  >
+    <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
+    <span>{% trans "Chat" %}</span>
+  </button>
+
+  <section class="support-chat__panel auth-modal modal-panel" id="support-chat-panel" aria-label="{{ SUPPORT_CHAT_TITLE }}" aria-hidden="true">
+    <div class="support-chat__header auth-modal__header">
+      <div class="auth-modal__icon" aria-hidden="true">
+        <i class="bi bi-chat-dots-fill"></i>
+      </div>
+      <div class="support-chat__header-copy">
+        <div class="support-chat__eyebrow">{% trans "Customer Support" %}</div>
+        <div class="support-chat__title">{{ SUPPORT_CHAT_TITLE }}</div>
+        <div class="support-chat__subtitle">{{ SUPPORT_CHAT_SUBTITLE }}</div>
+        <div class="support-chat__code" data-support-chat-code hidden></div>
+      </div>
+      <button
+        type="button"
+        class="support-chat__close"
+        data-support-chat-close
+        aria-label="{% trans 'Close' %}"
+      >
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="support-chat__messages" data-support-chat-messages aria-live="polite">
+      <div class="support-chat__empty" data-support-chat-empty>
+        {% trans "Send a message to start the conversation." %}
+      </div>
+    </div>
+
+    <form class="support-chat__form" data-support-chat-form>
+      <label class="visually-hidden" for="support-chat-input">{% trans "Your message" %}</label>
+      <textarea
+        id="support-chat-input"
+        class="support-chat__input"
+        rows="2"
+        placeholder="{% trans 'Type your message...' %}"
+        data-support-chat-input
+      ></textarea>
+      <div class="support-chat__actions">
+        <div class="support-chat__status" data-support-chat-status aria-live="polite"></div>
+        <button type="submit" class="btn btn-primary support-chat__submit" data-support-chat-submit>
+          {% trans "Send" %}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>

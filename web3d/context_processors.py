@@ -28,6 +28,12 @@ def site_meta(request):
         "BLOCKLY_QUIZ_SCRATCHBLOCKS_JS_URL": getattr(
             settings, "BLOCKLY_QUIZ_SCRATCHBLOCKS_JS_URL", ""
         ),
+        "SUPPORT_CHAT_ENABLED": getattr(settings, "SUPPORT_CHAT_ENABLED", False),
+        "SUPPORT_CHAT_TITLE": getattr(settings, "SUPPORT_CHAT_TITLE", "Chat with us"),
+        "SUPPORT_CHAT_SUBTITLE": getattr(
+            settings, "SUPPORT_CHAT_SUBTITLE", "Leave a message and we will reply here."
+        ),
+        "SUPPORT_CHAT_POLL_INTERVAL_MS": getattr(settings, "SUPPORT_CHAT_POLL_INTERVAL_MS", 5000),
         "DEFAULT_META_TITLE": _("%(site)s | V for tech, V for future")
         % {"site": site_name},
         "DEFAULT_META_DESCRIPTION": _(

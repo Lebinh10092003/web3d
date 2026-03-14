@@ -27,6 +27,9 @@
   <meta name="twitter:image" content="{% block twitter_image %}{{ DEFAULT_OG_IMAGE }}{% endblock %}">
   <link rel="stylesheet" href="{% static 'css/bootstrap_layered.css' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% if SUPPORT_CHAT_ENABLED %}
+    <link rel="stylesheet" href="{% static 'css/support_chat.css' %}">
+  {% endif %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
@@ -53,6 +56,7 @@
       <button
         class="navbar-toggler"
         type="button"
+        data-nav-toggle
         data-bs-toggle="collapse"
         data-bs-target="#site-nav"
         aria-controls="site-nav"
@@ -63,7 +67,7 @@
         <span class="navbar-toggler-icon" aria-hidden="true"></span>
       </button>
       {% with view_name=request.resolver_match.view_name|default:"" %}
-      <div class="collapse navbar-collapse" id="site-nav">
+      <div class="collapse navbar-collapse" id="site-nav" data-nav-panel>
         <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
           <li class="nav-item">
             <a class="nav-link{% if view_name == 'library:home' %} is-active{% endif %}" href="{% url 'library:home' %}">
@@ -444,6 +448,10 @@
     <span>{% trans "Contact" %}</span>
   </a>
 
+  {% if SUPPORT_CHAT_ENABLED %}
+    {% include "support_chat/widget.html" %}
+  {% endif %}
+
   <div class="modal fade modal-mazer text-left" id="contact-modal" tabindex="-1" aria-labelledby="contact-modal-title" aria-hidden="true" role="dialog">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document">
       <div class="modal-content">
@@ -633,5 +641,8 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{% static 'js/aphile.js' %}"></script>
   <script src="{% static 'js/app.js' %}"></script>
+  {% if SUPPORT_CHAT_ENABLED %}
+    <script src="{% static 'js/support_chat.js' %}"></script>
+  {% endif %}
 </body>
 </html>

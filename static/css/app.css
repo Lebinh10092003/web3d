@@ -330,14 +330,21 @@ img {
   background: rgba(255, 255, 255, 0.98);
 }
 
-.site-header.is-nav-tight .site-nav {
+.site-header.is-nav-tight .site-nav,
+.site-header.is-nav-tight .navbar-nav {
   gap: 8px;
   font-size: 13px;
 }
 
 .site-header.is-nav-tight .site-nav a,
-.site-header.is-nav-tight .site-nav button {
+.site-header.is-nav-tight .site-nav button,
+.site-header.is-nav-tight .navbar-nav .nav-link {
   padding: 6px 10px;
+}
+
+.site-header.is-nav-tight .btn-auth {
+  padding: 6px 12px;
+  min-width: 80px;
 }
 
 .site-header.is-nav-tight .user-chip {
