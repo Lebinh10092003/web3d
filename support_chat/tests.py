@@ -4,6 +4,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from .models import SupportConversation, SupportMessage
+from .services import build_owner_notification
 
 
 @override_settings(
@@ -44,3 +45,25 @@ class SupportChatViewTests(TestCase):
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["conversation_code"], conversation.conversation_code)
         self.assertEqual(conversation.messages.count(), 1)
+
+    def test_build_owner_notification_includes_explicit_relay_instruction(self):
+        conversation = SupportConversation.objects.create(
+            conversation_code="W4821",
+            visitor_name="Alice",
+            visitor_phone="0123456789",
+            page_title="Robot page",
+            page_url="https://stemrobotics.io.vn/robots",
+        )
+        message = SupportMessage.objects.create(
+            conversation=conversation,
+            sender_type=SupportMessage.SenderType.CUSTOMER,
+            source=SupportMessage.Source.WEB,
+            body="Hello from customer",
+        )
+
+        notification = build_owner_notification(conversation, message)
+
+        self.assertIn("Respond with ONLY the operator notification text below.", notification)
+        self.assertIn("[W4821] New website chat", notification)
+        self.assertIn("Visitor: Alice", notification)
+        self.assertIn("#W4821 Your reply here", notification)

@@ -92,16 +92,16 @@ def get_or_create_conversation(request, payload):
 
 
 def build_owner_notification(conversation, message):
-    lines = [f"[{conversation.conversation_code}] New website chat"]
+    operator_lines = [f"[{conversation.conversation_code}] New website chat"]
     if conversation.visitor_name:
-        lines.append(f"Visitor: {conversation.visitor_name}")
+        operator_lines.append(f"Visitor: {conversation.visitor_name}")
     if conversation.visitor_phone:
-        lines.append(f"Phone: {conversation.visitor_phone}")
+        operator_lines.append(f"Phone: {conversation.visitor_phone}")
     if conversation.page_title:
-        lines.append(f"Page title: {conversation.page_title}")
+        operator_lines.append(f"Page title: {conversation.page_title}")
     if conversation.page_url:
-        lines.append(f"Page URL: {conversation.page_url}")
-    lines.extend(
+        operator_lines.append(f"Page URL: {conversation.page_url}")
+    operator_lines.extend(
         [
             f"Message: {message.body}",
             "",
@@ -109,7 +109,18 @@ def build_owner_notification(conversation, message):
             f"#{conversation.conversation_code} Your reply here",
         ]
     )
-    return "\n".join(lines)
+    operator_notification = "\n".join(operator_lines)
+    # OpenClaw /hooks/agent delivers the agent's response, not the raw hook payload.
+    # Make the relay instruction explicit so the operator receives the exact website chat notice.
+    return "\n".join(
+        [
+            "Task: relay this website chat notification to the WhatsApp operator immediately.",
+            "Respond with ONLY the operator notification text below.",
+            "Do not add commentary, greetings, markdown fences, or extra explanations.",
+            "",
+            operator_notification,
+        ]
+    )
 
 
 def dispatch_owner_notification(conversation_id, message_id):
