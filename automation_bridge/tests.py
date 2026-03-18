@@ -1,8 +1,11 @@
+import json
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from blog.models import Post, PostBlock
 
@@ -43,6 +46,25 @@ class BlogAutomationBridgeTests(TestCase):
             email="editor@example.com",
             password="password123",
         )
+
+    def _create_blog_request(self, *, request_id, requested_by, title):
+        response = self.client.post(
+            reverse("automation_bridge:blog-publish"),
+            data=json.dumps(
+                {
+                    "request_id": request_id,
+                    "source_channel": "whatsapp",
+                    "requested_by": requested_by,
+                    "mode": "review",
+                    "title": title,
+                    "article_body": f"Noi dung cho {title}.",
+                }
+            ),
+            content_type="application/json",
+            **self.auth_headers,
+        )
+        self.assertEqual(response.status_code, 201)
+        return response.json()
 
     @patch("automation_bridge.services.ingest_remote_media", side_effect=_fake_ingest)
     def test_blog_publish_creates_review_post_with_sources_and_media(self, _ingest):
@@ -154,6 +176,135 @@ class BlogAutomationBridgeTests(TestCase):
         run.created_post.refresh_from_db()
         self.assertEqual(run.created_post.status, Post.Status.PUBLISHED)
         self.assertIn("publish_request", run.payload)
+
+    def test_blog_request_latest_detail_filters_by_whatsapp_sender(self):
+        self._create_blog_request(
+            request_id="req-owner-1",
+            requested_by="+84911111111",
+            title="Bai viet dau tien",
+        )
+        self._create_blog_request(
+            request_id="req-other-1",
+            requested_by="+84922222222",
+            title="Bai viet nguoi khac",
+        )
+        self._create_blog_request(
+            request_id="req-owner-2",
+            requested_by="+84911111111",
+            title="Bai viet moi nhat cua owner",
+        )
+
+        response = self.client.get(
+            reverse("automation_bridge:blog-request-latest")
+            + "?source_channel=whatsapp&requested_by=%2B84911111111",
+            **self.auth_headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        request_payload = response.json()["request"]
+        self.assertEqual(request_payload["request_id"], "req-owner-2")
+        self.assertEqual(request_payload["requested_by"], "+84911111111")
+        self.assertEqual(request_payload["post"]["title"], "Bai viet moi nhat cua owner")
+
+    def test_blog_request_latest_publish_promotes_latest_post_for_sender(self):
+        self._create_blog_request(
+            request_id="req-owner-old",
+            requested_by="+84933333333",
+            title="Bai viet cu",
+        )
+        self._create_blog_request(
+            request_id="req-owner-new",
+            requested_by="+84933333333",
+            title="Bai viet moi nhat",
+        )
+        self._create_blog_request(
+            request_id="req-other-new",
+            requested_by="+84944444444",
+            title="Bai viet chat khac",
+        )
+
+        response = self.client.post(
+            reverse("automation_bridge:blog-request-latest-publish"),
+            data=json.dumps(
+                {
+                    "source_channel": "whatsapp",
+                    "requested_by": "+84933333333",
+                }
+            ),
+            content_type="application/json",
+            **self.auth_headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["request_id"], "req-owner-new")
+
+        latest_owner_run = BlogAutomationRun.objects.get(request_id="req-owner-new")
+        latest_owner_run.created_post.refresh_from_db()
+        self.assertEqual(latest_owner_run.created_post.status, Post.Status.PUBLISHED)
+
+        other_run = BlogAutomationRun.objects.get(request_id="req-other-new")
+        other_run.created_post.refresh_from_db()
+        self.assertEqual(other_run.created_post.status, Post.Status.PENDING_REVIEW)
+
+    def test_blog_request_latest_publish_returns_existing_published_post(self):
+        self._create_blog_request(
+            request_id="req-published",
+            requested_by="+84955555555",
+            title="Bai viet da dang",
+        )
+
+        first_publish = self.client.post(
+            reverse("automation_bridge:blog-request-publish", args=["req-published"]),
+            data="{}",
+            content_type="application/json",
+            **self.auth_headers,
+        )
+        self.assertEqual(first_publish.status_code, 200)
+
+        response = self.client.post(
+            reverse("automation_bridge:blog-request-latest-publish"),
+            data=json.dumps(
+                {
+                    "source_channel": "whatsapp",
+                    "requested_by": "+84955555555",
+                }
+            ),
+            content_type="application/json",
+            **self.auth_headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["already_published"])
+        self.assertEqual(payload["request_id"], "req-published")
+        self.assertEqual(payload["post"]["status"], Post.Status.PUBLISHED)
+
+    def test_blog_request_latest_publish_supports_future_publish_at(self):
+        self._create_blog_request(
+            request_id="req-schedule-latest",
+            requested_by="+84966666666",
+            title="Bai viet hen gio",
+        )
+
+        publish_at = (timezone.now() + timedelta(days=1)).isoformat()
+        response = self.client.post(
+            reverse("automation_bridge:blog-request-latest-publish"),
+            data=json.dumps(
+                {
+                    "source_channel": "whatsapp",
+                    "requested_by": "+84966666666",
+                    "publish_at": publish_at,
+                }
+            ),
+            content_type="application/json",
+            **self.auth_headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["request_id"], "req-schedule-latest")
+        self.assertEqual(payload["post"]["status"], Post.Status.SCHEDULED)
 
     def test_media_ingest_accepts_local_media_url_without_download(self):
         response = self.client.post(

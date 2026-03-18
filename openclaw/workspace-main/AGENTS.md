@@ -54,22 +54,46 @@ Then you must:
 5. If the format is invalid, do not guess. Ask for the correct format.
 
 # Flow 2: Blog drafting and publishing
-Only treat a message as a blog command when it starts with `/blogpost` or `/blogpublish`.
-Never publish a blog post from ordinary chat.
+Treat a message as a blog instruction when either condition is true:
+1. it uses an explicit slash command such as `/blogpost`, `/blogpreview`, or `/blogpublish`
+2. it clearly asks you to write, review, preview, publish, or schedule a blog post for the website in natural language
 
-## Accepted WhatsApp commands
-- `/blogpost` creates a draft/review/publish request.
-- `/blogpublish <request_id>` confirms publishing of an existing reviewed draft.
-- `/blogpreview <request_id>` shows the current prepared payload summary.
+Never publish a blog post from casual small talk, ordinary support chat, or ambiguous messages.
+If the message might be casual chat instead of a blog instruction, ask one short follow-up question instead of guessing.
 
-## /blogpost requirements
-The operator should provide at least:
-- mode: `draft`, `review`, `publish`, or `schedule`
+## Supported operator inputs
+- Slash command create: `/blogpost ...`
+- Slash command preview: `/blogpreview <request_id>`
+- Slash command publish: `/blogpublish <request_id>`
+- Natural create examples:
+  - `Viet bai blog ve robot STEM cho phu huynh Viet Nam`
+  - `Soan bai viet moi cho web ve khoa hoc cho tre em`
+- Natural preview examples:
+  - `Cho toi xem lai bai vua chuan bi`
+  - `Xem bai blog moi nhat trong chat nay`
+- Natural publish examples:
+  - `Dang bai vua viet len web`
+  - `Publish bai moi nhat giup toi`
+- Natural schedule examples:
+  - `Len lich dang bai vua viet luc 8h sang mai`
+  - `Dang bai moi nhat vao 2026-03-20T08:00:00+07:00`
+
+## Blog intent rules
+- Prefer `mode: review` unless the operator clearly asked to publish immediately.
+- If the current message clearly expresses publish intent with words like `dang`, `publish`, `len web`, or `dang ngay`, you may publish immediately.
+- If the operator asks to `xem`, `preview`, `xem lai`, or `kiem tra`, do not publish.
+- If the operator asks to `len lich`, `schedule`, or gives a future publish time, use scheduled publish behavior.
+- If the operator refers to `bai vua viet`, `bai moi nhat`, `bai vua chuan bi`, or equivalent without a `request_id`, resolve that to the latest blog request from the same WhatsApp chat only.
+- The same WhatsApp chat is identified by the current sender number. Never look up the latest blog request globally across all senders.
+
+## Blog draft/review requirements
+For creating a new blog request, the operator should provide at least:
 - title
-- summary
+- summary or enough brief/context to produce one
 - either article content or enough brief/context for you to write the article
 
 Optional:
+- mode: `draft`, `review`, `publish`, or `schedule`
 - hero: image URL or attachment URL
 - images: one or more image URLs or attachment URLs
 - video: YouTube/Vimeo/embed URL or direct video URL
@@ -77,10 +101,10 @@ Optional:
 - sources: optional source hints or URLs
 - keywords: optional SEO hints
 
-## /blogpost behaviour
-When `/blogpost` is received:
-1. Parse the command.
-2. If required fields are missing, ask follow-up questions.
+## Create request behavior
+When the operator asks you to draft, review, or create a blog post, whether by slash command or natural language:
+1. Parse the instruction and infer the requested mode.
+2. If required fields are missing, ask focused follow-up questions.
 3. If article body is missing, research the topic on the web and write an original article.
 4. Build a structured JSON payload for the Django automation bridge.
 5. Prefer `mode: review` unless the operator explicitly asked for `publish`.
@@ -92,7 +116,7 @@ When `/blogpost` is received:
      "request_id": "optional-client-generated-id",
      "source_channel": "whatsapp",
      "requested_by": "+84...",
-     "command_text": "raw whatsapp command",
+     "command_text": "raw whatsapp message",
      "mode": "review",
      "title": "...",
      "summary": "...",
@@ -108,31 +132,35 @@ When `/blogpost` is received:
      ],
      "publish_at": "2026-03-14T09:00:00+07:00"
    }
-10. If success, reply with the created blog URL and request_id.
+10. If success, reply with the created blog URL and `request_id`.
 11. If failure, reply with the validation error and do not retry blindly.
-12. If the created post is review or draft, tell the operator they can use `/blogpreview <request_id>` or `/blogpublish <request_id>`.
+12. If the created post is `review` or `draft`, tell the operator they can preview or publish it with either natural language or slash commands.
 
-## /blogpreview behaviour
-When `/blogpreview <request_id>` is received:
-1. Call the full blog request-detail endpoint from `RUNTIME.md`.
-2. Read back:
+## Preview behavior
+When the operator asks to preview a prepared post:
+1. If a `request_id` is provided, call the full blog request-detail endpoint from `RUNTIME.md`.
+2. If no `request_id` is provided and the operator refers to the latest post in the current chat, call the full latest-request detail endpoint from `RUNTIME.md` with:
+   - `source_channel=whatsapp`
+   - `requested_by=<current WhatsApp sender>`
+3. Read back:
    - current post status
    - blog URL
    - title
    - summary
    - stored sources
-3. Reply with a short preview summary for the operator.
+4. Reply with a short preview summary for the operator.
 
-## /blogpublish behaviour
-When `/blogpublish <request_id>` is received:
-1. Call the full blog publish-confirm endpoint from `RUNTIME.md`.
-2. Optional JSON body:
-   {
-     "publish_at": "2026-03-14T09:00:00+07:00"
-   }
+## Publish and schedule behavior
+When the operator asks to publish or schedule a prepared post:
+1. If a `request_id` is provided, call the full blog publish-confirm endpoint from `RUNTIME.md`.
+2. If no `request_id` is provided and the operator refers to the latest post in the current chat, call the full latest-request publish endpoint from `RUNTIME.md` with:
+   - `source_channel=whatsapp`
+   - `requested_by=<current WhatsApp sender>`
+   - optional `publish_at`
 3. If `publish_at` is omitted, publish immediately.
 4. If `publish_at` is in the future, the Django site will mark the post as `SCHEDULED`.
-5. Reply with the final blog URL and status.
+5. If the latest post is already published, reply with the existing blog URL and status instead of guessing or creating a duplicate.
+6. Reply with the final blog URL and status.
 
 ## Writing rules for blog posts
 - Write original copy. Do not paste source material.
@@ -146,6 +174,7 @@ When `/blogpublish <request_id>` is received:
 # Safety rules
 - Never guess a website chat conversation code.
 - Never publish from a casual message.
+- Never guess what `bai vua viet` means across multiple chats; use the current WhatsApp sender only.
 - Never expose internal URLs or tokens to customers.
 - Never browse unrelated sites when trusted sources already answer the question.
 - For web research, prefer official or primary sources.

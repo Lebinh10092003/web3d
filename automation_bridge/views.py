@@ -65,6 +65,35 @@ def _get_run_or_error(request_id):
     return run, None
 
 
+def _lookup_latest_params(request, *, payload=None):
+    data = payload if isinstance(payload, dict) else {}
+    source_channel = str(
+        data.get("source_channel") or request.GET.get("source_channel") or "whatsapp"
+    ).strip()[:40] or "whatsapp"
+    requested_by = str(
+        data.get("requested_by") or data.get("from") or request.GET.get("requested_by") or ""
+    ).strip()[:120]
+    if not requested_by:
+        return None, None, _error("requested_by is required.")
+    return source_channel, requested_by, None
+
+
+def _get_latest_run_or_error(source_channel, requested_by):
+    run = (
+        BlogAutomationRun.objects.select_related("created_post")
+        .filter(
+            source_channel=source_channel,
+            requested_by=requested_by,
+            status=BlogAutomationRun.Status.CREATED,
+            created_post__isnull=False,
+        )
+        .first()
+    )
+    if run is None:
+        return None, _error("No blog request found for this sender.", status=404)
+    return run, None
+
+
 def _serialize_run(run, *, request_obj=None):
     post_payload = None
     if run.created_post_id:
@@ -89,6 +118,67 @@ def _serialize_run(run, *, request_obj=None):
         "created_at": run.created_at.isoformat(),
         "updated_at": run.updated_at.isoformat(),
     }
+
+
+def _publish_run(run, payload, *, request_obj):
+    if run.created_post is None:
+        return _error("Request does not have a created post.", status=409, request_id=run.request_id)
+
+    published_raw = payload.get("published_at") or payload.get("publish_at")
+    published_at = _parse_iso_datetime(published_raw) if published_raw else None
+    if published_raw and not published_at:
+        return _error("invalid_published_at", status=400, request_id=run.request_id)
+
+    post = run.created_post
+    now = timezone.now()
+    if not published_at and post.status == Post.Status.PUBLISHED and post.published_at <= now:
+        return JsonResponse(
+            {
+                "ok": True,
+                "request_id": run.request_id,
+                "already_published": True,
+                "post": build_post_response(
+                    post,
+                    block_count=post.blocks.count(),
+                    request_obj=request_obj,
+                ),
+            }
+        )
+
+    effective_publish_at = published_at or now
+    target_status = Post.Status.SCHEDULED if effective_publish_at > now else Post.Status.PUBLISHED
+
+    with transaction.atomic():
+        post.status = target_status
+        post.published_at = effective_publish_at
+        post.save(update_fields=["status", "published_at", "updated_at"])
+        PostRevision.objects.create(
+            post=post,
+            created_by=post.author,
+            is_autosave=False,
+            payload=post.snapshot(),
+        )
+
+        stored_payload = dict(run.payload or {})
+        stored_payload["publish_request"] = {
+            "requested_at": now.isoformat(),
+            "published_at": effective_publish_at.isoformat(),
+            "status": target_status,
+        }
+        run.payload = stored_payload
+        run.save(update_fields=["payload", "updated_at"])
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "request_id": run.request_id,
+            "post": build_post_response(
+                run.created_post,
+                block_count=run.created_post.blocks.count(),
+                request_obj=request_obj,
+            ),
+        }
+    )
 
 
 @csrf_exempt
@@ -223,6 +313,24 @@ def blog_request_detail(request, request_id):
     return JsonResponse({"ok": True, "request": _serialize_run(run, request_obj=request)})
 
 
+@require_GET
+def blog_request_latest_detail(request):
+    _ensure_enabled()
+    ok, error_response = _check_token(request)
+    if not ok:
+        return error_response
+
+    source_channel, requested_by, error_response = _lookup_latest_params(request)
+    if error_response:
+        return error_response
+
+    run, error_response = _get_latest_run_or_error(source_channel, requested_by)
+    if error_response:
+        return error_response
+
+    return JsonResponse({"ok": True, "request": _serialize_run(run, request_obj=request)})
+
+
 @csrf_exempt
 @require_POST
 def blog_request_publish(request, request_id):
@@ -234,48 +342,26 @@ def blog_request_publish(request, request_id):
     run, error_response = _get_run_or_error(request_id)
     if error_response:
         return error_response
-    if run.created_post is None:
-        return _error("Request does not have a created post.", status=409, request_id=request_id)
 
     payload = _json_body(request)
-    published_raw = payload.get("published_at") or payload.get("publish_at")
-    published_at = _parse_iso_datetime(published_raw) if published_raw else None
-    if published_raw and not published_at:
-        return _error("invalid_published_at", status=400, request_id=request_id)
+    return _publish_run(run, payload, request_obj=request)
 
-    now = timezone.now()
-    effective_publish_at = published_at or now
-    target_status = Post.Status.SCHEDULED if effective_publish_at > now else Post.Status.PUBLISHED
 
-    with transaction.atomic():
-        post = run.created_post
-        post.status = target_status
-        post.published_at = effective_publish_at
-        post.save(update_fields=["status", "published_at", "updated_at"])
-        PostRevision.objects.create(
-            post=post,
-            created_by=post.author,
-            is_autosave=False,
-            payload=post.snapshot(),
-        )
+@csrf_exempt
+@require_POST
+def blog_request_latest_publish(request):
+    _ensure_enabled()
+    ok, error_response = _check_token(request)
+    if not ok:
+        return error_response
 
-        stored_payload = dict(run.payload or {})
-        stored_payload["publish_request"] = {
-            "requested_at": now.isoformat(),
-            "published_at": effective_publish_at.isoformat(),
-            "status": target_status,
-        }
-        run.payload = stored_payload
-        run.save(update_fields=["payload", "updated_at"])
+    payload = _json_body(request)
+    source_channel, requested_by, error_response = _lookup_latest_params(request, payload=payload)
+    if error_response:
+        return error_response
 
-    return JsonResponse(
-        {
-            "ok": True,
-            "request_id": run.request_id,
-            "post": build_post_response(
-                run.created_post,
-                block_count=run.created_post.blocks.count(),
-                request_obj=request,
-            ),
-        }
-    )
+    run, error_response = _get_latest_run_or_error(source_channel, requested_by)
+    if error_response:
+        return error_response
+
+    return _publish_run(run, payload, request_obj=request)

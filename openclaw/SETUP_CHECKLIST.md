@@ -46,12 +46,22 @@ Docs:
 ## 6. Operator workflow
 - Website chat reply:
   - `#W4821 Your reply`
-- Blog draft:
+- Blog draft or review:
   - `/blogpost ...`
+  - `Viet bai blog ve robot STEM cho phu huynh Viet Nam`
 - Blog preview:
   - `/blogpreview <request_id>`
+  - `Cho toi xem lai bai vua chuan bi`
 - Blog publish:
   - `/blogpublish <request_id>`
+  - `Dang bai vua viet len web`
+- Blog schedule:
+  - `/blogpublish <request_id> at 2026-03-20T08:00:00+07:00`
+  - `Len lich dang bai vua viet luc 8h sang mai`
+
+Notes:
+- Slash commands remain supported, but the agent should also understand clear natural-language blog instructions.
+- `bai vua viet` or `bai moi nhat` should resolve to the latest blog request in the same WhatsApp chat.
 
 Detailed agent rules:
 - `openclaw/workspace-main/AGENTS.md`

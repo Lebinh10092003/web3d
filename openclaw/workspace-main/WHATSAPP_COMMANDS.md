@@ -1,4 +1,4 @@
-# WhatsApp command format
+# WhatsApp operator examples
 
 ## 1. Customer chat reply
 Use this exact format:
@@ -8,8 +8,8 @@ Use this exact format:
 Example:
 #W4821 Thank you. We can send the quotation this afternoon.
 
-## 2. Create or update a blog draft
-Use this format:
+## 2. Create a blog draft or review request
+Slash commands still work and are the clearest explicit format:
 
 /blogpost
 mode: review
@@ -32,7 +32,20 @@ Notes:
 - `article` can be omitted if you want the agent to research and write from the brief.
 - `hero`, `images`, and `video` should be public URLs or attachment URLs visible to the agent.
 
-## 3. Publish an already reviewed request
+Natural-language examples are also supported:
+- `Viet bai blog ve robot STEM cho hoc sinh tieu hoc, huong toi phu huynh Viet Nam.`
+- `Soan bai moi cho web ve loi ich cua lap trinh Blockly cho tre em.`
+- `Chuan bi bai viet review truoc khi dang len web.`
+
+## 3. Preview a prepared request
+Specific request by id:
+/blogpreview <request_id>
+
+Latest post in the current WhatsApp chat:
+- `Cho toi xem lai bai vua chuan bi`
+- `Xem bai blog moi nhat trong chat nay`
+
+## 4. Publish an already reviewed request
 /blogpublish <request_id>
 
 Example:
@@ -41,11 +54,20 @@ Example:
 Optional schedule:
 /blogpublish 3f1b4c2d9e1a4d33b4a4d0a2f54b8c6a at 2026-03-14T09:00:00+07:00
 
-## 4. Preview an already prepared request
-/blogpreview <request_id>
+Natural-language publish examples:
+- `Dang bai vua viet len web`
+- `Publish bai moi nhat giup toi`
+
+Natural-language schedule examples:
+- `Len lich dang bai vua viet luc 8h sang mai`
+- `Dang bai moi nhat vao 2026-03-20T08:00:00+07:00`
 
 Expected operator flow:
-1. Send `/blogpost ...`
-2. Review the returned `request_id`
-3. Send `/blogpreview <request_id>` to inspect
-4. Send `/blogpublish <request_id>` when ready
+1. Create a new post with `/blogpost ...` or a natural-language request.
+2. Review the returned `request_id` and blog URL.
+3. Preview with `/blogpreview <request_id>` or `Cho toi xem lai bai vua chuan bi`.
+4. Publish with `/blogpublish <request_id>` or `Dang bai vua viet len web`.
+
+Notes:
+- Slash commands are optional shortcuts, not the only supported input format.
+- When the operator says `bai vua viet` or `bai moi nhat`, the agent should resolve that to the latest blog request in the same WhatsApp chat only.
